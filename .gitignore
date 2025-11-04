@@ -98,10 +98,11 @@ reports/
 .kiro/
 
 # ===== DATA FILES MANAGEMENT =====
-# Exclude entire data/ directory (duplicated in public/data/)
+
+# Exclude entire data/ directory (not needed for app - duplicated in public/data/)
 data/
 
-# Exclude large files that exceed GitHub's 100MB limit
+# Exclude large files that exceed GitHub's 100MB limit from public/data/
 public/data/all_indicators_clean.csv
 public/data/*_matrix.csv
 public/data/48-indicators/
@@ -122,6 +123,12 @@ public/data/48-indicators/
 !public/data/*.json
 !public/data/README.md
 
+# Allow essential GDP data files specifically needed for GDP pages
+!public/data/metadata.json
+!public/data/global_summary.json
+!public/data/us_summary.json
+!public/data/global_insights.json
+
 # ===== GITHUB ACTIONS DEPLOYMENT =====
 # Files needed for GitHub Actions deployment:
 # - package.json, package-lock.json (dependencies)
@@ -132,3 +139,5 @@ public/data/48-indicators/
 
 MidProject_Report.md
 DATA_FILES_GUIDE.md
+
+

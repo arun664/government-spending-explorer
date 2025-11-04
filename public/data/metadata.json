@@ -1,0 +1,29 @@
+{
+  "processing_date": "2025-10-29T14:20:09.187675",
+  "total_indicators": 49,
+  "total_records": 780579,
+  "date_range": "2005-2023",
+  "countries_covered": 177,
+  "priority_indicators": {
+    "IMF_GFSE_GE_G14": "Total Government Expense",
+    "IMF_GFSE_GECE_G14": "Compensation of Employees",
+    "IMF_GFSE_GEGS_G14": "Use of Goods and Services",
+    "IMF_GFSE_GEI_G14": "Interest Expense",
+    "IMF_GFSE_GES_G14": "Social Benefits",
+    "IMF_GFSE_GEG_G14": "Grants Expense",
+    "IMF_GFSE_GEO_G14": "Other Expense"
+  },
+  "sectors": [
+    "Central Government Budget",
+    "Other",
+    "Central Government",
+    "State Government",
+    "General Government",
+    "Social Security",
+    "Local Government"
+  ],
+  "units": [
+    "Domestic currency",
+    "Percentage of GDP"
+  ]
+}
