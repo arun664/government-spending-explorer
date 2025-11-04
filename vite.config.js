@@ -3,7 +3,8 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig(({ command, mode }) => {
   // GitHub Pages deployment configuration
-  const isGitHubPages = mode === 'production' && process.env.GITHUB_ACTIONS
+  const isProduction = mode === 'production'
+  const isGitHubPages = isProduction && (process.env.GITHUB_ACTIONS || process.env.DEPLOY_TARGET === 'github-pages')
   
   return {
     plugins: [react()],
@@ -12,8 +13,8 @@ export default defineConfig(({ command, mode }) => {
       host: 'localhost',
       open: true
     },
-    // Use relative paths for GitHub Pages, repository name for production
-    base: isGitHubPages ? '/government-spending-explorer/' : './',
+    // Always use repository name for production builds (GitHub Pages)
+    base: isProduction ? '/government-spending-explorer/' : './',
     build: {
       outDir: 'dist',
       assetsDir: 'assets',

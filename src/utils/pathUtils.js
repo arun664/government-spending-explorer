@@ -8,18 +8,37 @@
  * @returns {string} The correct path for the current environment
  */
 export function getDataPath(filename) {
-  // In production (GitHub Pages), use relative path
-  // In development, use absolute path from public folder
   const isProduction = import.meta.env.PROD
   const base = import.meta.env.BASE_URL || '/'
   
+  // Debug logging (remove in production)
+  console.log('getDataPath debug:', { 
+    filename, 
+    isProduction, 
+    base, 
+    mode: import.meta.env.MODE,
+    hostname: window.location.hostname
+  })
+  
   if (isProduction) {
-    // Remove leading slash from base if it exists, then add data path
-    const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base
-    return `${cleanBase}/data/${filename}`
+    // For GitHub Pages, ensure we use the correct base path
+    let cleanBase = base
+    
+    // Handle case where base might be '/' but we're on GitHub Pages
+    if (base === '/' && window.location.hostname.includes('github.io')) {
+      cleanBase = '/government-spending-explorer'
+    } else if (base.endsWith('/')) {
+      cleanBase = base.slice(0, -1)
+    }
+    
+    const fullPath = `${cleanBase}/data/${filename}`
+    console.log('Production path:', fullPath)
+    return fullPath
   } else {
     // Development - use absolute path
-    return `/data/${filename}`
+    const devPath = `/data/${filename}`
+    console.log('Development path:', devPath)
+    return devPath
   }
 }
 
