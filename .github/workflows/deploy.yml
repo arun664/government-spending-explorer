@@ -37,6 +37,32 @@ jobs:
       run: npm run build
       env:
         NODE_ENV: production
+        GITHUB_ACTIONS: true
+        
+    - name: Verify build output
+      run: |
+        echo "Checking dist folder contents:"
+        ls -la dist/
+        echo "Checking if data folder exists in dist:"
+        ls -la dist/data/ || echo "No data folder found in dist"
+        echo "Checking public folder contents:"
+        ls -la public/
+        echo "Checking public/data folder:"
+        ls -la public/data/ || echo "No public/data folder found"
+        
+    - name: Ensure data files are in dist
+      run: |
+        # Make sure the data directory exists in dist
+        mkdir -p dist/data
+        # Copy public/data to dist/data if it exists and has content
+        if [ -d "public/data" ] && [ "$(ls -A public/data)" ]; then
+          echo "Copying public/data to dist/data"
+          cp -r public/data/* dist/data/
+          echo "Data files copied successfully"
+          ls -la dist/data/
+        else
+          echo "No data files found in public/data"
+        fi
         
     - name: Setup Pages
       uses: actions/configure-pages@v4
