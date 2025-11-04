@@ -11,21 +11,21 @@ export function getDataPath(filename) {
   const isProduction = import.meta.env.PROD
   const base = import.meta.env.BASE_URL || '/'
   
-  // Debug logging (remove in production)
+  // Debug logging
   console.log('getDataPath debug:', { 
     filename, 
     isProduction, 
-    base, 
+    base,
     mode: import.meta.env.MODE,
-    hostname: window.location.hostname
+    hostname: typeof window !== 'undefined' ? window.location.hostname : 'server'
   })
   
   if (isProduction) {
-    // For GitHub Pages, ensure we use the correct base path
+    // For GitHub Pages, use the correct base path
     let cleanBase = base
     
     // Handle case where base might be '/' but we're on GitHub Pages
-    if (base === '/' && window.location.hostname.includes('github.io')) {
+    if (base === '/' && typeof window !== 'undefined' && window.location.hostname.includes('github.io')) {
       cleanBase = '/government-spending-explorer'
     } else if (base.endsWith('/')) {
       cleanBase = base.slice(0, -1)
@@ -35,7 +35,7 @@ export function getDataPath(filename) {
     console.log('Production path:', fullPath)
     return fullPath
   } else {
-    // Development - use absolute path
+    // Development - use local absolute path
     const devPath = `/data/${filename}`
     console.log('Development path:', devPath)
     return devPath

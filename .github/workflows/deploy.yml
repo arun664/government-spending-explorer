@@ -23,7 +23,17 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      
+      with:
+        lfs: true
+        
+    - name: Download LFS files
+      run: |
+        echo "Downloading Git LFS files..."
+        git lfs pull
+        echo "Verifying LFS files are downloaded:"
+        ls -lh public/data/gdp_clean.csv || echo "GDP file not found"
+        ls -lh public/data/expense_clean.csv || echo "Expense file not found"
+        
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
@@ -39,29 +49,29 @@ jobs:
         NODE_ENV: production
         GITHUB_ACTIONS: true
         
-    - name: Verify build output
+    - name: Verify and ensure data files in build
       run: |
-        echo "Checking dist folder contents:"
+        echo "=== BUILD VERIFICATION ==="
+        echo "Dist folder contents:"
         ls -la dist/
-        echo "Checking if data folder exists in dist:"
-        ls -la dist/data/ || echo "No data folder found in dist"
-        echo "Checking public folder contents:"
-        ls -la public/
-        echo "Checking public/data folder:"
-        ls -la public/data/ || echo "No public/data folder found"
         
-    - name: Ensure data files are in dist
-      run: |
-        # Make sure the data directory exists in dist
-        mkdir -p dist/data
-        # Copy public/data to dist/data if it exists and has content
-        if [ -d "public/data" ] && [ "$(ls -A public/data)" ]; then
-          echo "Copying public/data to dist/data"
-          cp -r public/data/* dist/data/
-          echo "Data files copied successfully"
+        # Check if Vite copied the data files
+        if [ -d "dist/data" ]; then
+          echo "Data folder exists in dist"
           ls -la dist/data/
         else
-          echo "No data files found in public/data"
+          echo "No data folder in dist - copying manually"
+          mkdir -p dist/data/48-indicators
+          
+          # Copy all committed data files
+          cp public/data/*.csv dist/data/ 2>/dev/null || echo "No CSV files"
+          cp public/data/*.json dist/data/ 2>/dev/null || echo "No JSON files"  
+          cp public/data/*.md dist/data/ 2>/dev/null || echo "No MD files"
+          cp public/data/48-indicators/*.csv dist/data/48-indicators/ 2>/dev/null || echo "No indicator CSV files"
+          
+          echo "Data files copied. Final structure:"
+          ls -la dist/data/
+          ls -la dist/data/48-indicators/
         fi
         
     - name: Setup Pages
