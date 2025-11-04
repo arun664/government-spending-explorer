@@ -49,30 +49,52 @@ jobs:
         NODE_ENV: production
         GITHUB_ACTIONS: true
         
-    - name: Verify and ensure data files in build
+    - name: Verify and ensure ALL data files in build
       run: |
         echo "=== BUILD VERIFICATION ==="
         echo "Dist folder contents:"
         ls -la dist/
         
-        # Check if Vite copied the data files
-        if [ -d "dist/data" ]; then
-          echo "Data folder exists in dist"
-          ls -la dist/data/
-        else
-          echo "No data folder in dist - copying manually"
-          mkdir -p dist/data/48-indicators
-          
-          # Copy all committed data files
-          cp public/data/*.csv dist/data/ 2>/dev/null || echo "No CSV files"
-          cp public/data/*.json dist/data/ 2>/dev/null || echo "No JSON files"  
-          cp public/data/*.md dist/data/ 2>/dev/null || echo "No MD files"
-          cp public/data/48-indicators/*.csv dist/data/48-indicators/ 2>/dev/null || echo "No indicator CSV files"
-          
-          echo "Data files copied. Final structure:"
-          ls -la dist/data/
-          ls -la dist/data/48-indicators/
-        fi
+        echo "=== CHECKING SOURCE DATA FILES ==="
+        echo "Public data folder contents:"
+        ls -la public/data/
+        echo "Public 48-indicators folder:"
+        ls -la public/data/48-indicators/ | head -10
+        
+        # Always ensure data directory exists and copy all files
+        echo "=== ENSURING ALL DATA FILES ARE IN DIST ==="
+        mkdir -p dist/data/48-indicators
+        
+        # Copy ALL data files (overwrite if they exist)
+        echo "Copying all CSV files..."
+        cp public/data/*.csv dist/data/ 2>/dev/null || echo "No root CSV files to copy"
+        
+        echo "Copying all JSON files..."
+        cp public/data/*.json dist/data/ 2>/dev/null || echo "No JSON files to copy"
+        
+        echo "Copying README..."
+        cp public/data/*.md dist/data/ 2>/dev/null || echo "No MD files to copy"
+        
+        echo "Copying ALL 48-indicators CSV files..."
+        cp public/data/48-indicators/*.csv dist/data/48-indicators/ 2>/dev/null || echo "No indicator files to copy"
+        
+        echo "=== FINAL VERIFICATION ==="
+        echo "Final dist/data contents:"
+        ls -la dist/data/
+        echo "Final dist/data/48-indicators contents:"
+        ls -la dist/data/48-indicators/ | head -10
+        
+        echo "=== CHECKING SPECIFIC ESSENTIAL FILES ==="
+        echo "GDP files:"
+        ls -lh dist/data/gdp_clean.csv dist/data/gdp_growth.csv 2>/dev/null || echo "GDP files missing"
+        echo "Expense file:"
+        ls -lh dist/data/expense_clean.csv 2>/dev/null || echo "Expense file missing"
+        echo "US spending file:"
+        ls -lh dist/data/us_spending_breakdown.csv 2>/dev/null || echo "US spending file missing"
+        echo "Priority indicator files:"
+        ls -lh dist/data/48-indicators/IMF_GFSE_GE_G14.csv dist/data/48-indicators/IMF_GFSE_GECE_G14.csv 2>/dev/null || echo "Some indicator files missing"
+        echo "JSON metadata files:"
+        ls -lh dist/data/*.json 2>/dev/null || echo "JSON files missing"
         
     - name: Setup Pages
       uses: actions/configure-pages@v4

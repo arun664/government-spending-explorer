@@ -392,7 +392,8 @@ export async function loadSpendingIndicator(indicatorCode) {
       throw new Error(`Indicator ${indicatorCode} not found`)
     }
 
-    const data = await d3.csv(`/data/48-indicators/${indicator.file}`)
+    const { getDataPath } = await import('../../../utils/pathUtils.js')
+    const data = await d3.csv(getDataPath(`48-indicators/${indicator.file}`))
     
     // Process the data
     const processedData = {

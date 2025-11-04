@@ -397,7 +397,7 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true }) => {
       setLoading(false)
     } catch (err) {
       console.error('Error loading data:', err)
-      setError('Failed to load data. Please ensure the CSV file exists at /data/gdp_clean.csv')
+      setError('Failed to load GDP data. Please check your connection and try again.')
       setLoading(false)
     }
   }

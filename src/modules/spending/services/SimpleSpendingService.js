@@ -146,7 +146,8 @@ export async function loadSpendingDataWithSectorFilter(indicatorCode = 'GE', sel
     console.log(`Loading spending data for ${indicatorCode} with sector filter: ${selectedSector}...`)
     
     // Load CSV data
-    const csvData = await d3.csv(`/data/48-indicators/IMF_GFSE_${indicatorCode}_G14.csv`)
+    const { getDataPath } = await import('../../../utils/pathUtils.js')
+    const csvData = await d3.csv(getDataPath(`48-indicators/IMF_GFSE_${indicatorCode}_G14.csv`))
     console.log(`Loaded ${csvData.length} rows from CSV`)
     
     // Process data: group by country and year, filter by sector if specified
@@ -321,7 +322,8 @@ export async function loadCategorySpendingData(indicatorCodes = ['GE', 'GECE', '
     // Load data for each indicator
     const indicatorDataPromises = indicatorCodes.map(async (code) => {
       try {
-        const csvData = await d3.csv(`/data/48-indicators/IMF_GFSE_${code}_G14.csv`)
+        const { getDataPath } = await import('../../../utils/pathUtils.js')
+        const csvData = await d3.csv(getDataPath(`48-indicators/IMF_GFSE_${code}_G14.csv`))
         return { code, csvData, metadata: INDICATOR_METADATA[code] }
       } catch (error) {
         console.warn(`Failed to load ${code}:`, error)

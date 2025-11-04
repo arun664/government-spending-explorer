@@ -8,7 +8,9 @@ const CompareView = ({ selectedCountries, gdpData, yearRange, showGDPView = true
   
   // Load expense data
   useEffect(() => {
-    fetch('../data/expense_clean.csv')
+    import('../../../utils/pathUtils.js').then(({ getDataPath }) => {
+      return fetch(getDataPath('expense_clean.csv'))
+    })
       .then(response => response.text())
       .then(data => {
         const parsedData = d3.csvParse(data);
