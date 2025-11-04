@@ -1,4 +1,5 @@
 import * as d3 from 'd3'
+import { getDataPath } from '../utils/pathUtils.js'
 
 class IndicatorsDataService {
   constructor() {
@@ -37,7 +38,7 @@ class IndicatorsDataService {
     if (this.metadata) return this.metadata
 
     try {
-      const response = await fetch('/data/metadata.json')
+      const response = await fetch(getDataPath('metadata.json'))
       this.metadata = await response.json()
       return this.metadata
     } catch (error) {
@@ -53,7 +54,7 @@ class IndicatorsDataService {
     if (this.globalInsights) return this.globalInsights
 
     try {
-      const response = await fetch('/data/global_insights.json')
+      const response = await fetch(getDataPath('global_insights.json'))
       this.globalInsights = await response.json()
       return this.globalInsights
     } catch (error) {
@@ -69,7 +70,7 @@ class IndicatorsDataService {
     if (this.usData) return this.usData
 
     try {
-      const response = await fetch('/data/us_summary.json')
+      const response = await fetch(getDataPath('us_summary.json'))
       this.usData = await response.json()
       return this.usData
     } catch (error) {
@@ -90,7 +91,7 @@ class IndicatorsDataService {
 
     try {
       const fileName = `IMF_GFSE_${indicatorCode}_G14.csv`;
-      const response = await fetch(`/data/48-indicators/${fileName}`);
+      const response = await fetch(getDataPath(`48-indicators/${fileName}`));
       if (!response.ok) {
         throw new Error(`Failed to load ${fileName}: ${response.statusText}`);
       }
@@ -198,7 +199,7 @@ class IndicatorsDataService {
     }
 
     try {
-      const response = await fetch('/data/us_spending_breakdown.csv')
+      const response = await fetch(getDataPath('us_spending_breakdown.csv'))
       const csvText = await response.text()
       const rawData = d3.csvParse(csvText, d => ({
         indicatorCode: d.IndicatorCode,

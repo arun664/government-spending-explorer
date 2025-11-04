@@ -1,4 +1,5 @@
 import * as d3 from 'd3'
+import { getDataPath } from './pathUtils.js'
 
 /**
  * Data loading utilities for the Government Expense Dashboard
@@ -11,7 +12,7 @@ import * as d3 from 'd3'
  */
 export async function loadGDPData() {
   try {
-    const data = await d3.csv('/data/gdp_clean.csv', d => ({
+    const data = await d3.csv(getDataPath('gdp_clean.csv'), d => ({
       countryName: d['Country Name'],
       countryCode: d['Country Code'],
       year: +d.Year,
@@ -32,7 +33,7 @@ export async function loadGDPData() {
  */
 export async function loadExpenseData() {
   try {
-    const data = await d3.csv('/data/expense_clean.csv', d => ({
+    const data = await d3.csv(getDataPath('expense_clean.csv'), d => ({
       countryName: d['Country Name'],
       expenseCategory: d['Expense Category'],
       year: +d.Year,

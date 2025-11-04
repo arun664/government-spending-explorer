@@ -5,7 +5,8 @@
 export const loadAllData = async () => {
   // Load GDP data
   try {
-    const response = await fetch('/data/gdp_clean.csv')
+    const { getDataPath } = await import('../../../utils/pathUtils.js')
+    const response = await fetch(getDataPath('gdp_clean.csv'))
     const text = await response.text()
     // Parse CSV data
     const gdpData = parseCSVData(text)

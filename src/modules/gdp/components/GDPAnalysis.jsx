@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import * as d3 from 'd3'
 import * as topojson from 'topojson-client'
+import { getDataPath } from '../../../utils/pathUtils.js'
 import SearchBar from './SearchBar.jsx';
 import Filters from './Filters.jsx';
 import ZoomControls from './ZoomControls.jsx';
@@ -322,7 +323,7 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true }) => {
       // Load world map and GDP data
       const [worldData, gdpCSV] = await Promise.all([
         d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'),
-        d3.csv('/data/gdp_clean.csv')
+        d3.csv(getDataPath('gdp_clean.csv'))
       ])
 
       // Regional aggregate codes to filter out (these are not individual countries)

@@ -1,5 +1,6 @@
 // US Data Service - Specialized service for US government expense data processing
 import * as d3 from 'd3'
+import { getDataPath } from '../utils/pathUtils.js'
 
 class USDataService {
   constructor() {
@@ -27,7 +28,7 @@ class USDataService {
   // Load and process US expense data
   async loadUSData() {
     try {
-      const data = await d3.csv('/data/expense_clean.csv')
+      const data = await d3.csv(getDataPath('expense_clean.csv'))
       
       this.usData = data
         .filter(d => d['Country Name'] === 'United States' && d.Value && !isNaN(+d.Value))

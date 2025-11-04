@@ -5,9 +5,10 @@
 export const loadComparisonData = async () => {
   try {
     // Load both GDP and spending data in parallel
+    const { getDataPath } = await import('../../../utils/pathUtils.js')
     const [gdpResponse, spendingResponse] = await Promise.all([
-      fetch('/data/gdp_clean.csv'),
-      fetch('/data/48-indicators/GE.csv') // General government expenditure as default
+      fetch(getDataPath('gdp_clean.csv')),
+      fetch(getDataPath('48-indicators/GE.csv')) // General government expenditure as default
     ])
 
     const [gdpText, spendingText] = await Promise.all([

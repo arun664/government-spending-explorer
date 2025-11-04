@@ -139,7 +139,8 @@ async function processAllIndicators() {
       const fileName = `IMF_GFSE_${indicatorCode}_G14.csv`
       
       console.log(`Loading ${indicatorCode}: ${fileName}`)
-      const csvData = await d3.csv(`/data/48-indicators/${fileName}`)
+      const { getDataPath } = await import('../../../utils/pathUtils.js')
+      const csvData = await d3.csv(getDataPath(`48-indicators/${fileName}`))
       
       return { indicatorCode, metadata, csvData }
     } catch (error) {

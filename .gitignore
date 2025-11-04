@@ -107,6 +107,15 @@ public/data/all_indicators_clean.csv
 public/data/*_matrix.csv
 public/data/48-indicators/
 
+# Allow only priority indicator files (essential for app functionality)
+!public/data/48-indicators/IMF_GFSE_GE_G14.csv
+!public/data/48-indicators/IMF_GFSE_GECE_G14.csv
+!public/data/48-indicators/IMF_GFSE_GEGS_G14.csv
+!public/data/48-indicators/IMF_GFSE_GEI_G14.csv
+!public/data/48-indicators/IMF_GFSE_GES_G14.csv
+!public/data/48-indicators/IMF_GFSE_GEG_G14.csv
+!public/data/48-indicators/IMF_GFSE_GEO_G14.csv
+
 # ===== ESSENTIAL FILES FOR DEPLOYMENT =====
 # These files are required for the React app to function:
 # ✅ public/data/gdp_clean.csv (0.20MB - used by loadGDPData)
