@@ -102,12 +102,8 @@ reports/
 # Exclude entire data/ directory (not needed for app - duplicated in public/data/)
 data/
 
-# Exclude large files that exceed GitHub's 100MB limit from public/data/
+# Exclude only unnecessary large files
 public/data/all_indicators_clean.csv
-public/data/*_matrix.csv
-
-# Allow ALL 48-indicators files (needed for category selection functionality)
-!public/data/48-indicators/
 
 # ===== ESSENTIAL FILES FOR DEPLOYMENT =====
 # These files are required for the React app to function:

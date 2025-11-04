@@ -28,7 +28,8 @@ export async function loadSpendingData(indicatorCode = 'GE') {
     const dataFile = dataFileMap[indicatorCode] || 'total_government_expense_matrix.csv'
     
     // Load CSV data
-    const csvData = await d3.csv(`/data/${dataFile}`)
+    const { getDataPath } = await import('../../../utils/pathUtils.js')
+    const csvData = await d3.csv(getDataPath(dataFile))
     console.log(`Loaded ${csvData.length} rows from ${dataFile}`)
     
     // Process data: each row is a country with years as columns
