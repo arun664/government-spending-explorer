@@ -1,0 +1,493 @@
+/* US Report Generator Styles */
+
+.us-report-generator {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.us-report-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+}
+
+.us-report-header h2 {
+  margin: 0 0 10px 0;
+  font-size: 2.2em;
+  font-weight: 600;
+}
+
+.us-report-header p {
+  margin: 0;
+  font-size: 1.1em;
+  opacity: 0.9;
+}
+
+/* Loading and Error States */
+.us-report-loading,
+.us-report-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.loading-spinner .spinner-icon {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner .loading-text {
+  font-size: 16px;
+  color: #6c757d;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.us-report-error {
+  color: #d32f2f;
+}
+
+.us-report-error button {
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1em;
+}
+
+.us-report-error button:hover {
+  background: #5a67d8;
+}
+
+/* Controls Section */
+.us-report-controls {
+  background: #f8f9fa;
+  padding: 25px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  border: 1px solid #e9ecef;
+}
+
+.time-range-control {
+  margin-bottom: 20px;
+}
+
+.time-range-control label {
+  font-weight: 600;
+  margin-right: 10px;
+  color: #495057;
+}
+
+.time-range-control select {
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  margin: 0 5px;
+  font-size: 1em;
+  background: white;
+}
+
+.time-range-control span {
+  margin: 0 10px;
+  color: #6c757d;
+}
+
+.category-control label {
+  font-weight: 600;
+  color: #495057;
+  display: block;
+  margin-bottom: 15px;
+}
+
+.category-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  background: white;
+}
+
+.category-checkbox {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.category-checkbox:hover {
+  background: #f8f9fa;
+}
+
+.category-checkbox input {
+  margin-right: 10px;
+  transform: scale(1.1);
+}
+
+.category-name {
+  font-size: 0.9em;
+  color: #495057;
+  line-height: 1.3;
+}
+
+/* Department Breakdown */
+.department-breakdown {
+  margin-bottom: 40px;
+}
+
+.department-breakdown h3 {
+  color: #495057;
+  margin-bottom: 20px;
+  font-size: 1.5em;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 10px;
+}
+
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.department-card {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.department-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.department-rank {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #667eea;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+
+.department-name {
+  margin: 0 0 15px 0;
+  color: #495057;
+  font-size: 1.1em;
+  line-height: 1.3;
+  padding-right: 40px;
+}
+
+.department-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat label {
+  color: #6c757d;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.stat .value {
+  color: #495057;
+  font-weight: 600;
+  font-size: 0.95em;
+}
+
+/* Time Series Analysis */
+.time-series-analysis {
+  margin-bottom: 40px;
+}
+
+.time-series-analysis h3 {
+  color: #495057;
+  margin-bottom: 20px;
+  font-size: 1.5em;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 10px;
+}
+
+.time-series-table {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.time-series-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.time-series-table th {
+  background: #667eea;
+  color: white;
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+}
+
+.time-series-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.time-series-table tr:hover {
+  background: #f8f9fa;
+}
+
+.year-cell {
+  font-weight: 600;
+  color: #495057;
+}
+
+.spending-cell {
+  font-weight: 600;
+  color: #28a745;
+}
+
+.growth-cell {
+  font-weight: 600;
+}
+
+.growth-cell.positive {
+  color: #28a745;
+}
+
+.growth-cell.negative {
+  color: #dc3545;
+}
+
+.categories-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.category-tag {
+  background: #e9ecef;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  color: #495057;
+  white-space: nowrap;
+}
+
+/* Growth Analysis */
+.growth-analysis {
+  margin-bottom: 40px;
+}
+
+.growth-analysis h3 {
+  color: #495057;
+  margin-bottom: 20px;
+  font-size: 1.5em;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 10px;
+}
+
+.growth-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.growth-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 15px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background: #f8f9fa;
+}
+
+.growth-stat label {
+  color: #6c757d;
+  font-size: 0.9em;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.growth-stat .value {
+  color: #495057;
+  font-size: 1.2em;
+  font-weight: 700;
+}
+
+/* Data Summary */
+.data-summary {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.data-summary h3 {
+  color: #495057;
+  margin-bottom: 20px;
+  font-size: 1.5em;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 10px;
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 15px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background: #f8f9fa;
+}
+
+.summary-stat label {
+  color: #6c757d;
+  font-size: 0.9em;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.summary-stat span {
+  color: #495057;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .us-report-generator {
+    padding: 15px;
+  }
+  
+  .us-report-header h2 {
+    font-size: 1.8em;
+  }
+  
+  .breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .category-checkboxes {
+    grid-template-columns: 1fr;
+    max-height: 150px;
+  }
+  
+  .time-series-table {
+    overflow-x: auto;
+  }
+  
+  .categories-cell {
+    flex-direction: column;
+  }
+  
+  .growth-summary,
+  .summary-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .us-report-controls {
+    padding: 15px;
+  }
+  
+  .time-range-control {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .time-range-control select {
+    margin: 0;
+  }
+  
+  .department-card {
+    padding: 15px;
+  }
+  
+  .department-name {
+    font-size: 1em;
+  }
+}/* Exp
+ort Button Header Styling */
+.us-report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.us-report-header .header-left {
+  flex: 1;
+}
+
+.us-report-header .header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.export-btn-header {
+  margin-right: 8px;
+}

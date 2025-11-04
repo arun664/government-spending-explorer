@@ -1,0 +1,273 @@
+/* Global App Styles */
+.app {
+  min-height: 100vh;
+  max-height: 100vh; /* Prevent content from exceeding viewport */
+  display: flex;
+  flex-direction: column;
+  background-color: #f8fafc;
+  overflow: hidden; /* Prevent any scrolling */
+}
+
+/* Header Styles */
+.app-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.6rem 0; /* Reduced from 1rem */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem; /* Reduced from 1rem */
+}
+
+.header-content h1 {
+  margin: 0;
+  font-size: 1.6rem; /* Reduced from 1.8rem */
+  font-weight: 600;
+  color: white; /* Ensure white text */
+}
+
+/* Navigation Tabs */
+.nav-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.nav-tab {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white; /* Ensure white text */
+  padding: 0.4rem 0.8rem; /* Reduced from 0.5rem 1rem */
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.85rem; /* Reduced from 0.9rem */
+  font-weight: 500;
+}
+
+.nav-tab:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.nav-tab.active {
+  background: rgba(255, 255, 255, 0.9);
+  color: #667eea;
+  font-weight: 600;
+}
+
+/* Main Content */
+.app-content {
+  flex: 1;
+  padding: 0.4rem 0; /* Reduced from 1rem */
+  overflow: hidden; /* Prevent overflow */
+  height: 100%; /* Use full available height */
+}
+
+.content-container {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0 0.5rem; /* Reduced from 0 1rem */
+  overflow: hidden; /* Prevent overflow */
+}
+
+.view-container {
+  background: transparent; /* Make transparent for GDP view */
+  border-radius: 0; /* Remove border radius for full coverage */
+  padding: 0; /* Remove padding for GDP view */
+  box-shadow: none; /* Remove shadow */
+  border: none; /* Remove border */
+  height: 100%; /* Use full height */
+  overflow: hidden; /* Prevent overflow */
+}
+
+.view-container h2 {
+  margin: 0 0 1rem 0;
+  color: #2d3748;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.view-container p {
+  margin: 0;
+  color: #4a5568;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Data Processing Info Styles */
+.data-processing-info {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.data-processing-info h3 {
+  margin: 0 0 1.5rem 0;
+  color: #2d3748;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.capabilities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.capability-card {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.capability-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #667eea;
+}
+
+.capability-card h4 {
+  margin: 0 0 0.5rem 0;
+  color: #2d3748;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.capability-card p {
+  margin: 0;
+  color: #4a5568;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Sub-navigation Styles */
+.sub-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.sub-nav-tab {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  color: #4a5568;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.sub-nav-tab:hover {
+  background: #edf2f7;
+  border-color: #cbd5e0;
+  transform: translateY(-1px);
+}
+
+.sub-nav-tab.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+  font-weight: 600;
+}
+
+/* Comparison Container Styles */
+.comparison-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.comparison-section,
+.search-map-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.comparison-section h3,
+.search-map-section h3 {
+  margin: 0 0 1rem 0;
+  color: #2d3748;
+  font-size: 1.25rem;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #667eea;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .nav-tabs {
+    justify-content: center;
+  }
+  
+  .nav-tab {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .content-container {
+    padding: 0 1rem;
+  }
+  
+  .view-container {
+    padding: 1.5rem;
+  }
+  
+  .header-content h1 {
+    font-size: 1.5rem;
+  }
+  
+  .capabilities-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .capability-card {
+    padding: 1rem;
+  }
+  
+  .sub-nav {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .sub-nav-tab {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .comparison-section,
+  .search-map-section {
+    padding: 1rem;
+  }
+  
+  .comparison-section h3,
+  .search-map-section h3 {
+    font-size: 1.1rem;
+  }
+}

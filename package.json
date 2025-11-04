@@ -1,0 +1,37 @@
+{
+  "name": "government-expense-dashboard",
+  "version": "1.0.0",
+  "description": "Comprehensive government expense dashboard with detailed analysis, visualization, and reporting capabilities",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "d3": "^7.8.5",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "topojson-client": "^3.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "vite": "^5.0.8"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "setup": "node scripts/dev-setup.js"
+  },
+  "keywords": [
+    "government",
+    "expense",
+    "dashboard",
+    "visualization",
+    "react",
+    "d3",
+    "analytics"
+  ],
+  "author": "Government Expense Dashboard Team",
+  "license": "MIT"
+}
