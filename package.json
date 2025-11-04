@@ -21,7 +21,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "setup": "node scripts/dev-setup.js"
+    "setup": "node scripts/dev-setup.js",
+    "build:production": "NODE_ENV=production vite build",
+    "test:build": "npm run build && npm run preview",
+    "deploy:test": "npm run build:production && npx serve dist -p 3000"
   },
   "keywords": [
     "government",

@@ -1,0 +1,443 @@
+/* Enhanced Spending Filters Styles */
+.spending-filters {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  overflow-y: auto;
+}
+
+.filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-bottom: 1px solid #e0e0e0;
+  order: -10; /* Ensure header stays at the very top */
+  flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.filters-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: white !important; /* Ensure white text */
+}
+
+.reset-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.reset-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Selected Country Info */
+.selected-country-info {
+  padding: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.selected-country-info h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+.country-card {
+  background: #f8f9ff;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.country-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #667eea;
+  margin-bottom: 12px;
+}
+
+.country-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.stat-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* Current Indicator Info */
+.current-indicator {
+  padding: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.current-indicator h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+.indicator-card {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid #4facfe;
+}
+
+.indicator-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 8px;
+}
+
+.indicator-category {
+  margin-bottom: 12px;
+}
+
+.category-badge {
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.global-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.stat-row span:first-child {
+  color: #666;
+}
+
+.stat-row span:last-child {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* Filter Groups */
+.filter-group {
+  padding: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.filter-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 12px;
+}
+
+/* Current Indicator - Show first */
+.current-indicator {
+  order: -2; /* Show first */
+}
+
+/* Year Range Group - Show second */
+.year-range-group {
+  order: -1; /* Show second */
+  background: #f8f9ff;
+  border: 1px solid #e8ecff;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+/* Year Range Slider */
+.year-range-slider {
+  margin-bottom: 16px;
+}
+
+.range-inputs {
+  position: relative;
+  height: 40px;
+  margin-bottom: 12px;
+}
+
+.range-slider {
+  position: absolute;
+  width: 100%;
+  height: 6px;
+  background: transparent;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: none; /* Disable pointer events on the track */
+}
+
+.range-slider.range-start {
+  z-index: 1; /* Lower z-index for start slider by default */
+}
+
+.range-slider.range-end {
+  z-index: 2; /* Higher z-index for end slider by default */
+}
+
+/* When start value is higher, prioritize start slider */
+.range-slider.range-start:focus,
+.range-slider.range-start:active {
+  z-index: 3; /* Bring to front when active */
+}
+
+.range-slider::-webkit-slider-track {
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+}
+
+.range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #667eea;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  pointer-events: auto; /* Enable pointer events on thumbs */
+  position: relative;
+  z-index: 10; /* High z-index for thumbs */
+}
+
+/* Different color for start range thumb */
+.range-slider.range-start::-webkit-slider-thumb {
+  background: #4facfe; /* Light blue for start */
+}
+
+/* Different color for end range thumb */
+.range-slider.range-end::-webkit-slider-thumb {
+  background: #667eea; /* Purple for end */
+}
+
+.range-slider::-moz-range-track {
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  border: none;
+}
+
+.range-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #667eea;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  pointer-events: auto; /* Enable pointer events on thumbs */
+  position: relative;
+  z-index: 10; /* High z-index for thumbs */
+}
+
+/* Different color for start range thumb */
+.range-slider.range-start::-moz-range-thumb {
+  background: #4facfe; /* Light blue for start */
+}
+
+/* Different color for end range thumb */
+.range-slider.range-end::-moz-range-thumb {
+  background: #667eea; /* Purple for end */
+}
+
+.range-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.year-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.range-separator {
+  color: #666;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Removed updating indicator - using real-time updates instead */
+
+/* Removed year-range-inputs since we only use the slider now */
+
+.range-display {
+  text-align: center;
+  font-size: 12px;
+  color: #667eea;
+  font-weight: 600;
+  padding: 4px 8px;
+  background: #f8f9ff;
+  border-radius: 4px;
+}
+
+/* Checkboxes */
+.category-checkboxes,
+.region-checkboxes,
+.sector-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #2c3e50;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.2s ease;
+}
+
+.checkbox-label:hover {
+  color: #667eea;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin: 0;
+}
+
+.category-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* Value Range Inputs */
+.value-range-inputs {
+  display: flex;
+  gap: 12px;
+}
+
+.value-input {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.value-input label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.value-input input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* Active Filters */
+.active-filters {
+  padding: 20px;
+  background: #f8f9fa;
+}
+
+.active-filters h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+.filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter-tag {
+  padding: 4px 8px;
+  background: #667eea;
+  color: white;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .year-range-inputs,
+  .value-range-inputs {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .filter-group {
+    padding: 16px;
+  }
+  
+  .selected-country-info,
+  .current-indicator {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 992px) {
+  .spending-filters {
+    height: auto;
+    max-height: 250px;
+  }
+  
+  .country-stats,
+  .global-stats {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .stat-item,
+  .stat-row {
+    flex: 1;
+    min-width: 120px;
+  }
+}

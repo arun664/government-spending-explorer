@@ -69,15 +69,20 @@
   flex: 1;
   padding: 0.4rem 0; /* Reduced from 1rem */
   overflow: hidden; /* Prevent overflow */
-  height: 100%; /* Use full available height */
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow flex child to shrink */
 }
 
 .content-container {
   width: 100%;
-  height: 100%;
+  flex: 1;
   margin: 0;
   padding: 0 0.5rem; /* Reduced from 0 1rem */
   overflow: hidden; /* Prevent overflow */
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow flex child to shrink */
 }
 
 .view-container {
@@ -86,8 +91,30 @@
   padding: 0; /* Remove padding for GDP view */
   box-shadow: none; /* Remove shadow */
   border: none; /* Remove border */
-  height: 100%; /* Use full height */
+  flex: 1; /* Use flex instead of height: 100% */
   overflow: hidden; /* Prevent overflow */
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow flex child to shrink */
+}
+
+/* Special handling for spending mode to use full viewport */
+.app-content.spending-mode {
+  padding: 0 !important;
+}
+
+.content-container.spending-mode {
+  padding: 0 !important;
+}
+
+.view-container.spending-mode {
+  padding: 0 !important;
+  height: calc(100vh - 60px); /* Full height minus header */
+}
+
+.view-container.spending-mode .sub-nav {
+  margin-bottom: 0;
+  flex-shrink: 0;
 }
 
 .view-container h2 {
@@ -159,10 +186,23 @@
 /* Sub-navigation Styles */
 .sub-nav {
   display: flex;
-  gap: 0.5rem;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 0.5rem;
-  padding-bottom: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
   border-bottom: 2px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.sub-nav-left {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sub-nav-right {
+  display: flex;
+  align-items: center;
 }
 
 .sub-nav-tab {
@@ -252,7 +292,16 @@
   }
   
   .sub-nav {
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+  
+  .sub-nav-left {
+    justify-content: center;
+  }
+  
+  .sub-nav-right {
     justify-content: center;
   }
   

@@ -1,0 +1,65 @@
+.legend {
+  position: absolute;
+  bottom: 60px; /* Move higher above bottom for visibility */
+  right: 376px; /* 360px (insights panel) + 16px margin */
+  z-index: 1000;
+  background: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+@media (max-width: 1200px) {
+  .legend {
+    right: 296px;
+    bottom: 140px;
+  }
+}
+
+@media (max-width: 768px) {
+  .legend {
+    right: 16px;
+    bottom: 140px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .legend {
+    right: 296px; /* 280px (insights panel) + 16px margin */
+  }
+}
+
+@media (max-width: 768px) {
+  .legend {
+    right: 16px; /* Stick to edge if panel overlays */
+    bottom: 100px;
+  }
+}
+
+.legend h3 {
+  margin: 0 0 4px 0;
+  font-size: 9px;
+  font-weight: 600;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.legend-scale {
+  display: flex;
+  height: 12px;
+  width: 150px;
+  margin: 0 auto 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+
+.legend-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8px;
+  color: #666;
+  font-weight: 500;
+}
