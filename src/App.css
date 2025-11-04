@@ -98,6 +98,11 @@
   min-height: 0; /* Allow flex child to shrink */
 }
 
+/* Allow scrolling for comparison view */
+.view-container.comparison-view {
+  overflow-y: auto;
+}
+
 /* Special handling for spending mode to use full viewport */
 .app-content.spending-mode {
   padding: 0 !important;

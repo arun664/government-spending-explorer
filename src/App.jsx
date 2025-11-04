@@ -91,7 +91,7 @@ function App() {
           )}
           
           {currentView === 'comparison' && (
-            <div className="view-container">
+            <div className="view-container comparison-view">
               <GDPSpendingComparison />
             </div>
           )}
