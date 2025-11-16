@@ -1,0 +1,139 @@
+/**
+ * MapTooltip Styles
+ * Styling for interactive map tooltips with color-coded information
+ */
+
+.map-tooltip {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 220px;
+  max-width: 320px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  animation: tooltipFadeIn 0.2s ease-in-out;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tooltip-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  border-left: 4px solid #667eea;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  background: linear-gradient(to right, rgba(102, 126, 234, 0.05), transparent);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.tooltip-country-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  flex: 1;
+}
+
+.region-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.tooltip-body {
+  padding: 12px 16px;
+}
+
+.tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  gap: 12px;
+}
+
+.tooltip-row:not(:last-child) {
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.tooltip-row .label {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.tooltip-row .value {
+  font-size: 13px;
+  color: #1a1a1a;
+  font-weight: 600;
+  text-align: right;
+}
+
+.tooltip-row.highlight {
+  background: linear-gradient(to right, rgba(102, 126, 234, 0.08), transparent);
+  margin: 0 -16px;
+  padding: 8px 16px;
+  border-bottom: none;
+}
+
+.tooltip-row.highlight .label {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.tooltip-row.highlight .value {
+  color: #667eea;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.category-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .map-tooltip {
+    min-width: 180px;
+    max-width: 280px;
+  }
+
+  .tooltip-country-name {
+    font-size: 14px;
+  }
+
+  .tooltip-row .label,
+  .tooltip-row .value {
+    font-size: 12px;
+  }
+
+  .region-badge,
+  .category-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+}

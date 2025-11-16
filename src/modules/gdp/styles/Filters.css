@@ -330,3 +330,17 @@ nge-inputs {
 .toggle-switch input:checked ~ .toggle-label {
   color: #667eea;
 }
+
+
+/* Country Search Section */
+.country-search-section {
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+  border: 1px solid #e8ecff;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 15px;
+}
+
+.country-search-section .filter-label {
+  margin-bottom: 8px;
+}

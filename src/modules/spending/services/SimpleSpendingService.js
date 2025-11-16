@@ -1,5 +1,6 @@
 import * as d3 from 'd3'
 import { CATEGORY_COLORS } from './UnifiedDataService.js'
+import { MapColorService } from '../../../shared/services/MapColorService.js'
 
 /**
  * Simple Spending Data Service
@@ -59,9 +60,10 @@ export async function loadSpendingData(indicatorCode = 'GE') {
       
       // Only add countries with data
       if (Object.keys(yearData).length > 0) {
-        countryData[countryName] = {
+        const countryCode = generateCountryCode(countryName)
+        countryData[countryCode] = {
           name: countryName,
-          code: generateCountryCode(countryName),
+          code: countryCode,
           data: yearData,
           unitMeasure: 'Millions USD'
         }
@@ -84,11 +86,15 @@ export async function loadSpendingData(indicatorCode = 'GE') {
       sampleCountries: Object.keys(countryData).slice(0, 5)
     })
     
+    // Get the category from INDICATOR_METADATA
+    const { INDICATOR_METADATA } = await import('./UnifiedDataService.js')
+    const indicatorCategory = INDICATOR_METADATA[indicatorCode]?.category || 'overview'
+    
     return {
       indicator: indicatorCode,
       name: getIndicatorName(indicatorCode),
       description: `Government spending data for ${getIndicatorName(indicatorCode)}`,
-      category: 'overview',
+      category: indicatorCategory,
       countries: countryData,
       globalStats
     }
@@ -225,10 +231,14 @@ export async function loadSpendingDataWithSectorFilter(indicatorCode = 'GE', sel
       globalStats
     })
     
+    // Get the category from INDICATOR_METADATA
+    const { INDICATOR_METADATA } = await import('./UnifiedDataService.js')
+    const indicatorCategory = INDICATOR_METADATA[indicatorCode]?.category || 'overview'
+    
     return {
       name: getIndicatorName(indicatorCode),
       code: indicatorCode,
-      category: 'overview',
+      category: indicatorCategory,
       countries: countryData,
       globalStats: globalStats,
       sectorFilter: selectedSector
@@ -338,7 +348,7 @@ export async function loadCategorySpendingData(indicatorCodes = ['GE', 'GECE', '
     const countryData = {}
     const categoryTotals = {}
     
-    indicatorResults.forEach(({ code, csvData, metadata }) => {
+    indicatorResults.forEach(({ csvData, metadata }) => {
       const category = metadata.category
       
       csvData.forEach(row => {
@@ -349,11 +359,12 @@ export async function loadCategorySpendingData(indicatorCodes = ['GE', 'GECE', '
         if (!country || isNaN(year) || isNaN(value)) return
         if (year < yearRange[0] || year > yearRange[1]) return
         
-        // Initialize country data
-        if (!countryData[country]) {
-          countryData[country] = {
+        // Initialize country data using country code as key
+        const countryCode = row.REF_AREA || generateCountryCode(country)
+        if (!countryData[countryCode]) {
+          countryData[countryCode] = {
             name: country,
-            code: row.REF_AREA || country.substring(0, 3).toUpperCase(),
+            code: countryCode,
             categories: {},
             totalSpending: 0,
             dominantCategory: null,
@@ -362,12 +373,12 @@ export async function loadCategorySpendingData(indicatorCodes = ['GE', 'GECE', '
         }
         
         // Initialize category for country
-        if (!countryData[country].categories[category]) {
-          countryData[country].categories[category] = []
+        if (!countryData[countryCode].categories[category]) {
+          countryData[countryCode].categories[category] = []
         }
         
         // Add value to category
-        countryData[country].categories[category].push(value)
+        countryData[countryCode].categories[category].push(value)
         
         // Track global category totals
         if (!categoryTotals[category]) {
@@ -378,8 +389,8 @@ export async function loadCategorySpendingData(indicatorCodes = ['GE', 'GECE', '
     })
     
     // Calculate category averages and determine dominant categories
-    Object.keys(countryData).forEach(countryName => {
-      const country = countryData[countryName]
+    Object.keys(countryData).forEach(countryCode => {
+      const country = countryData[countryCode]
       let maxCategoryValue = 0
       let dominantCategory = 'overview'
       
@@ -492,64 +503,32 @@ export function getCountrySpendingValueForCategory(categoryData, countryName, vi
 
 /**
  * Create category-based color scale for spending visualization
+ * Now uses MapColorService for consistent colors
  */
 export function createCategoryColorScale(spendingData) {
-  // If we have category information, use category colors
-  if (spendingData.category && CATEGORY_COLORS[spendingData.category]) {
-    const categoryColor = CATEGORY_COLORS[spendingData.category]
-    
-    // Create more contrasted colors
-    const lightColor = d3.color(categoryColor).brighter(2).toString()
-    const darkColor = d3.color(categoryColor).darker(0.5).toString()
-    
-    return d3.scaleSequential()
-      .domain([spendingData.globalStats.minSpending, spendingData.globalStats.maxSpending])
-      .interpolator(d3.interpolateRgb(lightColor, darkColor))
-  }
-  
-  // Fallback to a more visible color scale
-  return d3.scaleSequential()
-    .domain([spendingData.globalStats.minSpending, spendingData.globalStats.maxSpending])
-    .interpolator(d3.interpolateBlues)
+  // Use MapColorService for consistent color management
+  return MapColorService.createMapColorScale(spendingData, 'category', {
+    minValue: spendingData.globalStats?.minSpending,
+    maxValue: spendingData.globalStats?.maxSpending
+  })
 }
 
 /**
  * Create category-based color function for multi-category visualization
+ * Now uses MapColorService for consistent colors
  */
 export function createCategoryColorFunction(categoryData) {
-  const categoryColors = categoryData.categoryColors || {}
-  
-  return (countryName, visualizationMode = 'dominant') => {
-    const countryInfo = getCountrySpendingValueForCategory(categoryData, countryName, visualizationMode)
-    
-    if (!countryInfo || countryInfo.value === 0) {
-      return '#e8e8e8' // Slightly darker gray for no data to make it visible
-    }
-    
-    if (visualizationMode === 'dominant') {
-      // Use the dominant category color
-      const categoryColor = categoryColors[countryInfo.category] || categoryColors.overview
-      
-      // Create intensity based on spending value relative to global max
-      const intensity = Math.min(countryInfo.value / categoryData.globalStats.maxSpending, 1)
-      
-      // Use more contrasted colors - light to dark based on spending
-      const lightColor = d3.color(categoryColor).brighter(2).toString()
-      const darkColor = d3.color(categoryColor).darker(0.5).toString()
-      
-      return d3.interpolateRgb(lightColor, darkColor)(intensity * 0.8 + 0.2)
-    }
-    
-    // For other modes, use a default approach
-    return categoryColors.overview || '#667eea'
-  }
+  // Use MapColorService for category visualization
+  return MapColorService.createCategoryVisualizationScale(categoryData, 'dominant')
 }
 /*
 *
  * Generate country code from country name
  */
 function generateCountryCode(countryName) {
+  // Comprehensive ISO 3166-1 alpha-3 country code mapping
   const codeMap = {
+    // Major economies
     'United States': 'USA',
     'United Kingdom': 'GBR', 
     'Russian Federation': 'RUS',
@@ -563,13 +542,166 @@ function generateCountryCode(countryName) {
     'Brazil': 'BRA',
     'India': 'IND',
     'South Korea': 'KOR',
+    'Korea, Rep.': 'KOR',
     'Spain': 'ESP',
     'Mexico': 'MEX',
     'Indonesia': 'IDN',
     'Netherlands': 'NLD',
     'Saudi Arabia': 'SAU',
     'Turkey': 'TUR',
-    'Switzerland': 'CHE'
+    'Turkiye': 'TUR',
+    'Switzerland': 'CHE',
+    
+    // Europe
+    'Albania': 'ALB',
+    'Austria': 'AUT',
+    'Belgium': 'BEL',
+    'Bulgaria': 'BGR',
+    'Croatia': 'HRV',
+    'Cyprus': 'CYP',
+    'Czechia': 'CZE',
+    'Czech Republic': 'CZE',
+    'Denmark': 'DNK',
+    'Estonia': 'EST',
+    'Finland': 'FIN',
+    'Greece': 'GRC',
+    'Hungary': 'HUN',
+    'Iceland': 'ISL',
+    'Ireland': 'IRL',
+    'Latvia': 'LVA',
+    'Lithuania': 'LTU',
+    'Luxembourg': 'LUX',
+    'Malta': 'MLT',
+    'Norway': 'NOR',
+    'Poland': 'POL',
+    'Portugal': 'PRT',
+    'Romania': 'ROU',
+    'Serbia': 'SRB',
+    'Slovak Republic': 'SVK',
+    'Slovakia': 'SVK',
+    'Slovenia': 'SVN',
+    'Sweden': 'SWE',
+    'Ukraine': 'UKR',
+    
+    // Asia
+    'Afghanistan': 'AFG',
+    'Bangladesh': 'BGD',
+    'Cambodia': 'KHM',
+    'Hong Kong': 'HKG',
+    'Iran, Islamic Rep.': 'IRN',
+    'Iraq': 'IRQ',
+    'Israel': 'ISR',
+    'Jordan': 'JOR',
+    'Kazakhstan': 'KAZ',
+    'Kuwait': 'KWT',
+    'Kyrgyz Republic': 'KGZ',
+    'Lao PDR': 'LAO',
+    'Lebanon': 'LBN',
+    'Malaysia': 'MYS',
+    'Mongolia': 'MNG',
+    'Myanmar': 'MMR',
+    'Nepal': 'NPL',
+    'Oman': 'OMN',
+    'Pakistan': 'PAK',
+    'Philippines': 'PHL',
+    'Qatar': 'QAT',
+    'Singapore': 'SGP',
+    'Sri Lanka': 'LKA',
+    'Syrian Arab Republic': 'SYR',
+    'Taiwan': 'TWN',
+    'Thailand': 'THA',
+    'Timor-Leste': 'TLS',
+    'United Arab Emirates': 'ARE',
+    'Uzbekistan': 'UZB',
+    'Viet Nam': 'VNM',
+    'Vietnam': 'VNM',
+    'Yemen, Rep.': 'YEM',
+    
+    // Africa
+    'Algeria': 'DZA',
+    'Angola': 'AGO',
+    'Benin': 'BEN',
+    'Botswana': 'BWA',
+    'Burkina Faso': 'BFA',
+    'Burundi': 'BDI',
+    'Cameroon': 'CMR',
+    'Cabo Verde': 'CPV',
+    'Central African Republic': 'CAF',
+    'Chad': 'TCD',
+    'Congo, Rep.': 'COG',
+    'Congo, Dem. Rep.': 'COD',
+    'Cote d\'Ivoire': 'CIV',
+    'Egypt, Arab Rep.': 'EGY',
+    'Ethiopia': 'ETH',
+    'Gabon': 'GAB',
+    'Gambia, The': 'GMB',
+    'Ghana': 'GHA',
+    'Guinea': 'GIN',
+    'Kenya': 'KEN',
+    'Lesotho': 'LSO',
+    'Liberia': 'LBR',
+    'Libya': 'LBY',
+    'Madagascar': 'MDG',
+    'Malawi': 'MWI',
+    'Mali': 'MLI',
+    'Mauritania': 'MRT',
+    'Mauritius': 'MUS',
+    'Morocco': 'MAR',
+    'Mozambique': 'MOZ',
+    'Namibia': 'NAM',
+    'Niger': 'NER',
+    'Nigeria': 'NGA',
+    'Rwanda': 'RWA',
+    'Senegal': 'SEN',
+    'Seychelles': 'SYC',
+    'Sierra Leone': 'SLE',
+    'Somalia': 'SOM',
+    'South Africa': 'ZAF',
+    'South Sudan': 'SSD',
+    'Sudan': 'SDN',
+    'Eswatini': 'SWZ',
+    'Tanzania': 'TZA',
+    'Togo': 'TGO',
+    'Tunisia': 'TUN',
+    'Uganda': 'UGA',
+    'Zambia': 'ZMB',
+    'Zimbabwe': 'ZWE',
+    
+    // Americas
+    'Argentina': 'ARG',
+    'Bahamas, The': 'BHS',
+    'Barbados': 'BRB',
+    'Belize': 'BLZ',
+    'Bolivia': 'BOL',
+    'Chile': 'CHL',
+    'Colombia': 'COL',
+    'Costa Rica': 'CRI',
+    'Cuba': 'CUB',
+    'Dominican Republic': 'DOM',
+    'Ecuador': 'ECU',
+    'El Salvador': 'SLV',
+    'Guatemala': 'GTM',
+    'Guyana': 'GUY',
+    'Haiti': 'HTI',
+    'Honduras': 'HND',
+    'Jamaica': 'JAM',
+    'Nicaragua': 'NIC',
+    'Panama': 'PAN',
+    'Paraguay': 'PRY',
+    'Peru': 'PER',
+    'Suriname': 'SUR',
+    'Trinidad and Tobago': 'TTO',
+    'Uruguay': 'URY',
+    'Venezuela, RB': 'VEN',
+    
+    // Oceania
+    'Fiji': 'FJI',
+    'New Zealand': 'NZL',
+    'Papua New Guinea': 'PNG',
+    'Samoa': 'WSM',
+    'Solomon Islands': 'SLB',
+    'Tonga': 'TON',
+    'Vanuatu': 'VUT'
   }
   
   return codeMap[countryName] || countryName.substring(0, 3).toUpperCase()

@@ -1,16 +1,44 @@
 import React, { useState, useEffect } from 'react'
+import { filterStateManager } from '../../../shared/services/FilterStateManager.js'
+import FilterStatusIndicator from '../../../shared/components/FilterStatusIndicator.jsx'
 import '../styles/Filters.css'
 
-const Filters = ({ onFilterChange, minYear = 2005, maxYear = 2023, selectedCountries = [], onRemoveCountry, showLabels, onToggleLabels }) => {
+const Filters = ({ 
+  onFilterChange, 
+  minYear = 2005, 
+  maxYear = 2023, 
+  selectedCountries = [], 
+  onRemoveCountry, 
+  showLabels, 
+  onToggleLabels,
+  availableCountries = [],
+  onCountrySelect
+}) => {
+  // Initialize from FilterStateManager
+  const initialFilters = filterStateManager.getFiltersForModule('gdp')
   const [tempFilters, setTempFilters] = useState({
-    regions: [],
-    yearRange: [minYear, maxYear],
-    gdpRange: [-100, 100],
+    regions: initialFilters.regions || [],
+    yearRange: initialFilters.yearRange || [minYear, maxYear],
+    gdpRange: initialFilters.gdpRange || [-100, 100],
     countries: selectedCountries
   });
 
   // Removed Antarctica since it has no data
   const regions = ['Africa', 'Asia', 'Europe', 'North America', 'Oceania', 'South America', 'Other'];
+
+  // Subscribe to filter changes from FilterStateManager
+  useEffect(() => {
+    const unsubscribe = filterStateManager.subscribe((newFilters) => {
+      const gdpFilters = filterStateManager.getFiltersForModule('gdp')
+      setTempFilters(prev => ({
+        ...prev,
+        regions: gdpFilters.regions || [],
+        yearRange: gdpFilters.yearRange || [minYear, maxYear],
+        gdpRange: gdpFilters.gdpRange || [-100, 100]
+      }))
+    }, 'gdp')
+    return unsubscribe
+  }, [minYear, maxYear])
 
   // Update tempFilters.countries when selectedCountries prop changes
   useEffect(() => {
@@ -34,6 +62,9 @@ const Filters = ({ onFilterChange, minYear = 2005, maxYear = 2023, selectedCount
     };
     setTempFilters(updatedFilters);
     
+    // Update FilterStateManager
+    filterStateManager.updateFilters({ regions: newRegions }, false, 'gdp');
+    
     // Apply filters immediately in real-time
     onFilterChange(updatedFilters);
     
@@ -48,6 +79,8 @@ const Filters = ({ onFilterChange, minYear = 2005, maxYear = 2023, selectedCount
     newYearRange[index] = parseInt(value) || minYear;
     const updatedFilters = { ...tempFilters, yearRange: newYearRange };
     setTempFilters(updatedFilters);
+    // Update FilterStateManager
+    filterStateManager.updateFilters({ yearRange: newYearRange }, false, 'gdp');
     // Apply filters immediately in real-time
     onFilterChange(updatedFilters);
   };
@@ -57,6 +90,8 @@ const Filters = ({ onFilterChange, minYear = 2005, maxYear = 2023, selectedCount
     newGdpRange[index] = parseFloat(value) || 0;
     const updatedFilters = { ...tempFilters, gdpRange: newGdpRange };
     setTempFilters(updatedFilters);
+    // Update FilterStateManager
+    filterStateManager.updateFilters({ gdpRange: newGdpRange }, false, 'gdp');
     // Apply filters immediately in real-time
     onFilterChange(updatedFilters);
   };
@@ -72,6 +107,8 @@ const Filters = ({ onFilterChange, minYear = 2005, maxYear = 2023, selectedCount
       // Removed compareMode and compareYear
     };
     setTempFilters(resetFilters);
+    // Reset FilterStateManager for GDP module
+    filterStateManager.resetFilters('gdp');
     // Apply reset immediately
     onFilterChange(resetFilters);
     // Clear all selected countries
@@ -85,6 +122,10 @@ const Filters = ({ onFilterChange, minYear = 2005, maxYear = 2023, selectedCount
         <h3>FILTERS</h3>
         <span className="realtime-badge">Real-time</span>
       </div>
+      
+      {/* Filter Status Indicator */}
+      <FilterStatusIndicator module="gdp" />
+      
       <div className="filter-section">
         <label className="filter-label">REGIONS:</label>
         <div className="filter-chips">

@@ -56,16 +56,18 @@ export const INDICATOR_METADATA = {
   'GEST_PE': { name: 'Public Enterprises', category: 'programs', icon: '🏭', unit: 'Million USD' }
 }
 
+// Import category colors from ColorSchemeService to ensure consistency
+// These colors MUST match ColorSchemeService.js exactly
 export const CATEGORY_COLORS = {
-  overview: '#667eea',
-  personnel: '#f093fb',
-  transfers: '#4facfe',
-  debt: '#f5576c',
-  operations: '#43e97b',
-  other: '#ffa726',
-  services: '#ab47bc',
-  social: '#26c6da',
-  programs: '#66bb6a'
+  overview: '#667eea',      // Purple-blue
+  personnel: '#f093fb',     // Pink-purple
+  transfers: '#4facfe',     // Light blue
+  debt: '#f5576c',          // Red-pink
+  operations: '#43e97b',    // Green
+  other: '#ffa726',         // Orange
+  services: '#ab47bc',      // Purple
+  social: '#26c6da',        // Cyan
+  programs: '#66bb6a'       // Green
 }
 
 /**
@@ -96,24 +98,68 @@ export const CATEGORY_COLORS = {
  */
 let unifiedData = null
 let loadingPromise = null
+let loadingStatus = {
+  isLoading: false,
+  progress: 0,
+  loadedIndicators: 0,
+  totalIndicators: 48,
+  errors: []
+}
+
+/**
+ * Get current loading status
+ * @returns {Object} Loading status with progress information
+ */
+export function getLoadingStatus() {
+  return { ...loadingStatus }
+}
+
+/**
+ * Check if data is already loaded
+ * @returns {boolean} True if unified data is cached
+ */
+export function isDataLoaded() {
+  return unifiedData !== null
+}
+
+/**
+ * Preload unified data in the background
+ * Can be called on app startup to load data before it's needed
+ * @returns {Promise} Promise that resolves when data is loaded
+ */
+export function preloadUnifiedData() {
+  console.log('🚀 Preloading all 48 indicators in background...')
+  return loadUnifiedData()
+}
 
 /**
  * Load and process all 48 indicators into unified structure
+ * @returns {Promise<Object>} Unified data structure
  */
 export async function loadUnifiedData() {
   // Return cached data if available
   if (unifiedData) {
+    console.log('✅ Using cached unified data')
     return unifiedData
   }
 
   // Return existing loading promise if already loading
   if (loadingPromise) {
+    console.log('⏳ Waiting for existing load operation...')
     return loadingPromise
   }
+
+  loadingStatus.isLoading = true
+  loadingStatus.progress = 0
+  loadingStatus.loadedIndicators = 0
+  loadingStatus.errors = []
 
   loadingPromise = processAllIndicators()
   unifiedData = await loadingPromise
   loadingPromise = null
+  
+  loadingStatus.isLoading = false
+  loadingStatus.progress = 100
   
   return unifiedData
 }
@@ -122,7 +168,8 @@ export async function loadUnifiedData() {
  * Process all indicator CSV files into unified structure
  */
 async function processAllIndicators() {
-  console.log('Loading and processing all 48 indicators...')
+  const startTime = Date.now()
+  console.log('📊 Loading and processing all 48 indicators...')
   
   const data = {
     countries: {},
@@ -132,19 +179,28 @@ async function processAllIndicators() {
     lastUpdated: new Date().toISOString()
   }
 
-  // Load all CSV files in parallel
+  const totalIndicators = Object.keys(INDICATOR_METADATA).length
+  let loadedCount = 0
+
+  // Load all CSV files in parallel with progress tracking
   const loadPromises = Object.keys(INDICATOR_METADATA).map(async (indicatorCode) => {
     try {
       const metadata = INDICATOR_METADATA[indicatorCode]
       const fileName = `IMF_GFSE_${indicatorCode}_G14.csv`
       
-      console.log(`Loading ${indicatorCode}: ${fileName}`)
       const { getDataPath } = await import('../../../utils/pathUtils.js')
       const csvData = await d3.csv(getDataPath(`48-indicators/${fileName}`))
       
+      loadedCount++
+      loadingStatus.loadedIndicators = loadedCount
+      loadingStatus.progress = Math.round((loadedCount / totalIndicators) * 100)
+      
+      console.log(`✓ Loaded ${indicatorCode} (${loadedCount}/${totalIndicators})`)
+      
       return { indicatorCode, metadata, csvData }
     } catch (error) {
-      console.warn(`Failed to load ${indicatorCode}:`, error)
+      console.warn(`✗ Failed to load ${indicatorCode}:`, error.message)
+      loadingStatus.errors.push({ indicatorCode, error: error.message })
       return null
     }
   })
@@ -152,7 +208,8 @@ async function processAllIndicators() {
   const results = await Promise.all(loadPromises)
   const validResults = results.filter(result => result !== null)
 
-  console.log(`Successfully loaded ${validResults.length}/${Object.keys(INDICATOR_METADATA).length} indicators`)
+  const loadTime = ((Date.now() - startTime) / 1000).toFixed(2)
+  console.log(`✅ Successfully loaded ${validResults.length}/${totalIndicators} indicators in ${loadTime}s`)
 
   // Process each indicator
   validResults.forEach(({ indicatorCode, metadata, csvData }) => {

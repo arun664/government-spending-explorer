@@ -1,0 +1,144 @@
+/* Filter Status Indicator Styles */
+
+.filter-status-indicator {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* Active Filters Badge */
+.active-filters-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  animation: slideIn 0.3s ease-out;
+}
+
+.badge-icon {
+  font-size: 16px;
+}
+
+.badge-text {
+  letter-spacing: 0.3px;
+}
+
+/* Incompatible Filters Warning */
+.incompatible-filters-warning {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 12px;
+  animation: slideIn 0.3s ease-out;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+}
+
+.warning-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.warning-icon {
+  font-size: 18px;
+}
+
+.warning-title {
+  flex: 1;
+  font-weight: 600;
+  font-size: 14px;
+  color: #856404;
+}
+
+.dismiss-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: #856404;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.dismiss-btn:hover {
+  background-color: rgba(133, 100, 4, 0.1);
+}
+
+.warning-content {
+  padding-left: 26px;
+}
+
+.warning-message {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #856404;
+}
+
+.incompatible-list {
+  margin: 0;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+.incompatible-item {
+  font-size: 12px;
+  color: #856404;
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+.incompatible-item strong {
+  font-weight: 600;
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .filter-status-indicator {
+    margin-bottom: 12px;
+  }
+
+  .active-filters-badge {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .incompatible-filters-warning {
+    padding: 10px;
+  }
+
+  .warning-title {
+    font-size: 13px;
+  }
+
+  .warning-message,
+  .incompatible-item {
+    font-size: 12px;
+  }
+}

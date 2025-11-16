@@ -599,6 +599,13 @@
   transition: stroke-width 0.2s, stroke 0.2s;
 }
 
+/* Selected country highlighting - Requirements: 10.3 */
+.country.selected {
+  stroke: #ff6b00 !important;
+  stroke-width: 3 !important;
+  filter: brightness(1.1);
+}
+
 .country-label {
   font-weight: 800;
   text-shadow: 

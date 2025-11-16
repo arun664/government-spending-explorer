@@ -1,50 +1,57 @@
 import * as d3 from 'd3'
 import * as topojson from 'topojson-client'
-import { 
-  findCountryByMapName, 
-  getSpendingValueByMapName, 
-  getCountryTooltipInfo 
-} from '../utils/countryMapping.js'
+import { getCountryCodeFromMapName } from '../utils/countryMapping.js'
+import { getCountryRegion } from '../../../shared/utils/RegionMapping.js'
+import { MapColorService } from '../../../shared/services/MapColorService.js'
 
-/**
- * Spending Map Service
- * Handles all map-related functionality for government spending visualization
- */
-
-/**
- * Initialize and draw the spending map
- */
 export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spendingData, colorScale, filters, callbacks) {
   if (!worldData || !spendingData?.countries) {
-    console.log('Missing required data for map initialization:', {
-      worldData: !!worldData,
-      spendingData: !!spendingData,
-      countries: !!spendingData?.countries,
-      colorScale: typeof colorScale
+    console.warn('Map init skipped - missing data:', {
+      hasWorldData: !!worldData,
+      hasSpendingData: !!spendingData,
+      hasCountries: !!spendingData?.countries
     })
     return
   }
   
-  console.log('Initializing spending map with:', {
-    countriesCount: Object.keys(spendingData.countries).length,
-    spendingDataCategory: spendingData.category,
+  const firstCountry = Object.keys(spendingData.countries)[0]
+  const firstCountryData = spendingData.countries[firstCountry]
+  
+  console.log('=== MAP INITIALIZATION ===')
+  console.log('Map init:', {
+    hasColorScale: !!colorScale,
     colorScaleType: typeof colorScale,
-    visualizationMode: filters.visualizationMode
+    category: spendingData.category,
+    countriesCount: Object.keys(spendingData.countries).length,
+    sampleCountry: firstCountry,
+    sampleData: firstCountryData,
+    filters: filters
   })
+  
+  if (!colorScale) {
+    console.error('ColorScale is null/undefined! Category:', spendingData.category)
+    return
+  }
+  
+  // Test the color scale with sample data
+  if (firstCountryData?.totalSpending) {
+    const testColor = colorScale(firstCountryData.totalSpending)
+    console.log('Color scale test:', {
+      country: firstCountry,
+      spending: firstCountryData.totalSpending,
+      resultColor: testColor
+    })
+  }
 
   const svg = d3.select(svgRef.current)
   const g = d3.select(gRef.current)
 
-  // Clear existing content
   g.selectAll('*').remove()
 
-  // Get container dimensions
   const container = svgRef.current.parentElement
   const containerRect = container.getBoundingClientRect()
   const width = containerRect.width
   const height = containerRect.height
-
-  console.log('Map container dimensions:', { width, height, containerRect })
 
   svg.attr('width', width).attr('height', height)
 
@@ -73,6 +80,22 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
   const isCategoryVisualization = spendingData.category === 'multi-category'
   const visualizationMode = filters.visualizationMode || 'dominant'
 
+  // Apply filters to get filtered countries
+  const filteredCountries = MapColorService.applyFiltersToMapData(countries.features, filters, spendingData)
+  const filteredCountryNames = new Set(filteredCountries.map(f => getCountryNameFromFeature(f)))
+  
+  console.log('Filter processing:', {
+    totalCountries: countries.features.length,
+    filteredCount: filteredCountries.length,
+    filters: filters,
+    sampleFiltered: Array.from(filteredCountryNames).slice(0, 5),
+    hasSpendingData: !!spendingData?.countries,
+    spendingDataKeys: spendingData?.countries ? Object.keys(spendingData.countries).slice(0, 5) : []
+  })
+  
+  // Track color assignments for debugging
+  const colorAssignments = []
+  
   // Draw countries
   countriesGroup.selectAll('path')
     .data(countries.features)
@@ -84,27 +107,61 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
       const countryName = getCountryNameFromFeature(d)
       if (!countryName || countryName === 'Unknown Country') return '#f5f5f5'
       
+      // Check if country passes all filters
+      const passesFilters = filteredCountryNames.has(countryName)
+      if (!passesFilters) {
+        return '#e0e0e0' // Gray out filtered countries
+      }
+      
       if (isCategoryVisualization) {
-        // Use category-based coloring with the color function
         if (typeof colorScale === 'function') {
           return colorScale(countryName, visualizationMode)
         } else {
-          return getCategoryBasedColor(spendingData, countryName, visualizationMode)
+          const categoryColorScale = MapColorService.createCategoryVisualizationScale(spendingData, visualizationMode)
+          return categoryColorScale(countryName)
         }
       } else {
-        // Use traditional single-color scale
+        // For single indicator, use the color scale with spending values
+        const countryData = MapColorService.findCountryData(countryName, spendingData)
+        
+        if (!countryData || !countryData.data) {
+          return '#e8e8e8' // No data
+        }
+        
+        // Calculate average spending for year range
         const spendingValue = getCountrySpendingForMap(spendingData, countryName, filters.yearRange)
         
-        if (spendingValue !== null && !isNaN(spendingValue) && colorScale) {
-          return colorScale(spendingValue)
-        } else {
-          return '#e8e8e8' // Slightly darker gray for countries with no data
+        let finalColor = '#e8e8e8'
+        if (spendingValue !== null && !isNaN(spendingValue) && colorScale && typeof colorScale === 'function') {
+          finalColor = colorScale(spendingValue)
+          
+          // Log first 5 countries for debugging
+          if (colorAssignments.length < 5) {
+            colorAssignments.push({
+              country: countryName,
+              code: countryData.code,
+              spendingValue,
+              hasColorScale: !!colorScale,
+              colorScaleType: typeof colorScale,
+              finalColor,
+              passesFilters,
+              category: spendingData.category
+            })
+          }
         }
+        
+        return finalColor
       }
     })
     .attr('opacity', d => {
       const countryName = getCountryNameFromFeature(d)
       if (!countryName || countryName === 'Unknown Country') return 0.3
+      
+      // Reduce opacity for filtered out countries
+      const passesFilters = filteredCountryNames.has(countryName)
+      if (!passesFilters) {
+        return 0.2
+      }
       
       if (isCategoryVisualization) {
         const countryData = spendingData.countries[countryName]
@@ -128,10 +185,121 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
       }
       return 1 // Thicker border to make countries more visible
     })
+    .classed('selected', d => {
+      // Add selected class for CSS styling - Requirement 10.3
+      const countryName = getCountryNameFromFeature(d)
+      return callbacks.selectedCountry && countryName === callbacks.selectedCountry.name
+    })
     .style('cursor', 'pointer')
-    .on('click', (event, d) => {
+    .on('mouseenter', function(event, d) {
+      const countryName = getCountryNameFromFeature(d)
+      const currentFill = d3.select(this).attr('fill')
+      
+      // Brighten country on hover
+      d3.select(this)
+        .attr('data-original-fill', currentFill)
+        .attr('fill', d3.color(currentFill).brighter(0.3))
+        .attr('stroke', '#000')
+        .attr('stroke-width', 2)
+      
+      // Show tooltip
+      if (callbacks.onCountryHover) {
+        const spendingValue = getCountrySpendingForMap(spendingData, countryName, filters.yearRange)
+        const countryData = spendingData.countries?.[countryName]
+        
+        // Debug: Log first hover to see data structure
+        if (!window._firstHoverLogged) {
+          console.log('First hover debug:', {
+            countryName,
+            spendingValue,
+            hasCountryData: !!countryData,
+            countryDataKeys: countryData ? Object.keys(countryData) : [],
+            spendingDataKeys: spendingData.countries ? Object.keys(spendingData.countries).slice(0, 10) : [],
+            totalCountries: spendingData.countries ? Object.keys(spendingData.countries).length : 0
+          })
+          window._firstHoverLogged = true
+        }
+        
+        callbacks.onCountryHover({
+          name: countryName,
+          spending: spendingValue,
+          category: spendingData.category,
+          indicatorName: spendingData.name,
+          hasData: spendingValue !== null,
+          x: event.pageX,
+          y: event.pageY
+        })
+      }
+    })
+    .on('mousemove', function(event) {
+      // Update tooltip position
+      if (callbacks.onCountryHover) {
+        const countryName = getCountryNameFromFeature(d3.select(this).datum())
+        const spendingValue = getCountrySpendingForMap(spendingData, countryName, filters.yearRange)
+        
+        callbacks.onCountryHover({
+          name: countryName,
+          spending: spendingValue,
+          category: spendingData.category,
+          indicatorName: spendingData.name,
+          hasData: spendingValue !== null,
+          x: event.pageX,
+          y: event.pageY
+        })
+      }
+    })
+    .on('mouseleave', function(_, d) {
+      const countryName = getCountryNameFromFeature(d)
+      const isSelected = callbacks.selectedCountry && countryName === callbacks.selectedCountry.name
+      
+      const originalFill = d3.select(this).attr('data-original-fill')
+      d3.select(this)
+        .attr('fill', originalFill)
+        .attr('stroke', isSelected ? '#ff6b00' : '#333')
+        .attr('stroke-width', isSelected ? 3 : 1)
+      
+      // Hide tooltip
+      if (callbacks.onCountryHoverEnd) {
+        callbacks.onCountryHoverEnd()
+      }
+    })
+    .on('click', (_, d) => {
       const countryName = getCountryNameFromFeature(d)
       if (!countryName || countryName === 'Unknown Country') return
+      
+      // Prepare country data
+      let countryData = null
+      
+      if (isCategoryVisualization) {
+        const data = spendingData.countries[countryName]
+        if (data) {
+          countryData = {
+            name: countryName,
+            code: data.code,
+            region: getCountryRegion(countryName),
+            spending: { 
+              average: data.totalSpending, 
+              latest: data.totalSpending, 
+              dataPoints: 1,
+              dominantCategory: data.dominantCategory,
+              categoryBreakdown: data.categories,
+              categoryPercentages: data.categoryPercentages
+            }
+          }
+        }
+      } else {
+        const spendingValue = getCountrySpendingForMap(spendingData, countryName, filters.yearRange)
+        if (spendingValue !== null) {
+          countryData = {
+            name: countryName,
+            code: countryName.substring(0, 3).toUpperCase(),
+            region: getCountryRegion(countryName),
+            spending: { average: spendingValue, latest: spendingValue, dataPoints: 1 }
+          }
+        }
+      }
+      
+      if (!countryData) return
       
       // Check if clicking on already selected country to deselect
       const isAlreadySelected = callbacks.selectedCountry && countryName === callbacks.selectedCountry.name
@@ -141,71 +309,57 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
         if (callbacks.onCountryClick) {
           callbacks.onCountryClick(null)
         }
-        return
-      }
-      
-      if (isCategoryVisualization) {
-        const countryData = spendingData.countries[countryName]
-        if (countryData && callbacks.onCountryClick) {
-          callbacks.onCountryClick({
-            name: countryName,
-            code: countryData.code,
-            spending: { 
-              average: countryData.totalSpending, 
-              latest: countryData.totalSpending, 
-              dataPoints: 1,
-              dominantCategory: countryData.dominantCategory,
-              categoryBreakdown: countryData.categories,
-              categoryPercentages: countryData.categoryPercentages
-            }
-          })
-        }
       } else {
-        const spendingValue = getCountrySpendingForMap(spendingData, countryName, filters.yearRange)
-        if (spendingValue !== null && callbacks.onCountryClick) {
-          callbacks.onCountryClick({
-            name: countryName,
-            code: countryName.substring(0, 3).toUpperCase(),
-            spending: { average: spendingValue, latest: spendingValue, dataPoints: 1 }
-          })
+        // Select country
+        if (callbacks.onCountryClick) {
+          callbacks.onCountryClick(countryData)
         }
       }
     })
-    .append('title')
-    .text(d => {
-      const mapCountryName = getCountryNameFromFeature(d)
-      if (!mapCountryName || mapCountryName === 'Unknown Country') return 'Unknown Country'
-      
-      if (isCategoryVisualization) {
-        return getCategoryTooltipInfo(mapCountryName, spendingData, visualizationMode)
-      } else {
-        const tooltipInfo = getCountryTooltipInfo(mapCountryName, spendingData, filters.yearRange)
-        
-        if (tooltipInfo.hasData) {
-          const yearRangeText = filters.yearRange[0] === filters.yearRange[1] 
-            ? `${filters.yearRange[0]}`
-            : `${filters.yearRange[0]}-${filters.yearRange[1]}`
-          
-          return `${tooltipInfo.name}\n${spendingData.name || 'Spending'}: ${tooltipInfo.formattedValue}\nPeriod: ${yearRangeText}\nUnit: ${tooltipInfo.unitMeasure}`
-        }
-        
-        return `${tooltipInfo.name}\n${tooltipInfo.message}`
-      }
+  
+  // Log color assignments after all countries are processed
+  if (colorAssignments.length > 0) {
+    console.log('=== 🎨 COLOR ASSIGNMENTS (First 5 countries) ===')
+    colorAssignments.forEach(assignment => {
+      console.log(`${assignment.country} (${assignment.code}):`, {
+        category: assignment.category,
+        spending: assignment.spendingValue,
+        color: assignment.finalColor,
+        passes: assignment.passesFilters,
+        hasScale: assignment.hasColorScale
+      })
     })
-
-  console.log('Spending map initialized successfully')
+  } else {
+    console.warn('⚠️  NO COLOR ASSIGNMENTS - Check if colorScale is working!')
+  }
+  
+  console.log('=== MAP RENDER COMPLETE ===')
+  console.log(`Total countries rendered: ${countries.features.length}`)
+  console.log(`Countries passing filters: ${filteredCountries.length}`)
 }
 
-/**
- * Get country spending value for map visualization
- */
 function getCountrySpendingForMap(spendingData, countryName, yearRange = [2015, 2023]) {
-  return getSpendingValueByMapName(countryName, spendingData, yearRange)
+  if (!spendingData?.countries || !countryName) return null
+  
+  // Use MapColorService to find country data (handles both code and name lookups)
+  const countryData = MapColorService.findCountryData(countryName, spendingData)
+  if (!countryData || !countryData.data) return null
+  
+  // getIndicatorData returns: countries[name] = { name, code, data: {year: value} }
+  // Calculate average spending for the year range
+  const values = []
+  Object.entries(countryData.data).forEach(([year, value]) => {
+    const y = parseInt(year)
+    if (y >= yearRange[0] && y <= yearRange[1] && !isNaN(value) && value !== null) {
+      values.push(value)
+    }
+  })
+  
+  if (values.length === 0) return null
+  
+  return values.reduce((sum, v) => sum + v, 0) / values.length
 }
 
-/**
- * Get country name from map feature properties
- */
 function getCountryNameFromFeature(feature) {
   return feature.properties?.NAME || 
          feature.properties?.name || 
@@ -215,10 +369,6 @@ function getCountryNameFromFeature(feature) {
          'Unknown Country'
 }
 
-
-/**
- * Handle zoom controls
- */
 export function handleZoomIn(svgRef, zoomRef) {
   if (svgRef.current && zoomRef.current) {
     d3.select(svgRef.current).transition().call(zoomRef.current.scaleBy, 1.5)
@@ -238,84 +388,61 @@ export function handleResetZoom(svgRef, zoomRef) {
   }
 }
 
-/**
- * Get category-based color for a country
- */
-function getCategoryBasedColor(categoryData, countryName, visualizationMode = 'dominant') {
-  const countryData = categoryData.countries[countryName]
-  
-  if (!countryData || countryData.totalSpending === 0) {
-    return '#e8e8e8' // Slightly darker gray for no data to make it visible
+export function zoomToCountry(svgRef, zoomRef, worldData, countryName) {
+  if (!svgRef.current || !zoomRef.current || !worldData || !countryName) {
+    console.warn('Missing required parameters for zoomToCountry')
+    return
   }
-  
-  if (visualizationMode === 'dominant') {
-    // Use the dominant category color
-    const categoryColor = categoryData.categoryColors[countryData.dominantCategory] || categoryData.categoryColors.overview
-    
-    // Create intensity based on spending value relative to global max
-    const intensity = Math.min(countryData.totalSpending / categoryData.globalStats.maxSpending, 1)
-    
-    // Use a more contrasted color range - from light to dark
-    // Higher spending = darker color, lower spending = lighter color
-    const lightColor = d3.color(categoryColor).brighter(2).toString()
-    const darkColor = d3.color(categoryColor).darker(0.5).toString()
-    
-    return d3.interpolateRgb(lightColor, darkColor)(intensity * 0.8 + 0.2)
+
+  const svg = d3.select(svgRef.current)
+  const container = svgRef.current.parentElement
+  const containerRect = container.getBoundingClientRect()
+  const width = containerRect.width
+  const height = containerRect.height
+
+  // Get the projection and path
+  const countries = topojson.feature(worldData, worldData.objects.countries)
+  const projection = d3.geoNaturalEarth1()
+    .fitSize([width - 40, height - 40], countries)
+    .translate([width / 2, (height / 2) - 20])
+
+  const path = d3.geoPath().projection(projection)
+
+  // Find the country feature
+  const countryFeature = countries.features.find(d => {
+    const featureName = getCountryNameFromFeature(d)
+    return featureName === countryName
+  })
+
+  if (!countryFeature) {
+    console.warn(`Country not found: ${countryName}`)
+    return
   }
+
+  // Calculate bounds and zoom parameters
+  const bounds = path.bounds(countryFeature)
+  const dx = bounds[1][0] - bounds[0][0]
+  const dy = bounds[1][1] - bounds[0][1]
+  const x = (bounds[0][0] + bounds[1][0]) / 2
+  const y = (bounds[0][1] + bounds[1][1]) / 2
   
-  // For other modes, use a default approach
-  return categoryData.categoryColors.overview || '#667eea'
+  // Calculate scale with max zoom of 8
+  const scale = Math.min(8, 0.9 / Math.max(dx / width, dy / height))
+  const translate = [width / 2 - scale * x, height / 2 - scale * y]
+
+  // Animate zoom with 750ms duration
+  svg.transition()
+    .duration(750)
+    .call(
+      zoomRef.current.transform,
+      d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+    )
 }
 
-/**
- * Format spending values with B/M suffixes
- */
-function formatSpendingValue(value) {
-  if (value === null || value === undefined || isNaN(value)) return 'N/A'
-  
-  const absValue = Math.abs(value)
-  
-  if (absValue >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}B`
-  } else if (absValue >= 1000) {
-    return `${(value / 1000).toFixed(1)}M`
-  } else if (absValue >= 1) {
-    return `${value.toFixed(1)}K`
-  } else {
-    return value.toFixed(2)
-  }
-}
-
-/**
- * Get tooltip information for category-based visualization
- */
-function getCategoryTooltipInfo(countryName, categoryData, visualizationMode = 'dominant') {
-  const countryData = categoryData.countries[countryName]
-  
-  if (!countryData || countryData.totalSpending === 0) {
-    return `${countryName}\nNo spending data available`
+export function createSpendingColorScale(minValue, maxValue, spendingData = null, colorMode = 'category') {
+  if (spendingData) {
+    return MapColorService.createMapColorScale(spendingData, colorMode, { minValue, maxValue })
   }
   
-  const yearRangeText = categoryData.yearRange[0] === categoryData.yearRange[1] 
-    ? `${categoryData.yearRange[0]}`
-    : `${categoryData.yearRange[0]}-${categoryData.yearRange[1]}`
-  
-  if (visualizationMode === 'dominant') {
-    const dominantCategory = countryData.dominantCategory
-    const dominantValue = countryData.categories[dominantCategory]
-    const dominantPercentage = countryData.categoryPercentages[dominantCategory]
-    
-    return `${countryName}\nDominant Category: ${dominantCategory.charAt(0).toUpperCase() + dominantCategory.slice(1)}\nSpending: ${formatSpendingValue(dominantValue)} (${dominantPercentage.toFixed(1)}%)\nTotal Spending: ${formatSpendingValue(countryData.totalSpending)}\nPeriod: ${yearRangeText}`
-  }
-  
-  return `${countryName}\nTotal Spending: ${formatSpendingValue(countryData.totalSpending)}\nPeriod: ${yearRangeText}`
-}
-
-/**
- * Create color scale for spending visualization
- */
-export function createSpendingColorScale(minValue, maxValue) {
-  return d3.scaleSequential()
-    .domain([minValue, maxValue])
-    .interpolator(d3.interpolateViridis)
+  return MapColorService.createDefaultColorScale({ minValue, maxValue })
 }

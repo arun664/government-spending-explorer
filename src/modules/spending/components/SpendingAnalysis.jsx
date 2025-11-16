@@ -1,18 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import * as d3 from 'd3'
 import { 
-  loadSpendingData,
-  loadSpendingDataWithSectorFilter,
-  getCountrySpendingValue,
-  createColorScale,
-  createCategoryColorScale,
-  loadCategorySpendingData,
-  createCategoryColorFunction
-} from '../services/SimpleSpendingService.js'
-import { 
+  loadUnifiedData,
+  getIndicatorData,
   CATEGORY_COLORS,
   INDICATOR_METADATA
 } from '../services/UnifiedDataService.js'
+import { ColorSchemeService } from '../../../shared/services/ColorSchemeService.js'
+import { MapColorService } from '../../../shared/services/MapColorService.js'
+import { filterStateManager } from '../../../shared/services/FilterStateManager.js'
 
 import SpendingFilters from './SpendingFilters.jsx'
 import SpendingWorldMap from './SpendingWorldMap.jsx'
@@ -31,24 +27,22 @@ import '../styles/SpendingAnalysis.css'
  */
 const SpendingAnalysis = ({ onExportDataChange, onLoadingChange }) => {
   // Core state
+  const [unifiedData, setUnifiedData] = useState(null) // All 48 indicators pre-loaded
   const [spendingData, setSpendingData] = useState({})
-  const [allIndicators, setAllIndicators] = useState({})
   const [selectedIndicator, setSelectedIndicator] = useState('GE')
   const [selectedCategory, setSelectedCategory] = useState('overview')
   const [selectedCountry, setSelectedCountry] = useState(null)
   const [expandedGroups, setExpandedGroups] = useState(new Set(['overview']))
-  const [visualizationMode, setVisualizationMode] = useState('multi-category') // 'single' or 'multi-category'
   
   // Map and visualization state
   const [worldData, setWorldData] = useState(null)
   const [colorScale, setColorScale] = useState(null)
-  const [extent, setExtent] = useState([0, 100])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   
   // Filter state
   const [filters, setFilters] = useState({ 
-    yearRange: [2015, 2023],
+    yearRange: [2005, 2023], // Last 2 decades
     categories: ['overview'],
     countries: [],
     sectors: [],
@@ -130,38 +124,61 @@ const SpendingAnalysis = ({ onExportDataChange, onLoadingChange }) => {
       setLoading(true)
       setError(null)
 
-      // Load world map data and multi-category data by default
-      const [world, categoryData] = await Promise.all([
+      console.log('🚀 Loading ALL 48 indicators using UnifiedDataService...')
+
+      // Load world map data and ALL 48 indicators in parallel
+      const [world, unified] = await Promise.all([
         d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'),
-        loadCategorySpendingData(
-          ['GE', 'GECE', 'GEG', 'GEI', 'GES', 'GEOM'], // Key indicators from different categories
-          [2015, 2023]
-        )
+        loadUnifiedData() // Loads all 48 indicators at once!
       ])
       
       setWorldData(world)
-      setSpendingData(categoryData)
-      setVisualizationMode('multi-category')
+      setUnifiedData(unified)
 
-      console.log('Category data loaded:', categoryData)
+      console.log('✅ UNIFIED DATA LOADED - ALL 48 INDICATORS')
+      console.log('Unified data structure:', {
+        totalCountries: Object.keys(unified.countries).length,
+        totalIndicators: Object.keys(unified.indicators).length,
+        indicators: Object.keys(unified.indicators),
+        yearRange: [unified.years[0], unified.years[unified.years.length - 1]],
+        sampleCountry: Object.keys(unified.countries)[0],
+        sampleCountryData: unified.countries[Object.keys(unified.countries)[0]]
+      })
 
-      // Create category-based color function for multi-category visualization
-      const colorFunction = createCategoryColorFunction(categoryData)
-      setColorScale(() => colorFunction)
+      // Load initial indicator data (GE - Total Government Expense)
+      const initialData = getIndicatorData('GE', filters.yearRange)
+      setSpendingData(initialData)
+
+      console.log('Initial indicator (GE) loaded:', {
+        countries: Object.keys(initialData.countries).length,
+        category: initialData.category,
+        hasGlobalStats: !!initialData.globalStats
+      })
+
+      // Create color scale using ColorSchemeService directly
+      const scale = MapColorService.createMapColorScale(initialData, 'category', {
+        minValue: initialData.globalStats?.minSpending,
+        maxValue: initialData.globalStats?.maxSpending
+      })
+      setColorScale(() => scale)
       
-      console.log('Color function created:', typeof colorFunction)
+      console.log('✅ Color scale created for category:', initialData.category)
 
     } catch (err) {
-      console.error('Error loading initial data:', err)
+      console.error('❌ Error loading initial data:', err)
       setError('Failed to load spending data. Please check if data files are available.')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleIndicatorSelect = async (indicatorCode) => {
+  const handleIndicatorSelect = (indicatorCode) => {
+    // Prevent selecting while loading or if unified data not ready
+    if (loading || !unifiedData) return
+    
     try {
       setLoading(true)
+      setError(null)
       setSelectedIndicator(indicatorCode)
       
       // Set the category based on the selected indicator
@@ -180,29 +197,40 @@ const SpendingAnalysis = ({ onExportDataChange, onLoadingChange }) => {
         sectors: [] // Clear sector filters when changing indicators
       }))
 
-      // Load indicator data if not already cached
-      if (!allIndicators[indicatorCode]) {
-        const data = await loadSpendingData(indicatorCode)
-        setAllIndicators(prev => ({ ...prev, [indicatorCode]: data }))
-        setSpendingData(data)
-      } else {
-        setSpendingData(allIndicators[indicatorCode])
+      console.log(`📊 Switching to indicator: ${indicatorCode} (${INDICATOR_METADATA[indicatorCode]?.name})`)
+
+      // Get indicator data from unified data (instant - no loading!)
+      const data = getIndicatorData(indicatorCode, filters.yearRange)
+      
+      if (!data) {
+        throw new Error(`Indicator ${indicatorCode} not found in unified data`)
       }
 
-      // Switch to single indicator mode
-      setVisualizationMode('single')
+      setSpendingData(data)
 
-      // Update category-based color scale
-      const data = allIndicators[indicatorCode] || spendingData
-      if (data.globalStats) {
-        const { minSpending, maxSpending } = data.globalStats
-        setExtent([minSpending, maxSpending])
-        const scale = createCategoryColorScale(data)
-        setColorScale(() => scale)
-      }
+      console.log('Indicator data loaded:', {
+        indicator: indicatorCode,
+        countries: Object.keys(data.countries).length,
+        category: data.category,
+        globalStats: data.globalStats
+      })
+
+      // Create color scale using ColorSchemeService directly for consistency
+      const scale = MapColorService.createMapColorScale(data, 'category', {
+        minValue: data.globalStats?.minSpending,
+        maxValue: data.globalStats?.maxSpending
+      })
+      
+      setColorScale(() => scale)
+      
+      console.log(`✅ Color scale created for category: ${data.category}`, {
+        color: ColorSchemeService.getCategoryColor(data.category),
+        minValue: data.globalStats?.minSpending,
+        maxValue: data.globalStats?.maxSpending
+      })
 
     } catch (err) {
-      console.error('Error loading indicator:', err)
+      console.error('❌ Error loading indicator:', err)
       setError(`Failed to load indicator: ${indicatorCode}`)
     } finally {
       setLoading(false)
@@ -225,118 +253,163 @@ const SpendingAnalysis = ({ onExportDataChange, onLoadingChange }) => {
     // The category selection will be handled by the indicator selection
   }
 
-  // Load data for a specific category with proper color gradient
-  const loadCategorySpecificData = async (category) => {
-    try {
-      setLoading(true)
-      setVisualizationMode('category-specific')
-      
-      // Get indicators for this category
-      const categoryIndicators = Object.entries(INDICATOR_METADATA)
-        .filter(([_, metadata]) => metadata.category === category)
-        .map(([code, _]) => code)
-      
-      if (categoryIndicators.length > 0) {
-        // Load data for the first indicator in the category as representative
-        const representativeIndicator = categoryIndicators[0]
-        setSelectedIndicator(representativeIndicator)
-        
-        const data = await loadSpendingData(representativeIndicator)
-        
-        // Set category information for proper coloring
-        data.category = category
-        data.name = `${category.charAt(0).toUpperCase() + category.slice(1)} Spending`
-        
-        setSpendingData(data)
-        setAllIndicators(prev => ({ ...prev, [representativeIndicator]: data }))
-        
-        // Create category-specific color scale
-        if (data.globalStats) {
-          const { minSpending, maxSpending } = data.globalStats
-          setExtent([minSpending, maxSpending])
-          const scale = createCategoryColorScale(data)
-          setColorScale(() => scale)
+
+
+  // Subscribe to FilterStateManager changes
+  useEffect(() => {
+    const unsubscribe = filterStateManager.subscribe((newFilters) => {
+      setFilters(prev => ({
+        ...prev,
+        ...newFilters
+      }))
+    })
+    return unsubscribe
+  }, [])
+
+  const handleFilterChange = useCallback((newFilters) => {
+    setFilters(prev => ({
+      ...prev,
+      ...newFilters
+    }))
+    updateMatchingCountriesCount(newFilters)
+  }, [spendingData.countries])
+
+  // Calculate and update matching countries count
+  const updateMatchingCountriesCount = (currentFilters) => {
+    if (!spendingData.countries) {
+      filterStateManager.setFilterCount(0)
+      return
+    }
+
+    const countries = Object.values(spendingData.countries)
+    let matchingCount = 0
+
+    countries.forEach(country => {
+      // Apply region filter
+      if (currentFilters.regions && currentFilters.regions.length > 0) {
+        const countryRegion = getCountryRegion(country.code)
+        if (!currentFilters.regions.includes(countryRegion)) {
+          return
         }
       }
-      
-    } catch (err) {
-      console.error('Error loading category-specific data:', err)
-      setError('Failed to load category data')
-    } finally {
-      setLoading(false)
-    }
+
+      // Apply value range filter
+      if (country.spending) {
+        const spendingValue = country.spending.average || 0
+        if (spendingValue < currentFilters.valueRange[0] || 
+            spendingValue > currentFilters.valueRange[1]) {
+          return
+        }
+      }
+
+      // Apply sector filter
+      if (currentFilters.sectors && currentFilters.sectors.length > 0 && country.sectors) {
+        const hasSector = currentFilters.sectors.some(sector => 
+          country.sectors.has(sector)
+        )
+        if (!hasSector) {
+          return
+        }
+      }
+
+      matchingCount++
+    })
+
+    filterStateManager.setFilterCount(matchingCount)
   }
 
-  // Handle filter changes in real-time like GDP page
-  const handleFilterChange = (newFilters) => {
-    setFilters(newFilters)
-    // No loading states - just update filters and let the map re-render
+  // Helper function to get country region
+  const getCountryRegion = (countryCode) => {
+    // This should match the region mapping used in the map service
+    const regionMap = {
+      // Africa
+      'DZA': 'Africa', 'AGO': 'Africa', 'BEN': 'Africa', 'BWA': 'Africa', 'BFA': 'Africa',
+      'BDI': 'Africa', 'CMR': 'Africa', 'CPV': 'Africa', 'CAF': 'Africa', 'TCD': 'Africa',
+      'COM': 'Africa', 'COG': 'Africa', 'COD': 'Africa', 'CIV': 'Africa', 'DJI': 'Africa',
+      'EGY': 'Africa', 'GNQ': 'Africa', 'ERI': 'Africa', 'ETH': 'Africa', 'GAB': 'Africa',
+      'GMB': 'Africa', 'GHA': 'Africa', 'GIN': 'Africa', 'GNB': 'Africa', 'KEN': 'Africa',
+      'LSO': 'Africa', 'LBR': 'Africa', 'LBY': 'Africa', 'MDG': 'Africa', 'MWI': 'Africa',
+      'MLI': 'Africa', 'MRT': 'Africa', 'MUS': 'Africa', 'MAR': 'Africa', 'MOZ': 'Africa',
+      'NAM': 'Africa', 'NER': 'Africa', 'NGA': 'Africa', 'RWA': 'Africa', 'STP': 'Africa',
+      'SEN': 'Africa', 'SYC': 'Africa', 'SLE': 'Africa', 'SOM': 'Africa', 'ZAF': 'Africa',
+      'SSD': 'Africa', 'SDN': 'Africa', 'SWZ': 'Africa', 'TZA': 'Africa', 'TGO': 'Africa',
+      'TUN': 'Africa', 'UGA': 'Africa', 'ZMB': 'Africa', 'ZWE': 'Africa',
+      
+      // Asia
+      'AFG': 'Asia', 'ARM': 'Asia', 'AZE': 'Asia', 'BHR': 'Asia', 'BGD': 'Asia',
+      'BTN': 'Asia', 'BRN': 'Asia', 'KHM': 'Asia', 'CHN': 'Asia', 'GEO': 'Asia',
+      'IND': 'Asia', 'IDN': 'Asia', 'IRN': 'Asia', 'IRQ': 'Asia', 'ISR': 'Asia',
+      'JPN': 'Asia', 'JOR': 'Asia', 'KAZ': 'Asia', 'KWT': 'Asia', 'KGZ': 'Asia',
+      'LAO': 'Asia', 'LBN': 'Asia', 'MYS': 'Asia', 'MDV': 'Asia', 'MNG': 'Asia',
+      'MMR': 'Asia', 'NPL': 'Asia', 'PRK': 'Asia', 'OMN': 'Asia', 'PAK': 'Asia',
+      'PSE': 'Asia', 'PHL': 'Asia', 'QAT': 'Asia', 'SAU': 'Asia', 'SGP': 'Asia',
+      'KOR': 'Asia', 'LKA': 'Asia', 'SYR': 'Asia', 'TWN': 'Asia', 'TJK': 'Asia',
+      'THA': 'Asia', 'TLS': 'Asia', 'TUR': 'Asia', 'TKM': 'Asia', 'ARE': 'Asia',
+      'UZB': 'Asia', 'VNM': 'Asia', 'YEM': 'Asia',
+      
+      // Europe
+      'ALB': 'Europe', 'AND': 'Europe', 'AUT': 'Europe', 'BLR': 'Europe', 'BEL': 'Europe',
+      'BIH': 'Europe', 'BGR': 'Europe', 'HRV': 'Europe', 'CYP': 'Europe', 'CZE': 'Europe',
+      'DNK': 'Europe', 'EST': 'Europe', 'FIN': 'Europe', 'FRA': 'Europe', 'DEU': 'Europe',
+      'GRC': 'Europe', 'HUN': 'Europe', 'ISL': 'Europe', 'IRL': 'Europe', 'ITA': 'Europe',
+      'XKX': 'Europe', 'LVA': 'Europe', 'LIE': 'Europe', 'LTU': 'Europe', 'LUX': 'Europe',
+      'MKD': 'Europe', 'MLT': 'Europe', 'MDA': 'Europe', 'MCO': 'Europe', 'MNE': 'Europe',
+      'NLD': 'Europe', 'NOR': 'Europe', 'POL': 'Europe', 'PRT': 'Europe', 'ROU': 'Europe',
+      'RUS': 'Europe', 'SMR': 'Europe', 'SRB': 'Europe', 'SVK': 'Europe', 'SVN': 'Europe',
+      'ESP': 'Europe', 'SWE': 'Europe', 'CHE': 'Europe', 'UKR': 'Europe', 'GBR': 'Europe',
+      'VAT': 'Europe',
+      
+      // North America
+      'ATG': 'North America', 'BHS': 'North America', 'BRB': 'North America', 'BLZ': 'North America',
+      'CAN': 'North America', 'CRI': 'North America', 'CUB': 'North America', 'DMA': 'North America',
+      'DOM': 'North America', 'SLV': 'North America', 'GRD': 'North America', 'GTM': 'North America',
+      'HTI': 'North America', 'HND': 'North America', 'JAM': 'North America', 'MEX': 'North America',
+      'NIC': 'North America', 'PAN': 'North America', 'KNA': 'North America', 'LCA': 'North America',
+      'VCT': 'North America', 'TTO': 'North America', 'USA': 'North America',
+      
+      // South America
+      'ARG': 'South America', 'BOL': 'South America', 'BRA': 'South America', 'CHL': 'South America',
+      'COL': 'South America', 'ECU': 'South America', 'GUY': 'South America', 'PRY': 'South America',
+      'PER': 'South America', 'SUR': 'South America', 'URY': 'South America', 'VEN': 'South America',
+      
+      // Oceania
+      'AUS': 'Oceania', 'FJI': 'Oceania', 'KIR': 'Oceania', 'MHL': 'Oceania',
+      'FSM': 'Oceania', 'NRU': 'Oceania', 'NZL': 'Oceania', 'PLW': 'Oceania',
+      'PNG': 'Oceania', 'WSM': 'Oceania', 'SLB': 'Oceania', 'TON': 'Oceania',
+      'TUV': 'Oceania', 'VUT': 'Oceania'
+    }
+    
+    return regionMap[countryCode] || 'Other'
   }
+
+  // Update matching countries count when filters or data change
+  useEffect(() => {
+    updateMatchingCountriesCount(filters)
+  }, [filters, spendingData])
 
   // Real-time filtering - no data reloading needed
   // The map service already filters data by yearRange in real-time
 
-  const toggleGroupExpansion = (groupName) => {
-    setExpandedGroups(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(groupName)) {
-        newSet.delete(groupName)
-      } else {
-        newSet.add(groupName)
-      }
-      return newSet
-    })
-  }
-
   // Sector filtering handled in real-time through filter changes
 
-  // Handle country selection from map
-  const handleCountrySelect = (country) => {
+  const handleCountrySelect = useCallback((country) => {
     setSelectedCountry(country)
-  }
+  }, [])
+
+  // Get available countries for search
+  const availableCountries = useMemo(() => {
+    if (!spendingData.countries) return []
+    
+    return Object.values(spendingData.countries).map(country => ({
+      name: country.name,
+      code: country.code,
+      region: getCountryRegion(country.code)
+    }))
+  }, [spendingData.countries])
 
 
 
-  // Handle visualization mode change
-  const handleVisualizationModeChange = async (mode) => {
-    try {
-      setLoading(true)
-      setVisualizationMode(mode)
-      
-      if (mode === 'multi-category') {
-        // Load multi-category data
-        const categoryData = await loadCategorySpendingData(
-          ['GE', 'GECE', 'GEG', 'GEI', 'GES', 'GEOM'], // Key indicators from different categories
-          filters.yearRange
-        )
-        
-        setSpendingData(categoryData)
-        
-        // Create category-based color function instead of scale
-        const colorFunction = createCategoryColorFunction(categoryData)
-        setColorScale(() => colorFunction)
-        
-      } else {
-        // Load single indicator data
-        const data = await loadSpendingData(selectedIndicator)
-        setSpendingData(data)
-        
-        // Create traditional color scale
-        if (data.globalStats) {
-          const { minSpending, maxSpending } = data.globalStats
-          setExtent([minSpending, maxSpending])
-          const scale = createCategoryColorScale(data)
-          setColorScale(() => scale)
-        }
-      }
-      
-    } catch (err) {
-      console.error('Error changing visualization mode:', err)
-      setError('Failed to change visualization mode')
-    } finally {
-      setLoading(false)
-    }
-  }
+
 
 
 
@@ -352,6 +425,15 @@ const SpendingAnalysis = ({ onExportDataChange, onLoadingChange }) => {
 
   return (
     <div className="spending-analysis">
+      {/* Loading Overlay */}
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner">
+            <div className="spinner"></div>
+            <p>Loading spending data...</p>
+          </div>
+        </div>
+      )}
       {/* Main Content Area */}
       <div className="main-content">
         {/* Left Sidebar - Categories and Indicators */}
@@ -440,9 +522,6 @@ const SpendingAnalysis = ({ onExportDataChange, onLoadingChange }) => {
               if (categoryIndicators.length === 0) {
                 return null
               }
-
-              // Always expand the selected category
-              const isExpanded = true
               
               return (
                 <div key={category} className="indicator-group">
@@ -456,8 +535,9 @@ const SpendingAnalysis = ({ onExportDataChange, onLoadingChange }) => {
                       {categoryIndicators.map(([code, metadata]) => (
                         <div 
                           key={code} 
-                          className={`indicator-item ${selectedIndicator === code ? 'selected' : ''}`}
-                          onClick={() => handleIndicatorSelect(code)}
+                          className={`indicator-item ${selectedIndicator === code ? 'selected' : ''} ${loading ? 'disabled' : ''}`}
+                          onClick={() => !loading && handleIndicatorSelect(code)}
+                          style={{ cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}
                         >
                           <div className="indicator-info">
                             <span className="indicator-icon">{metadata.icon}</span>
@@ -503,6 +583,9 @@ const SpendingAnalysis = ({ onExportDataChange, onLoadingChange }) => {
             spendingData={spendingData}
             categories={Object.keys(CATEGORY_COLORS)}
             indicators={INDICATOR_METADATA}
+            matchingCountries={filterStateManager.getFilterCount()}
+            onCountrySelect={handleCountrySelect}
+            availableCountries={availableCountries}
           />
         </div>
       </div>

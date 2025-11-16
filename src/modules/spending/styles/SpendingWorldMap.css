@@ -1,4 +1,3 @@
-/* Spending World Map Styles */
 .spending-world-map {
   position: relative;
   width: 100%;
@@ -11,9 +10,6 @@
   flex-direction: column;
 }
 
-
-
-/* Map SVG Container */
 .map-svg-container {
   position: relative;
   width: 100%;
@@ -22,11 +18,10 @@
   overflow: hidden;
 }
 
-/* SVG Map */
 .world-map-svg {
   width: 100%;
   height: 100%;
-  background: white; /* Clean white background */
+  background: white;
   display: block;
   position: relative;
 }
@@ -37,20 +32,37 @@
 }
 
 .world-map-svg .country {
-  stroke: #333 !important; /* Dark borders for all countries */
-  stroke-width: 1px !important; /* Thicker borders for visibility */
+  stroke: #333 !important;
+  stroke-width: 1px !important;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .world-map-svg .country:hover {
-  stroke: #000 !important; /* Even darker on hover */
+  stroke: #000 !important;
   stroke-width: 2px !important;
   opacity: 0.9;
-  filter: brightness(1.1); /* Slightly brighten on hover */
+  filter: brightness(1.15) saturate(1.1);
+  transform: scale(1.01);
+  transform-origin: center;
 }
 
-/* Map Controls - Horizontal at bottom right */
+.world-map-svg .country.selected {
+  stroke: #ff6b00 !important;
+  stroke-width: 3px !important;
+  filter: brightness(1.15);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    filter: brightness(1.15);
+  }
+  50% {
+    filter: brightness(1.25);
+  }
+}
+
 .map-controls {
   position: absolute;
   bottom: 20px;
@@ -74,19 +86,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .zoom-button:hover {
   background: white;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.05);
   border-color: #5a6fd8;
 }
 
+.zoom-button:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
 .zoom-button:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98);
+  transition: all 0.1s ease;
 }
 
 .zoom-in {
@@ -104,7 +122,6 @@
   font-size: 18px;
 }
 
-/* Collapsible Map Legend */
 .map-legend {
   position: absolute;
   bottom: 20px;
@@ -113,7 +130,7 @@
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   z-index: 1005;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: auto;
 }
 
@@ -129,7 +146,6 @@
   max-width: 280px;
 }
 
-/* Legend Toggle Button */
 .legend-toggle {
   display: flex;
   align-items: center;
@@ -142,7 +158,7 @@
   font-size: 12px;
   font-weight: 500;
   color: #667eea;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   width: 100%;
   justify-content: space-between;
@@ -153,11 +169,17 @@
 .legend-toggle:hover {
   background: white;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(1.02);
+}
+
+.legend-toggle:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
 }
 
 .legend-toggle:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98);
+  transition: all 0.1s ease;
 }
 
 .legend-icon {
@@ -183,7 +205,6 @@
   transform: rotate(180deg);
 }
 
-/* Legend Content */
 .legend-content {
   margin-top: 12px;
   animation: slideDown 0.3s ease;
@@ -222,7 +243,6 @@
   line-height: 1.3;
 }
 
-/* Slide down animation for legend content */
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -236,7 +256,6 @@
   }
 }
 
-/* Category Legend Styles */
 .category-legend {
   margin-top: 8px;
 }
@@ -288,7 +307,6 @@
   text-transform: capitalize;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .map-controls {
     bottom: 10px;
@@ -376,7 +394,6 @@
   }
 }
 
-/* Info Panel - Bottom Left */
 .map-info-panel {
   position: absolute;
   bottom: 20px;
@@ -385,7 +402,7 @@
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   z-index: 1008;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: auto;
 }
 
@@ -401,7 +418,6 @@
   max-width: 320px;
 }
 
-/* Info Panel Toggle Button */
 .info-toggle {
   display: flex;
   align-items: center;
@@ -414,7 +430,7 @@
   font-size: 12px;
   font-weight: 500;
   color: #667eea;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   width: 100%;
   justify-content: space-between;
@@ -425,11 +441,17 @@
 .info-toggle:hover {
   background: white;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(1.02);
+}
+
+.info-toggle:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
 }
 
 .info-toggle:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98);
+  transition: all 0.1s ease;
 }
 
 .info-icon {
@@ -490,4 +512,75 @@
   font-size: 10px;
   color: #888;
   line-height: 1.4;
+}
+
+/* Map 
+Tooltip Styles */
+.map-tooltip {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0;
+  min-width: 200px;
+  max-width: 300px;
+  font-size: 13px;
+  border: 2px solid #667eea;
+  animation: tooltipFadeIn 0.2s ease;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.map-tooltip .tooltip-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px 6px 0 0;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.map-tooltip .tooltip-body {
+  padding: 10px 12px;
+}
+
+.map-tooltip .tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  gap: 12px;
+}
+
+.map-tooltip .tooltip-row.highlight {
+  background: #f0f0ff;
+  margin: 4px -12px;
+  padding: 6px 12px;
+  border-radius: 4px;
+}
+
+.map-tooltip .label {
+  font-size: 11px;
+  color: #666;
+  font-weight: 500;
+}
+
+.map-tooltip .value {
+  font-size: 13px;
+  color: #333;
+  font-weight: 600;
+}
+
+.map-tooltip .no-data {
+  color: #999;
+  font-style: italic;
+  font-size: 12px;
 }

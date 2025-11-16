@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import './App.css'
 import ExportButton from './shared/components/ExportButton.jsx'
+import { filterStateManager } from './shared/services/FilterStateManager.js'
 
 // Import modules
 import { SpendingAnalysis, USReportGenerator } from './modules/spending'
@@ -8,7 +9,10 @@ import { GDPAnalysis } from './modules/gdp'
 import { ComparisonDashboard } from './modules/comparison'
 
 function App() {
-  const [currentView, setCurrentView] = useState('spending')
+  const [currentView, setCurrentView] = useState(() => {
+    // Restore last viewed module from session storage
+    return filterStateManager.getCurrentModule() || 'spending'
+  })
   const [spendingSubView, setSpendingSubView] = useState('global') // 'global' or 'us'
 
   const [exportData, setExportData] = useState(null)
@@ -33,6 +37,13 @@ function App() {
     }
   }, [currentView])
 
+  // Handle module switching with filter restoration
+  const handleModuleSwitch = (newModule) => {
+    // Restore filters for the new module
+    filterStateManager.restoreFiltersForModule(newModule)
+    setCurrentView(newModule)
+  }
+
   return (
     <div className="app">
       <header className="app-header">
@@ -41,19 +52,19 @@ function App() {
           <nav className="nav-tabs">
             <button 
               className={`nav-tab ${currentView === 'spending' ? 'active' : ''}`}
-              onClick={() => setCurrentView('spending')}
+              onClick={() => handleModuleSwitch('spending')}
             >
               Spending
             </button>
             <button 
               className={`nav-tab ${currentView === 'gdp' ? 'active' : ''}`}
-              onClick={() => setCurrentView('gdp')}
+              onClick={() => handleModuleSwitch('gdp')}
             >
               GDP
             </button>
             <button 
               className={`nav-tab ${currentView === 'comparison' ? 'active' : ''}`}
-              onClick={() => setCurrentView('comparison')}
+              onClick={() => handleModuleSwitch('comparison')}
             >
               Comparison
             </button>

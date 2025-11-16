@@ -1,4 +1,3 @@
-/* Enhanced Spending Filters Styles */
 .spending-filters {
   height: 100%;
   display: flex;
@@ -15,15 +14,40 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border-bottom: 1px solid #e0e0e0;
-  order: -10; /* Ensure header stays at the very top */
-  flex-shrink: 0; /* Prevent header from shrinking */
+  order: -10;
+  flex-shrink: 0;
 }
 
 .filters-header h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: white !important; /* Ensure white text */
+  color: white !important;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .reset-btn {
@@ -41,7 +65,57 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Selected Country Info */
+.filter-count-display {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.count-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+}
+
+.count-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #667eea;
+  padding: 2px 8px;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.no-matches-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  font-size: 12px;
+  color: #f5576c;
+  font-weight: 500;
+  padding: 8px 12px;
+  background: #fff5f5;
+  border-radius: 6px;
+  border: 1px solid #ffe0e0;
+  margin-top: 8px;
+}
+
+.warning-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.warning-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
 .selected-country-info {
   padding: 20px;
   border-bottom: 1px solid #f0f0f0;
@@ -90,7 +164,6 @@
   color: #2c3e50;
 }
 
-/* Current Indicator Info */
 .current-indicator {
   padding: 20px;
   border-bottom: 1px solid #f0f0f0;
@@ -152,7 +225,6 @@
   color: #2c3e50;
 }
 
-/* Filter Groups */
 .filter-group {
   padding: 20px;
   border-bottom: 1px solid #f0f0f0;
@@ -166,21 +238,26 @@
   margin-bottom: 12px;
 }
 
-/* Current Indicator - Show first */
-.current-indicator {
-  order: -2; /* Show first */
+.country-search-group {
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+  border: 1px solid #e8ecff;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  order: -3;
 }
 
-/* Year Range Group - Show second */
+.current-indicator {
+  order: -2;
+}
+
 .year-range-group {
-  order: -1; /* Show second */
+  order: -1;
   background: #f8f9ff;
   border: 1px solid #e8ecff;
   border-radius: 8px;
   margin-bottom: 16px;
 }
 
-/* Year Range Slider */
 .year-range-slider {
   margin-bottom: 16px;
 }
@@ -199,21 +276,20 @@
   outline: none;
   -webkit-appearance: none;
   appearance: none;
-  pointer-events: none; /* Disable pointer events on the track */
+  pointer-events: none;
 }
 
 .range-slider.range-start {
-  z-index: 1; /* Lower z-index for start slider by default */
+  z-index: 1;
 }
 
 .range-slider.range-end {
-  z-index: 2; /* Higher z-index for end slider by default */
+  z-index: 2;
 }
 
-/* When start value is higher, prioritize start slider */
 .range-slider.range-start:focus,
 .range-slider.range-start:active {
-  z-index: 3; /* Bring to front when active */
+  z-index: 3;
 }
 
 .range-slider::-webkit-slider-track {
@@ -233,19 +309,17 @@
   cursor: pointer;
   border: 2px solid white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  pointer-events: auto; /* Enable pointer events on thumbs */
+  pointer-events: auto;
   position: relative;
-  z-index: 10; /* High z-index for thumbs */
+  z-index: 10;
 }
 
-/* Different color for start range thumb */
 .range-slider.range-start::-webkit-slider-thumb {
-  background: #4facfe; /* Light blue for start */
+  background: #4facfe;
 }
 
-/* Different color for end range thumb */
 .range-slider.range-end::-webkit-slider-thumb {
-  background: #667eea; /* Purple for end */
+  background: #667eea;
 }
 
 .range-slider::-moz-range-track {
@@ -264,19 +338,17 @@
   cursor: pointer;
   border: 2px solid white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  pointer-events: auto; /* Enable pointer events on thumbs */
+  pointer-events: auto;
   position: relative;
-  z-index: 10; /* High z-index for thumbs */
+  z-index: 10;
 }
 
-/* Different color for start range thumb */
 .range-slider.range-start::-moz-range-thumb {
-  background: #4facfe; /* Light blue for start */
+  background: #4facfe;
 }
 
-/* Different color for end range thumb */
 .range-slider.range-end::-moz-range-thumb {
-  background: #667eea; /* Purple for end */
+  background: #667eea;
 }
 
 .range-display {
@@ -302,10 +374,6 @@
   font-weight: 500;
 }
 
-/* Removed updating indicator - using real-time updates instead */
-
-/* Removed year-range-inputs since we only use the slider now */
-
 .range-display {
   text-align: center;
   font-size: 12px;
@@ -316,7 +384,73 @@
   border-radius: 4px;
 }
 
-/* Checkboxes */
+.region-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-chip {
+  padding: 6px 12px;
+  border: 2px solid;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent;
+  outline: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.filter-chip::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.1;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease;
+}
+
+.filter-chip:hover::before {
+  width: 200%;
+  height: 200%;
+}
+
+.filter-chip:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.filter-chip:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+.filter-chip.active {
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transform: scale(1.02);
+}
+
+.filter-chip:active {
+  transform: translateY(0) scale(0.98);
+  transition: all 0.1s ease;
+}
+
+.filter-count {
+  font-size: 12px;
+  font-weight: 400;
+  color: #666;
+  margin-left: 4px;
+}
+
 .category-checkboxes,
 .region-checkboxes,
 .sector-checkboxes {
@@ -332,16 +466,48 @@
   font-size: 13px;
   color: #2c3e50;
   cursor: pointer;
-  padding: 4px 0;
-  transition: color 0.2s ease;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
 .checkbox-label:hover {
   color: #667eea;
+  background: rgba(102, 126, 234, 0.05);
+  transform: translateX(4px);
+}
+
+.checkbox-label:focus-within {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  background: rgba(102, 126, 234, 0.08);
 }
 
 .checkbox-label input[type="checkbox"] {
   margin: 0;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.checkbox-label input[type="checkbox"]:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+.checkbox-label:hover input[type="checkbox"] {
+  transform: scale(1.1);
+}
+
+.sector-name {
+  user-select: none;
+  transition: font-weight 0.2s ease;
+}
+
+.checkbox-label:hover .sector-name {
+  font-weight: 500;
 }
 
 .category-color {
@@ -351,7 +517,6 @@
   flex-shrink: 0;
 }
 
-/* Value Range Inputs */
 .value-range-inputs {
   display: flex;
   gap: 12px;
@@ -368,25 +533,120 @@
   font-size: 12px;
   color: #666;
   font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.value-input:focus-within label {
+  color: #667eea;
 }
 
 .value-input input {
   padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
   font-size: 13px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Active Filters */
+.value-input input:hover {
+  border-color: #bbb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.value-input input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.input-with-suffix {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-suffix input {
+  width: 100%;
+  padding-right: 32px;
+}
+
+.unit-suffix {
+  position: absolute;
+  right: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #667eea;
+  pointer-events: none;
+  user-select: none;
+}
+
 .active-filters {
   padding: 20px;
   background: #f8f9fa;
+  margin-top: auto;
+}
+
+.active-filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
 .active-filters h4 {
-  margin: 0 0 12px 0;
+  margin: 0;
   font-size: 14px;
   color: #2c3e50;
+}
+
+.active-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.filter-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.summary-stats .stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.summary-stats .stat-label {
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-stats .stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #667eea;
 }
 
 .filter-tags {
@@ -396,6 +656,9 @@
 }
 
 .filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 4px 8px;
   background: #667eea;
   color: white;
@@ -404,7 +667,69 @@
   font-weight: 500;
 }
 
-/* Responsive Design */
+.filter-tag.sector-tag {
+  background: #43e97b;
+}
+
+.remove-tag {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 2px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.remove-tag:hover {
+  opacity: 1;
+}
+
+.reset-all-filters-btn {
+  width: 100%;
+  padding: 10px 16px;
+  margin-top: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+.reset-all-filters-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.reset-all-filters-btn:active {
+  transform: translateY(0);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.keyboard-hint {
+  font-weight: 400;
+  font-style: italic;
+  opacity: 0.7;
+}
+
 @media (max-width: 1200px) {
   .year-range-inputs,
   .value-range-inputs {
@@ -439,5 +764,510 @@
   .stat-row {
     flex: 1;
     min-width: 120px;
+  }
+}
+
+
+/* Year Slider Styles - matching GDP page */
+.year-slider-wrapper {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.slider-container {
+  position: relative;
+  height: 40px;
+  margin-bottom: 12px;
+  padding: 0 10px;
+}
+
+.slider-track {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  right: 10px;
+  height: 8px;
+  background: #e8e8e8;
+  border-radius: 4px;
+  transform: translateY(-50%);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.slider-range {
+  position: absolute;
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(102, 126, 234, 0.3);
+}
+
+.slider-input {
+  position: absolute;
+  width: 100%;
+  height: 35px;
+  top: 0;
+  left: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+  margin: 0;
+  z-index: 2;
+}
+
+.slider-input.slider-min {
+  z-index: 3;
+}
+
+.slider-input.slider-max {
+  z-index: 4;
+}
+
+/* When sliders overlap, ensure both are visible */
+.slider-input.slider-min::-webkit-slider-thumb {
+  margin-left: -2px;
+}
+
+.slider-input.slider-max::-webkit-slider-thumb {
+  margin-left: 2px;
+}
+
+.slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #667eea;
+  border: 3px solid white;
+  border-radius: 50%;
+  cursor: grab;
+  pointer-events: all;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+}
+
+/* Different styling for min thumb */
+.slider-input.slider-min::-webkit-slider-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #5568d3 100%);
+}
+
+/* Different styling for max thumb */
+.slider-input.slider-max::-webkit-slider-thumb {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.slider-input::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+}
+
+.slider-input::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.05);
+}
+
+.slider-input::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #667eea;
+  border: 3px solid white;
+  border-radius: 50%;
+  cursor: grab;
+  pointer-events: all;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+}
+
+/* Different styling for min thumb */
+.slider-input.slider-min::-moz-range-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #5568d3 100%);
+}
+
+/* Different styling for max thumb */
+.slider-input.slider-max::-moz-range-thumb {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.slider-input::-moz-range-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+}
+
+.slider-input::-moz-range-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.05);
+}
+
+/* Year tick marks */
+.year-ticks {
+  position: relative;
+  height: 30px;
+  margin-top: -5px;
+  padding: 0 10px;
+}
+
+.year-tick {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%);
+}
+
+.tick-mark {
+  width: 2px;
+  height: 8px;
+  background: #999;
+  margin-bottom: 4px;
+}
+
+.tick-label {
+  font-size: 10px;
+  color: #666;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.year-display {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #667eea;
+  background: linear-gradient(135deg, #f0f0ff 0%, #e8ecff 100%);
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 2px solid #667eea;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
+  letter-spacing: 0.5px;
+}
+
+/* Year input fields */
+.year-inputs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.year-input-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.year-input-field label {
+  font-size: 10px;
+  color: #999;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.year-input-field input {
+  width: 70px;
+  padding: 8px 10px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  color: #333;
+  transition: all 0.2s ease;
+}
+
+.year-input-field input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.year-input-field input:hover {
+  border-color: #999;
+}
+
+.year-separator {
+  font-size: 12px;
+  color: #999;
+  font-weight: 500;
+  margin-top: 18px;
+}
+
+/* Fix filter group spacing to prevent overflow */
+.filter-group {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.filter-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Fix region chips to wrap properly */
+.region-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.filter-chip {
+  padding: 6px 12px;
+  border-radius: 16px;
+  border: 2px solid;
+  background: transparent;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.filter-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filter-chip.active {
+  transform: scale(1.05);
+}
+
+/* Fix value range inputs */
+.value-range-inputs {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.value-input {
+  flex: 1;
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.value-input label {
+  font-size: 11px;
+  color: #999;
+  text-transform: uppercase;
+}
+
+.input-with-suffix {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-suffix input {
+  width: 100%;
+  padding: 8px 28px 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.input-with-suffix input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.unit-suffix {
+  position: absolute;
+  right: 10px;
+  font-size: 11px;
+  color: #999;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+/* Fix sector checkboxes */
+.sector-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-size: 12px;
+}
+
+.checkbox-label:hover {
+  background: #f8f9ff;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Fix active filters section */
+.active-filters {
+  padding: 16px 20px;
+  background: #f8f9ff;
+  border-top: 2px solid #e0e0e0;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.active-filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.active-filters-header h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.active-count-badge {
+  background: #667eea;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.filter-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.stat-item .stat-label {
+  font-size: 10px;
+  color: #999;
+  text-transform: uppercase;
+}
+
+.stat-item .stat-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Fix filter tags */
+.filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Region tag colors are set inline based on region */
+
+.sector-tag {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.remove-tag {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s ease;
+}
+
+.remove-tag:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.reset-all-filters-btn {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #667eea;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 600;
+  background: white;
+  color: #667eea;
+}
+
+.reset-all-filters-btn:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+  .summary-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .value-range-inputs {
+    flex-direction: column;
+  }
+  
+  .value-input {
+    width: 100%;
   }
 }

@@ -1143,6 +1143,12 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
         onRemoveCountry={handleRemoveCountry}
         showLabels={showLabels}
         onToggleLabels={() => setShowLabels(!showLabels)}
+        availableCountries={Object.values(gdpData).map(country => ({
+          name: country.name,
+          code: country.code,
+          region: getRegion(country.code)
+        }))}
+        onCountrySelect={handleSearchSelect}
       />
       
       <ZoomControls

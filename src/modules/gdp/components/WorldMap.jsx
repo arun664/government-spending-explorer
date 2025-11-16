@@ -84,22 +84,25 @@ const WorldMap = ({
       .attr('stroke', '#ffffff')
       .attr('stroke-width', 0.5)
       .style('cursor', 'pointer')
-      .on('mouseover', function(event, d) {
+      .on('mouseenter', function(event, d) {
+        // Hover effect - brighten country
+        const currentFill = d3.select(this).attr('fill')
         d3.select(this)
-          .attr('stroke-width', 2)
+          .attr('data-original-fill', currentFill)
+          .attr('fill', d3.color(currentFill).brighter(0.3))
           .attr('stroke', '#333333')
-        
-        // Show tooltip
-        showTooltip(event, d)
+          .attr('stroke-width', 2)
       })
-      .on('mouseout', function(event, d) {
+      .on('mouseleave', function(event, d) {
+        // Restore original appearance
+        const originalFill = d3.select(this).attr('data-original-fill')
         d3.select(this)
-          .attr('stroke-width', 0.5)
+          .attr('fill', originalFill)
           .attr('stroke', '#ffffff')
-        
-        hideTooltip()
+          .attr('stroke-width', 0.5)
       })
       .on('click', function(event, d) {
+        // Handle country selection
         if (onCountryClick) {
           const countryData = {
             countryCode: d.id,
@@ -117,7 +120,8 @@ const WorldMap = ({
 
   }, [worldData, width, height, onCountryClick])
 
-  // Handle selected country zoom
+  // Handle selected country zoom with smooth animation (750ms)
+  // Requirements: 10.3, 10.5 - Zoom to country when selected from search
   useEffect(() => {
     if (!selectedCountry || !worldData || !svgRef.current) return
 
@@ -128,12 +132,14 @@ const WorldMap = ({
 
     if (!zoom || !projection || !path) return
 
-    // Find the country feature
+    // Find the country feature by code or name
     const countries = topojson.feature(worldData, worldData.objects.countries)
-    const countryFeature = countries.features.find(d => 
-      d.id === selectedCountry.countryCode || 
-      d.properties.name === selectedCountry.countryName
-    )
+    const countryFeature = countries.features.find(d => {
+      const featureName = d.properties.name || 'Unknown'
+      return d.id === selectedCountry.countryCode || 
+             d.properties.name === selectedCountry.countryName ||
+             featureName === selectedCountry.name
+    })
 
     if (countryFeature) {
       // Calculate bounds and zoom to country
@@ -145,7 +151,7 @@ const WorldMap = ({
       const scale = Math.min(8, 0.9 / Math.max(dx / width, dy / height))
       const translate = [width / 2 - scale * x, height / 2 - scale * y]
 
-      // Animate zoom
+      // Animate zoom with 750ms duration (Requirement 10.5)
       svg.transition()
         .duration(750)
         .call(
@@ -153,12 +159,28 @@ const WorldMap = ({
           d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
         )
 
-      // Highlight selected country
+      // Highlight selected country (Requirement 10.3)
       svg.selectAll('.country')
-        .classed('selected', d => 
-          d.id === selectedCountry.countryCode || 
-          d.properties.name === selectedCountry.countryName
-        )
+        .classed('selected', d => {
+          const featureName = d.properties.name || 'Unknown'
+          return d.id === selectedCountry.countryCode || 
+                 d.properties.name === selectedCountry.countryName ||
+                 featureName === selectedCountry.name
+        })
+        .attr('stroke', d => {
+          const featureName = d.properties.name || 'Unknown'
+          const isSelected = d.id === selectedCountry.countryCode || 
+                            d.properties.name === selectedCountry.countryName ||
+                            featureName === selectedCountry.name
+          return isSelected ? '#ff6b00' : '#ffffff'
+        })
+        .attr('stroke-width', d => {
+          const featureName = d.properties.name || 'Unknown'
+          const isSelected = d.id === selectedCountry.countryCode || 
+                            d.properties.name === selectedCountry.countryName ||
+                            featureName === selectedCountry.name
+          return isSelected ? 3 : 0.5
+        })
     }
   }, [selectedCountry, worldData, width, height])
 
@@ -175,38 +197,6 @@ const WorldMap = ({
       'Unknown': '#7f7f7f'
     }
     return colors[region] || colors['Unknown']
-  }
-
-  // Tooltip functions
-  const showTooltip = (event, d) => {
-    const tooltip = d3.select('body').selectAll('.map-tooltip')
-      .data([0])
-      .join('div')
-      .attr('class', 'map-tooltip')
-      .style('opacity', 0)
-
-    const region = getCountryRegion(d.id)
-    
-    tooltip.html(`
-      <div class="tooltip-content">
-        <strong>${d.properties.name || 'Unknown'}</strong><br/>
-        <span class="tooltip-code">Code: ${d.id}</span><br/>
-        <span class="tooltip-region">Region: ${region}</span>
-      </div>
-    `)
-    .style('left', (event.pageX + 10) + 'px')
-    .style('top', (event.pageY - 10) + 'px')
-    .transition()
-    .duration(200)
-    .style('opacity', 1)
-  }
-
-  const hideTooltip = () => {
-    d3.select('.map-tooltip')
-      .transition()
-      .duration(200)
-      .style('opacity', 0)
-      .remove()
   }
 
   // Reset zoom function
@@ -270,7 +260,7 @@ const WorldMap = ({
       >
         {/* Map content will be rendered by D3 */}
       </svg>
-      
+
       <div className="map-legend">
         <h4>Regions</h4>
         <div className="legend-items">

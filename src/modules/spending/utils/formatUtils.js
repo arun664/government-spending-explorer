@@ -53,15 +53,17 @@ export function formatLargeNumber(value, decimals = 1) {
  * @returns {string} Category color
  */
 export function getCategoryColor(spendingData) {
-  // Import category colors dynamically to avoid circular dependencies
+  // Use ColorSchemeService colors for consistency
   const CATEGORY_COLORS = {
-    overview: '#667eea',
-    personnel: '#f093fb',
-    transfers: '#4facfe',
-    debt: '#43e97b',
-    operations: '#fa709a',
-    social: '#fee140',
-    infrastructure: '#a8edea'
+    overview: '#667eea',      // Purple-blue
+    personnel: '#f093fb',     // Pink-purple
+    transfers: '#4facfe',     // Light blue
+    debt: '#f5576c',          // Red-pink (FIXED!)
+    operations: '#43e97b',    // Green (FIXED!)
+    other: '#ffa726',         // Orange
+    services: '#ab47bc',      // Purple
+    social: '#26c6da',        // Cyan
+    programs: '#66bb6a'       // Green
   }
   
   return CATEGORY_COLORS[spendingData?.category] || CATEGORY_COLORS.overview
