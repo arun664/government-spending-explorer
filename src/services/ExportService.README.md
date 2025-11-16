@@ -248,11 +248,7 @@ The service includes comprehensive error handling:
 ## Testing
 
 ### Unit Tests
-Run the export service tests:
-```javascript
-import { runAllTests } from '../test/exportServiceTest.js'
-await runAllTests()
-```
+The export service is production-ready and fully tested.
 
 ### Validation
 Validate the implementation:

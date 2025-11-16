@@ -11,7 +11,7 @@ import CompareView from './CompareView.jsx';
 import ExportButton from './ExportButton.jsx'
 import '../styles/GDPAnalysis.css'
 
-const GDPAnalysis = ({ compareMode = false, showGDPView = true }) => {
+const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange }) => {
   const svgRef = useRef(null)
   const gRef = useRef(null)
   const zoomRef = useRef(null)
@@ -47,6 +47,13 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true }) => {
       applyFilters()
     }
   }, [gdpData, filters])
+
+  // Sync loading state with parent component
+  useEffect(() => {
+    if (onLoadingChange) {
+      onLoadingChange(loading)
+    }
+  }, [loading, onLoadingChange])
 
   useEffect(() => {
     if (filteredCountries.length > 0) {

@@ -10,7 +10,7 @@ import '../styles/GDPSpendingComparison.css'
  * This component compares GDP growth data with government spending data
  * across different countries and time periods.
  */
-const GDPSpendingComparison = () => {
+const GDPSpendingComparison = ({ onLoadingChange }) => {
   const [data, setData] = useState({ gdp: [], expenses: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -29,6 +29,13 @@ const GDPSpendingComparison = () => {
       processComparisonData()
     }
   }, [data, selectedCountries, yearRange])
+
+  // Sync loading state with parent component
+  useEffect(() => {
+    if (onLoadingChange) {
+      onLoadingChange(loading)
+    }
+  }, [loading, onLoadingChange])
 
   const loadData = async () => {
     try {

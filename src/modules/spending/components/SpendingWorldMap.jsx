@@ -70,14 +70,7 @@ const SpendingWorldMap = ({
   }
 
   if (!worldData || !spendingData || !colorScale) {
-    return (
-      <div className={`spending-world-map loading ${className}`}>
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading world map...</p>
-        </div>
-      </div>
-    )
+    return null
   }
 
   return (

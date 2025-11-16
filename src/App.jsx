@@ -1,23 +1,37 @@
 import React, { useState, useEffect } from 'react'
 import './App.css'
-import { dataProcessor } from './services/DataProcessor.js'
 import ExportButton from './shared/components/ExportButton.jsx'
 
 // Import modules
 import { SpendingAnalysis, USReportGenerator } from './modules/spending'
 import { GDPAnalysis } from './modules/gdp'
-import { GDPSpendingComparison } from './modules/comparison'
+import { ComparisonDashboard } from './modules/comparison'
 
 function App() {
   const [currentView, setCurrentView] = useState('spending')
   const [spendingSubView, setSpendingSubView] = useState('global') // 'global' or 'us'
-  const [dataProcessingStatus, setDataProcessingStatus] = useState(null)
+
   const [exportData, setExportData] = useState(null)
+  // Page-specific loading states
+  const [spendingLoading, setSpendingLoading] = useState(true)
+  const [gdpLoading, setGdpLoading] = useState(true)
+  const [comparisonLoading, setComparisonLoading] = useState(true)
 
   // Clear export data when switching views
   useEffect(() => {
     setExportData(null)
   }, [currentView, spendingSubView])
+
+  // Reset loading state when switching to a new view
+  useEffect(() => {
+    if (currentView === 'spending') {
+      setSpendingLoading(true)
+    } else if (currentView === 'gdp') {
+      setGdpLoading(true)
+    } else if (currentView === 'comparison') {
+      setComparisonLoading(true)
+    }
+  }, [currentView])
 
   return (
     <div className="app">
@@ -48,7 +62,7 @@ function App() {
       </header>
 
       <main className={`app-content ${currentView === 'spending' ? 'spending-mode' : ''}`}>
-        <div className={`content-container ${currentView === 'spending' ? 'spending-mode' : ''}`}>
+        <div className={`content-container ${currentView === 'spending' ? 'spending-mode' : ''}`} style={{ position: 'relative' }}>
           {currentView === 'spending' && (
             <div className={`view-container ${currentView === 'spending' ? 'spending-mode' : ''}`}>
               <div className="sub-nav">
@@ -79,24 +93,37 @@ function App() {
                 </div>
               </div>
               
-              {spendingSubView === 'global' && <SpendingAnalysis onExportDataChange={setExportData} />}
+              {spendingSubView === 'global' && <SpendingAnalysis onExportDataChange={setExportData} onLoadingChange={setSpendingLoading} />}
               {spendingSubView === 'us' && <USReportGenerator onExportDataChange={setExportData} />}
             </div>
           )}
           
           {currentView === 'gdp' && (
             <div className="view-container">
-              <GDPAnalysis />
+              <GDPAnalysis onLoadingChange={setGdpLoading} />
             </div>
           )}
           
           {currentView === 'comparison' && (
             <div className="view-container comparison-view">
-              <GDPSpendingComparison />
+              <ComparisonDashboard onLoadingChange={setComparisonLoading} />
+            </div>
+          )}
+          
+          {/* Page-specific Loading Overlay - Only covers main content */}
+          {((currentView === 'spending' && spendingLoading) ||
+            (currentView === 'gdp' && gdpLoading) ||
+            (currentView === 'comparison' && comparisonLoading)) && (
+            <div className="global-loading-overlay">
+              <div className="loading-content">
+                <div className="spinner"></div>
+                <p>Loading {currentView} data...</p>
+              </div>
             </div>
           )}
         </div>
       </main>
+
     </div>
   )
 }

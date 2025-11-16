@@ -29,7 +29,7 @@ import '../styles/SpendingAnalysis.css'
  * - Advanced filtering by categories, countries, and time periods
  * - Export functionality with charts and data
  */
-const SpendingAnalysis = ({ onExportDataChange }) => {
+const SpendingAnalysis = ({ onExportDataChange, onLoadingChange }) => {
   // Core state
   const [spendingData, setSpendingData] = useState({})
   const [allIndicators, setAllIndicators] = useState({})
@@ -43,7 +43,7 @@ const SpendingAnalysis = ({ onExportDataChange }) => {
   const [worldData, setWorldData] = useState(null)
   const [colorScale, setColorScale] = useState(null)
   const [extent, setExtent] = useState([0, 100])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   
   // Filter state
@@ -60,6 +60,13 @@ const SpendingAnalysis = ({ onExportDataChange }) => {
   useEffect(() => {
     loadInitialData()
   }, [])
+
+  // Sync loading state with parent component
+  useEffect(() => {
+    if (onLoadingChange) {
+      onLoadingChange(loading)
+    }
+  }, [loading, onLoadingChange])
 
   // Handle click outside to close stats popup
   useEffect(() => {
@@ -331,14 +338,7 @@ const SpendingAnalysis = ({ onExportDataChange }) => {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="loading">
-        <div className="spinner"></div>
-        <p>Loading spending data...</p>
-      </div>
-    )
-  }
+
 
   if (error) {
     return (
