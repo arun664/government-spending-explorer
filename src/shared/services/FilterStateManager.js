@@ -293,10 +293,10 @@ export class FilterStateManager {
   loadCurrentModule() {
     try {
       const stored = sessionStorage.getItem(MODULE_STORAGE_KEY)
-      return stored || 'spending'
+      return stored || 'about'
     } catch (error) {
       console.error('FilterStateManager: Error loading current module', error)
-      return 'spending'
+      return 'about'
     }
   }
 

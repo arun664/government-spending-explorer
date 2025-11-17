@@ -12,6 +12,57 @@ import * as d3 from 'd3'
 import { getDataPath } from '../../../utils/pathUtils.js'
 
 /**
+ * Sector data files and metadata
+ */
+const SECTOR_FILES = [
+  'social_benefits_matrix.csv',
+  'compensation_of_employees_matrix.csv',
+  'interest_expense_matrix.csv',
+  'use_of_goods_and_services_matrix.csv',
+  'grants_expense_matrix.csv',
+  'other_expense_matrix.csv'
+]
+
+const SECTOR_METADATA = {
+  'social_benefits': { 
+    name: 'Social Benefits', 
+    color: '#4e79a7', 
+    icon: '👥',
+    description: 'Social security and welfare payments'
+  },
+  'compensation_of_employees': { 
+    name: 'Employee Compensation', 
+    color: '#f28e2c', 
+    icon: '💼',
+    description: 'Salaries and benefits for government employees'
+  },
+  'interest_expense': { 
+    name: 'Interest Payments', 
+    color: '#e15759', 
+    icon: '💰',
+    description: 'Interest on government debt'
+  },
+  'use_of_goods_and_services': { 
+    name: 'Goods & Services', 
+    color: '#76b7b2', 
+    icon: '🏭',
+    description: 'Government purchases of goods and services'
+  },
+  'grants_expense': { 
+    name: 'Grants', 
+    color: '#59a14f', 
+    icon: '🎁',
+    description: 'Grants to other governments and organizations'
+  },
+  'other_expense': { 
+    name: 'Other Expenses', 
+    color: '#edc949', 
+    icon: '📊',
+    description: 'Miscellaneous government expenses'
+  }
+}
+
+/**
  * Load GDP Growth data from gdp_clean.csv
  * Note: This contains growth rates, not absolute values
  * We'll use this for trend analysis and anomaly detection
@@ -530,6 +581,100 @@ export function analyzeGlobalTrends(data) {
   }
 }
 
+/**
+ * Load sector breakdown data for a specific country and year
+ * @param {string} countryName - Name of the country
+ * @param {number} year - Year to load data for
+ * @returns {Promise<Array>} Array of sector objects with name, value, percentage, color, icon, yearOverYearChange
+ */
+export async function loadSectorBreakdown(countryName, year) {
+  try {
+    // Load all sector CSV files
+    const sectorDataPromises = SECTOR_FILES.map(async (filename) => {
+      try {
+        const data = await d3.csv(getDataPath(filename))
+        
+        // Extract sector key from filename (e.g., 'social_benefits_matrix.csv' -> 'social_benefits')
+        const sectorKey = filename.replace('_matrix.csv', '').replace('_expense', '')
+        const metadata = SECTOR_METADATA[sectorKey]
+        
+        if (!metadata) {
+          console.warn(`No metadata found for sector: ${sectorKey}`)
+          return null
+        }
+        
+        // Find the country row
+        const countryRow = data.find(row => {
+          const rowCountry = row['Country'] || row['Country Name']
+          return rowCountry === countryName
+        })
+        
+        if (!countryRow) {
+          return null
+        }
+        
+        // Get value for the specified year
+        const yearStr = year.toString()
+        const value = parseFloat(countryRow[yearStr])
+        
+        if (isNaN(value) || value <= 0) {
+          return null
+        }
+        
+        // Get previous year value for YoY calculation
+        const prevYearStr = (year - 1).toString()
+        const prevValue = parseFloat(countryRow[prevYearStr])
+        let yearOverYearChange = null
+        
+        if (!isNaN(prevValue) && prevValue > 0) {
+          yearOverYearChange = ((value - prevValue) / prevValue) * 100
+        }
+        
+        return {
+          key: sectorKey,
+          name: metadata.name,
+          value: value,
+          color: metadata.color,
+          icon: metadata.icon,
+          description: metadata.description,
+          yearOverYearChange: yearOverYearChange
+        }
+      } catch (error) {
+        console.warn(`Failed to load sector file ${filename}:`, error.message)
+        return null
+      }
+    })
+    
+    // Wait for all sector data to load
+    const sectorResults = await Promise.all(sectorDataPromises)
+    
+    // Filter out null results (missing data)
+    const validSectors = sectorResults.filter(sector => sector !== null)
+    
+    if (validSectors.length === 0) {
+      console.warn(`No sector data available for ${countryName} in ${year}`)
+      return []
+    }
+    
+    // Calculate total expense across all sectors
+    const totalExpense = validSectors.reduce((sum, sector) => sum + sector.value, 0)
+    
+    // Calculate percentage for each sector
+    const sectorsWithPercentage = validSectors.map(sector => ({
+      ...sector,
+      percentage: (sector.value / totalExpense) * 100
+    }))
+    
+    // Sort by value (descending)
+    const sortedSectors = sectorsWithPercentage.sort((a, b) => b.value - a.value)
+    
+    return sortedSectors
+  } catch (error) {
+    console.error(`Error loading sector breakdown for ${countryName} (${year}):`, error)
+    return []
+  }
+}
+
 export default {
   loadGdpExpenseData,
   getCountryData,
@@ -539,5 +684,6 @@ export default {
   calculateExpenseToGdpRatios,
   getTopSpenders,
   calculateStatistics,
-  analyzeGlobalTrends
+  analyzeGlobalTrends,
+  loadSectorBreakdown
 }

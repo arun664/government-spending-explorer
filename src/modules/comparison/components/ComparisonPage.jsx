@@ -11,19 +11,22 @@
 
 import { useState, useEffect } from 'react'
 import GdpExpenseChart from './GdpExpenseChart.jsx'
+import ChartTypeSelector from './ChartTypeSelector.jsx'
 import { 
   loadGdpExpenseData,
   detectAnomalies,
   calculateExpenseToGdpRatios,
   getTopSpenders,
   calculateStatistics,
-  analyzeGlobalTrends
+  analyzeGlobalTrends,
+  loadSectorBreakdown
 } from '../services/GdpExpenseDataService.js'
 import '../styles/ComparisonPage.css'
 
 // Main component
 function ComparisonContent({ onLoadingChange, onControlsReady }) {
   const [selectedCountry, setSelectedCountry] = useState('WORLD')
+  const [chartType, setChartType] = useState('line')
   const [countries, setCountries] = useState([])
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -35,6 +38,11 @@ function ComparisonContent({ onLoadingChange, onControlsReady }) {
   const [topSpenders, setTopSpenders] = useState([])
   const [statistics, setStatistics] = useState(null)
   const [trends, setTrends] = useState('')
+  
+  // Sector breakdown state
+  const [sectorBreakdown, setSectorBreakdown] = useState([])
+  const [loadingSectors, setLoadingSectors] = useState(false)
+  const [sectorError, setSectorError] = useState(null)
 
   // Load data on mount
   useEffect(() => {
@@ -75,17 +83,15 @@ function ComparisonContent({ onLoadingChange, onControlsReady }) {
     fetchData()
   }, [onLoadingChange])
   
-  // Chart type state
-  const [chartType, setChartType] = useState('timeSeries')
-
   // Notify parent about available controls
   useEffect(() => {
     if (onControlsReady && data) {
-      // Provide only the Time Series chart (line chart)
+      // Provide all available chart types
       onControlsReady({
         chartType: chartType,
         chartTypes: [
-          { id: 'timeSeries', name: 'GDP vs Expense Growth', icon: '📈' }
+          { id: 'line', name: 'Line Chart', icon: '📈' },
+          { id: 'scatter', name: 'Bubble Chart', icon: '🫧' }
         ],
         onChartTypeChange: (newType) => setChartType(newType)
       })
@@ -95,6 +101,55 @@ function ComparisonContent({ onLoadingChange, onControlsReady }) {
   const handleCountryChange = (event) => {
     setSelectedCountry(event.target.value)
   }
+
+  const handleChartTypeChange = (newChartType) => {
+    setChartType(newChartType)
+  }
+  
+  // Load sector breakdown when country changes
+  useEffect(() => {
+    async function fetchSectorData() {
+      // Only load sector data for specific countries (not WORLD)
+      if (!selectedCountry || selectedCountry === 'WORLD' || !data) {
+        setSectorBreakdown([])
+        return
+      }
+      
+      try {
+        setLoadingSectors(true)
+        setSectorError(null)
+        
+        // Get the most recent year with data
+        const latestYear = data.years && data.years.length > 0 
+          ? Math.max(...data.years) 
+          : new Date().getFullYear()
+        
+        const sectors = await loadSectorBreakdown(selectedCountry, latestYear)
+        setSectorBreakdown(sectors)
+        
+        // Log sector data for validation
+        if (sectors.length > 0) {
+          const totalPercentage = sectors.reduce((sum, s) => sum + s.percentage, 0)
+          console.log(`Sector breakdown for ${selectedCountry} (${latestYear}):`)
+          console.log(`  - ${sectors.length} sectors loaded`)
+          console.log(`  - Total percentage: ${totalPercentage.toFixed(2)}%`)
+          sectors.forEach(s => {
+            console.log(`  - ${s.name}: ${s.value.toFixed(2)} (${s.percentage.toFixed(1)}%)`)
+          })
+        } else {
+          console.log(`No sector data available for ${selectedCountry}`)
+        }
+      } catch (err) {
+        console.error('Error loading sector breakdown:', err)
+        setSectorError(err.message)
+        setSectorBreakdown([])
+      } finally {
+        setLoadingSectors(false)
+      }
+    }
+    
+    fetchSectorData()
+  }, [selectedCountry, data])
 
   // Helper function to check if a country has anomalies
   const hasAnomalies = (countryName) => {
@@ -128,34 +183,18 @@ function ComparisonContent({ onLoadingChange, onControlsReady }) {
 
   return (
     <div className="comparison-page-simple">
-      {/* Header with Country Selector */}
-      <div className="comparison-header-simple">
-        <div className="header-left">
-          <h2>GDP vs Government Expense Comparison</h2>
-          <p className="header-subtitle">Values in domestic currency (USD, EUR, INR, etc.)</p>
-        </div>
-        <div className="header-controls">
-          <div className="country-selector">
-            <label htmlFor="country-select">Country:</label>
-            <select 
-              id="country-select"
-              value={selectedCountry} 
-              onChange={handleCountryChange}
-              className="country-dropdown"
-            >
-              <option key="WORLD" value="WORLD">🌍 World Average</option>
-              {countries.map((country, index) => (
-                <option key={`${country.name}-${index}`} value={country.name}>
-                  {hasAnomalies(country.name) ? '⚠️ ' : ''}{country.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
       {/* Main Chart Area */}
-      <div className="chart-area-simple">
+      <div className="chart-area-simple" style={{ position: 'relative' }}>
+        {/* Chart Type Selector - Floating in top-right */}
+        {!loading && !error && (
+          <div style={{ position: 'absolute', top: '15px', right: '15px', zIndex: 100 }}>
+            <ChartTypeSelector 
+              value={chartType} 
+              onChange={handleChartTypeChange}
+            />
+          </div>
+        )}
+        
         {loading ? (
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -167,13 +206,37 @@ function ComparisonContent({ onLoadingChange, onControlsReady }) {
             <p>Error loading data: {error}</p>
           </div>
         ) : (
-          <div className="chart-with-insights">
-            <div className="chart-main">
-              <GdpExpenseChart selectedCountry={selectedCountry} data={data} />
+          <div className={chartType === 'scatter' ? 'chart-fullscreen' : 'chart-with-insights'}>
+            <div className={chartType === 'scatter' ? 'chart-fullscreen-main' : 'chart-main'}>
+              <GdpExpenseChart 
+                selectedCountry={selectedCountry} 
+                data={data} 
+                chartType={chartType}
+              />
             </div>
             
-            {/* Trends and Anomalies Panel */}
+            {/* Trends and Anomalies Panel - Hidden in bubble chart mode */}
+            {chartType !== 'scatter' && (
             <div className="comparison-insights-panel">
+              {/* Country Selector - Above insights */}
+              <div className="country-selector" style={{ marginBottom: '12px' }}>
+                <label htmlFor="country-select" style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', marginBottom: '6px', display: 'block' }}>Country:</label>
+                <select 
+                  id="country-select"
+                  value={selectedCountry} 
+                  onChange={handleCountryChange}
+                  className="country-dropdown"
+                  style={{ width: '100%', padding: '8px 12px', fontSize: '13px', border: '1px solid #e2e8f0', borderRadius: '6px', background: 'white', cursor: 'pointer' }}
+                >
+                  <option key="WORLD" value="WORLD">🌍 World Average</option>
+                  {countries.map((country, index) => (
+                    <option key={`${country.name}-${index}`} value={country.name}>
+                      {hasAnomalies(country.name) ? '⚠️ ' : ''}{country.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
               <h3 className="comparison-insights-title">📊 Insights</h3>
               
               {/* Trends Section */}
@@ -264,12 +327,60 @@ function ComparisonContent({ onLoadingChange, onControlsReady }) {
                   </div>
                 </div>
               )}
+              
+              {/* Sector Breakdown Section */}
+              <div className="comparison-insights-section">
+                <h4 className="comparison-section-title">
+                  🏛️ Sector Breakdown
+                </h4>
+                {selectedCountry === 'WORLD' ? (
+                  <p className="comparison-no-data">
+                    Select a specific country to view sector breakdown
+                  </p>
+                ) : loadingSectors ? (
+                  <div className="comparison-loading-sectors">
+                    <div className="loading-spinner-small"></div>
+                    <p>Loading sector data...</p>
+                  </div>
+                ) : sectorError ? (
+                  <p className="comparison-error-text">
+                    Error loading sector data: {sectorError}
+                  </p>
+                ) : sectorBreakdown.length > 0 ? (
+                  <div className="comparison-sectors-list">
+                    {sectorBreakdown.slice(0, 5).map((sector, index) => (
+                      <div key={index} className="comparison-sector-item">
+                        <div className="comparison-sector-header">
+                          <span className="comparison-sector-icon">{sector.icon}</span>
+                          <span className="comparison-sector-name">{sector.name}</span>
+                        </div>
+                        <div className="comparison-sector-stats">
+                          <span className="comparison-sector-percentage">
+                            {sector.percentage.toFixed(1)}%
+                          </span>
+                          {sector.yearOverYearChange !== null && (
+                            <span className={`comparison-sector-change ${sector.yearOverYearChange > 0 ? 'positive' : 'negative'}`}>
+                              {sector.yearOverYearChange > 0 ? '↑' : '↓'} {Math.abs(sector.yearOverYearChange).toFixed(1)}%
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="comparison-no-data">
+                    No sector data available for {selectedCountry}
+                  </p>
+                )}
+              </div>
             </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Info Section */}
+      {/* Info Section - Hidden in bubble chart mode */}
+      {chartType !== 'scatter' && (
       <div className="info-section">
         <div className="info-card">
           <h3>About This Comparison</h3>
@@ -283,6 +394,7 @@ function ComparisonContent({ onLoadingChange, onControlsReady }) {
           </p>
         </div>
       </div>
+      )}
     </div>
   )
 }

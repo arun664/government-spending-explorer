@@ -3,8 +3,8 @@
  */
 
 .comparison-page-simple {
-  padding: 20px;
-  max-width: 1400px;
+  padding: 0;
+  max-width: 100%;
   margin: 0 auto;
   background: #f8f9fa;
   min-height: 100vh;
@@ -79,6 +79,41 @@
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
+/* Chart Type Selector */
+.chart-type-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chart-type-selector label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.chart-type-dropdown {
+  padding: 8px 16px;
+  font-size: 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  color: #2d3748;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 180px;
+}
+
+.chart-type-dropdown:hover {
+  border-color: #007bff;
+}
+
+.chart-type-dropdown:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
 /* Anomaly indicator styling in dropdown */
 .country-dropdown option {
   padding: 8px;
@@ -92,11 +127,11 @@
 
 .chart-area-simple {
   background: white;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-  min-height: 500px;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin-bottom: 0;
+  min-height: 100vh;
 }
 
 .gdp-expense-chart {
@@ -172,6 +207,22 @@
 
   .comparison-header-simple h2 {
     font-size: 20px;
+  }
+
+  .header-controls {
+    width: 100%;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .chart-type-selector {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .chart-type-dropdown {
+    width: 100%;
   }
 
   .country-selector {
@@ -574,6 +625,110 @@
   padding: 12px;
 }
 
+/* Sector Breakdown */
+.comparison-sectors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+}
+
+.comparison-sector-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.comparison-sector-item:last-child {
+  border-bottom: none;
+}
+
+.comparison-sector-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.comparison-sector-icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+.comparison-sector-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  flex: 1;
+}
+
+.comparison-sector-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 28px;
+}
+
+.comparison-sector-percentage {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  font-family: 'Courier New', monospace;
+}
+
+.comparison-sector-change {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.comparison-sector-change.positive {
+  color: #059669;
+  background: #d1fae5;
+}
+
+.comparison-sector-change.negative {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+/* Loading Sectors */
+.comparison-loading-sectors {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px;
+}
+
+.loading-spinner-small {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #f1f3f5;
+  border-top-color: #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.comparison-loading-sectors p {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Error Text */
+.comparison-error-text {
+  margin: 0;
+  font-size: 13px;
+  color: #ef4444;
+  text-align: center;
+  padding: 12px;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .chart-with-insights {
@@ -711,4 +866,58 @@ div[class*="tooltip"] .value {
 svg text.tooltip-text,
 svg text[class*="tooltip"] {
   fill: #1a1a1a !important;
+}
+
+
+/* ========================================
+   FULLSCREEN BUBBLE CHART MODE
+   ======================================== */
+
+.chart-fullscreen {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100%;
+  height: calc(100vh - 200px);
+  min-height: 700px;
+}
+
+.chart-fullscreen-main {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-fullscreen-main .gdp-expense-chart {
+  width: 100%;
+  height: 100%;
+}
+
+.chart-fullscreen-main svg {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+/* Hide elements in fullscreen bubble mode */
+.chart-fullscreen .comparison-insights-panel,
+.chart-fullscreen + .info-section {
+  display: none !important;
+}
+
+/* Adjust chart area for fullscreen */
+.comparison-page-simple:has(.chart-fullscreen) .chart-area-simple {
+  padding: 0;
+  min-height: calc(100vh - 200px);
+}
+
+/* Responsive fullscreen */
+@media (max-width: 768px) {
+  .chart-fullscreen {
+    height: calc(100vh - 250px);
+    min-height: 500px;
+  }
 }

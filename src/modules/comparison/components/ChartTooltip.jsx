@@ -54,8 +54,16 @@ export function ChartTooltip({ data, position, visible = true }) {
   const tooltipRef = useRef(null)
   const [adjustedPosition, setAdjustedPosition] = useState(position || { x: 0, y: 0 })
 
+  // Reset adjusted position when tooltip should be hidden
   useEffect(() => {
-    if (!tooltipRef.current || !position) return
+    if (!visible || !position) {
+      setAdjustedPosition(null)
+      return
+    }
+  }, [visible, position])
+
+  useEffect(() => {
+    if (!tooltipRef.current || !position || !visible) return
 
     const tooltip = tooltipRef.current
     const rect = tooltip.getBoundingClientRect()
@@ -80,12 +88,15 @@ export function ChartTooltip({ data, position, visible = true }) {
     }
 
     setAdjustedPosition({ x, y })
-  }, [position])
+  }, [position, visible])
 
   // Early return if not visible or missing required data
-  if (!visible || !data || !position || !adjustedPosition) {
+  if (!visible || !data || !position) {
     return null
   }
+  
+  // Use position directly if adjustedPosition not ready yet
+  const displayPosition = adjustedPosition || position
 
   const {
     countryName,
@@ -104,10 +115,11 @@ export function ChartTooltip({ data, position, visible = true }) {
       ref={tooltipRef}
       className="chart-tooltip"
       style={{
-        left: `${adjustedPosition?.x || 0}px`,
-        top: `${adjustedPosition?.y || 0}px`,
+        left: `${displayPosition.x}px`,
+        top: `${displayPosition.y}px`,
         opacity: visible ? 1 : 0,
-        pointerEvents: 'none'
+        pointerEvents: 'none',
+        zIndex: 99999
       }}
     >
       <div className="tooltip-header">
