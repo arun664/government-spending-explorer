@@ -7,6 +7,7 @@ import {
   zoomToCountry
 } from '../services/SpendingMapService.js'
 import { getCurrencyCode } from '../../../shared/utils/CurrencyMapping.js'
+import { formatLargeNumber } from '../utils/formatUtils.js'
 import '../styles/SpendingWorldMap.css'
 
 const SpendingWorldMap = ({ 
@@ -176,10 +177,10 @@ const SpendingWorldMap = ({
               <div className="info-section">
                 <h5>Statistics (Mixed Currencies)</h5>
                 <p className="info-item">
-                  <strong>Average:</strong> {spendingData.globalStats.avgSpending.toFixed(2)}M
+                  <strong>Average:</strong> {formatLargeNumber(spendingData.globalStats.avgSpending, 2)}
                 </p>
                 <p className="info-item">
-                  <strong>Range:</strong> {spendingData.globalStats.minSpending.toFixed(2)}M - {spendingData.globalStats.maxSpending.toFixed(2)}M
+                  <strong>Range:</strong> {formatLargeNumber(spendingData.globalStats.minSpending, 2)} - {formatLargeNumber(spendingData.globalStats.maxSpending, 2)}
                 </p>
               </div>
             )}
@@ -222,7 +223,7 @@ const SpendingWorldMap = ({
                   <span className="label">Value:</span>
                   <span className="value">
                     {tooltip.data.spending !== null 
-                      ? `${tooltip.data.spending.toFixed(2)}M ${getCurrencyCode(tooltip.data.name)}`
+                      ? `${formatLargeNumber(tooltip.data.spending, 2)} ${getCurrencyCode(tooltip.data.name)}`
                       : 'N/A'}
                   </span>
                 </div>

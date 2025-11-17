@@ -12,6 +12,7 @@
 import { useState, useEffect } from 'react'
 import GdpExpenseChart from './GdpExpenseChart.jsx'
 import ChartTypeSelector from './ChartTypeSelector.jsx'
+import { formatNumber } from '../utils/formatNumber.js'
 import { 
   loadGdpExpenseData,
   detectAnomalies,
@@ -297,31 +298,31 @@ function ComparisonContent({ onLoadingChange, onControlsReady }) {
                     <div className="comparison-stat-row">
                       <span className="comparison-stat-label">Average</span>
                       <span className="comparison-stat-value">
-                        {countryStats.mean ? `${countryStats.mean.toFixed(1)}M` : 'N/A'}
+                        {countryStats.mean ? formatNumber(countryStats.mean) : 'N/A'}
                       </span>
                     </div>
                     <div className="comparison-stat-row">
                       <span className="comparison-stat-label">Median</span>
                       <span className="comparison-stat-value">
-                        {countryStats.median ? `${countryStats.median.toFixed(1)}M` : 'N/A'}
+                        {countryStats.median ? formatNumber(countryStats.median) : 'N/A'}
                       </span>
                     </div>
                     <div className="comparison-stat-row">
                       <span className="comparison-stat-label">Std Dev</span>
                       <span className="comparison-stat-value">
-                        {countryStats.stdDev ? `${countryStats.stdDev.toFixed(1)}M` : 'N/A'}
+                        {countryStats.stdDev ? formatNumber(countryStats.stdDev) : 'N/A'}
                       </span>
                     </div>
                     <div className="comparison-stat-row">
                       <span className="comparison-stat-label">Min</span>
                       <span className="comparison-stat-value">
-                        {countryStats.min ? `${countryStats.min.toFixed(1)}M` : 'N/A'}
+                        {countryStats.min ? formatNumber(countryStats.min) : 'N/A'}
                       </span>
                     </div>
                     <div className="comparison-stat-row">
                       <span className="comparison-stat-label">Max</span>
                       <span className="comparison-stat-value">
-                        {countryStats.max ? `${countryStats.max.toFixed(1)}M` : 'N/A'}
+                        {countryStats.max ? formatNumber(countryStats.max) : 'N/A'}
                       </span>
                     </div>
                   </div>
