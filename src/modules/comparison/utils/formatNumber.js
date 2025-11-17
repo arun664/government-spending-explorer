@@ -50,6 +50,36 @@ export function formatNumberWithCommas(value, decimals = 0) {
 }
 
 /**
+ * formatValueInMillions - Format values that are already in millions
+ * NOTE: CSV data is already in millions, so values are in millions of domestic currency
+ * 
+ * @param {number} value - The value in millions
+ * @param {number} decimals - Number of decimal places (default: 1)
+ * @returns {string} Formatted value with appropriate suffix
+ */
+export function formatValueInMillions(value, decimals = 1) {
+  if (value === null || value === undefined || isNaN(value)) return 'N/A'
+  
+  const absValue = Math.abs(value)
+  
+  // Values are already in millions from CSV
+  // So we just need to format them appropriately
+  if (absValue >= 1000000) {
+    // If value is >= 1 trillion (in millions), show as T
+    return `${(value / 1000000).toFixed(decimals)}T`
+  } else if (absValue >= 1000) {
+    // If value is >= 1 billion (in millions), show as B
+    return `${(value / 1000).toFixed(decimals)}B`
+  } else if (absValue >= 1) {
+    // If value is >= 1 million, show as M
+    return `${value.toFixed(decimals)}M`
+  } else {
+    // If value is < 1 million, show with decimals
+    return `${value.toFixed(2)}M`
+  }
+}
+
+/**
  * getNumberFormatter - Get a D3-compatible number formatter
  * 
  * @param {number} maxValue - Maximum value in the dataset

@@ -38,7 +38,7 @@ export const CategoryLegendExample = () => {
       extent={extent}
       colorScale={colorScale}
       title="Government Expenditure"
-      unit="Million USD"
+      unit="USD"
       colorMode="category"
       spendingData={spendingData}
     />
@@ -105,7 +105,7 @@ export const DynamicLegendExample = () => {
         extent={extent}
         colorScale={colorScale}
         title={spendingData.name}
-        unit="Million USD"
+        unit="USD"
         colorMode="category"
         spendingData={spendingData}
       />
@@ -135,7 +135,7 @@ export const MapLegendIntegrationExample = ({ worldData, spendingData }) => {
         extent={extent}
         colorScale={colorScale}
         title={spendingData.name}
-        unit="Million USD"
+        unit="USD"
         colorMode="category"
         spendingData={spendingData}
       />
@@ -185,7 +185,7 @@ export const ColorModeSwitchingExample = ({ spendingData }) => {
         extent={extent}
         colorScale={colorScale}
         title={colorMode === 'category' ? spendingData.name : 'Geographic Regions'}
-        unit="Million USD"
+        unit="USD"
         colorMode={colorMode}
         spendingData={spendingData}
       />
@@ -212,3 +212,4 @@ export const ColorModeSwitchingExample = ({ spendingData }) => {
  * 
  * 7. Region mode shows discrete colors for each region
  */
+

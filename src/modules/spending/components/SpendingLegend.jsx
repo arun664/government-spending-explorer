@@ -19,7 +19,7 @@ const SpendingLegend = ({
   extent, 
   colorScale, 
   title, 
-  unit = "Million USD",
+  unit = "USD",
   colorMode = 'category',
   category = 'overview',
   spendingData

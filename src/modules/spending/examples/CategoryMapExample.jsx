@@ -136,7 +136,7 @@ const CategoryMapExample = () => {
                   <strong>Dominant Category:</strong> {selectedCountry.spending.dominantCategory}
                 </p>
                 <p style={{ margin: '0', fontSize: '13px' }}>
-                  <strong>Total Spending:</strong> {selectedCountry.spending.average?.toFixed(2)} Million USD
+                  <strong>Total Spending:</strong> {selectedCountry.spending.average?.toFixed(2)}M USD
                 </p>
               </div>
             )}

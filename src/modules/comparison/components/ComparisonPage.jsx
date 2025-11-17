@@ -12,7 +12,7 @@
 import { useState, useEffect } from 'react'
 import GdpExpenseChart from './GdpExpenseChart.jsx'
 import ChartTypeSelector from './ChartTypeSelector.jsx'
-import { formatNumber } from '../utils/formatNumber.js'
+import { formatValueInMillions } from '../utils/formatNumber.js'
 import { 
   loadGdpExpenseData,
   detectAnomalies,
@@ -298,31 +298,31 @@ function ComparisonContent({ onLoadingChange, onControlsReady }) {
                     <div className="comparison-stat-row">
                       <span className="comparison-stat-label">Average</span>
                       <span className="comparison-stat-value">
-                        {countryStats.mean ? formatNumber(countryStats.mean) : 'N/A'}
+                        {countryStats.mean ? formatValueInMillions(countryStats.mean) : 'N/A'}
                       </span>
                     </div>
                     <div className="comparison-stat-row">
                       <span className="comparison-stat-label">Median</span>
                       <span className="comparison-stat-value">
-                        {countryStats.median ? formatNumber(countryStats.median) : 'N/A'}
+                        {countryStats.median ? formatValueInMillions(countryStats.median) : 'N/A'}
                       </span>
                     </div>
                     <div className="comparison-stat-row">
                       <span className="comparison-stat-label">Std Dev</span>
                       <span className="comparison-stat-value">
-                        {countryStats.stdDev ? formatNumber(countryStats.stdDev) : 'N/A'}
+                        {countryStats.stdDev ? formatValueInMillions(countryStats.stdDev) : 'N/A'}
                       </span>
                     </div>
                     <div className="comparison-stat-row">
                       <span className="comparison-stat-label">Min</span>
                       <span className="comparison-stat-value">
-                        {countryStats.min ? formatNumber(countryStats.min) : 'N/A'}
+                        {countryStats.min ? formatValueInMillions(countryStats.min) : 'N/A'}
                       </span>
                     </div>
                     <div className="comparison-stat-row">
                       <span className="comparison-stat-label">Max</span>
                       <span className="comparison-stat-value">
-                        {countryStats.max ? formatNumber(countryStats.max) : 'N/A'}
+                        {countryStats.max ? formatValueInMillions(countryStats.max) : 'N/A'}
                       </span>
                     </div>
                   </div>
