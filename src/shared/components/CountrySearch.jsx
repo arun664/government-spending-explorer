@@ -167,8 +167,6 @@ const CountrySearch = ({
   return (
     <div className="country-search" ref={searchRef}>
       <div className="search-input-wrapper">
-        <span className="search-icon" aria-hidden="true">🔍</span>
-        
         <input
           ref={inputRef}
           type="text"

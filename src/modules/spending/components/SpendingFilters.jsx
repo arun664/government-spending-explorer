@@ -79,21 +79,6 @@ const SpendingFilters = ({
     }
   }
 
-  const handleValueRangeChange = (field, value) => {
-    const currentFilters = filterStateManager.getFilters()
-    const parsedValue = ValueFormatUtils.parseMillions(value)
-    const newRange = field === 'min' 
-      ? [parsedValue, currentFilters.valueRange[1]]
-      : [currentFilters.valueRange[0], parsedValue]
-    
-    const validation = ValueFormatUtils.validateRange(newRange[0], newRange[1])
-    if (validation.isValid) {
-      filterStateManager.updateFilters({ valueRange: newRange })
-    }
-  }
-
-
-
   const handleRegionToggle = (region) => {
     const currentFilters = filterStateManager.getFilters()
     const newRegions = currentFilters.regions.includes(region)
@@ -419,46 +404,7 @@ const SpendingFilters = ({
             </div>
           </div>
 
-          <div className="filter-group">
-            <label className="filter-label" id="value-range-label">Value Range (Millions USD)</label>
-            <div className="value-range-inputs" role="group" aria-labelledby="value-range-label">
-              <div className="value-input">
-                <label htmlFor="value-min">Min</label>
-                <div className="input-with-suffix">
-                  <input
-                    id="value-min"
-                    type="number"
-                    min="0"
-                    step="100"
-                    value={filters.valueRange[0]}
-                    onChange={(e) => handleValueRangeChange('min', e.target.value)}
-                    placeholder="0"
-                    aria-label="Minimum value in millions USD"
-                  />
-                  <span className="unit-suffix" aria-hidden="true">M</span>
-                </div>
-              </div>
-              <div className="value-input">
-                <label htmlFor="value-max">Max</label>
-                <div className="input-with-suffix">
-                  <input
-                    id="value-max"
-                    type="number"
-                    min="0"
-                    step="100"
-                    value={filters.valueRange[1]}
-                    onChange={(e) => handleValueRangeChange('max', e.target.value)}
-                    placeholder="100,000"
-                    aria-label="Maximum value in millions USD"
-                  />
-                  <span className="unit-suffix" aria-hidden="true">M</span>
-                </div>
-              </div>
-            </div>
-            <div className="range-display" aria-live="polite">
-              {ValueFormatUtils.createRangeLabel(filters.valueRange[0], filters.valueRange[1])}
-            </div>
-          </div>
+
         </>
       )}
 

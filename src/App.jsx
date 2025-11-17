@@ -1,30 +1,25 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
-import ExportButton from './shared/components/ExportButton.jsx'
 import { filterStateManager } from './shared/services/FilterStateManager.js'
 
 // Import modules
-import { SpendingAnalysis, USReportGenerator } from './modules/spending'
+import { SpendingAnalysis } from './modules/spending'
 import { GDPAnalysis } from './modules/gdp'
-import { ComparisonDashboard } from './modules/comparison'
+import { ComparisonPage } from './modules/comparison'
+import { AboutPage } from './modules/about'
 
 function App() {
   const [currentView, setCurrentView] = useState(() => {
-    // Restore last viewed module from session storage
-    return filterStateManager.getCurrentModule() || 'spending'
+    // Restore last viewed module from session storage, default to 'about'
+    return filterStateManager.getCurrentModule() || 'about'
   })
-  const [spendingSubView, setSpendingSubView] = useState('global') // 'global' or 'us'
-
-  const [exportData, setExportData] = useState(null)
   // Page-specific loading states
   const [spendingLoading, setSpendingLoading] = useState(true)
   const [gdpLoading, setGdpLoading] = useState(true)
   const [comparisonLoading, setComparisonLoading] = useState(true)
-
-  // Clear export data when switching views
-  useEffect(() => {
-    setExportData(null)
-  }, [currentView, spendingSubView])
+  
+  // Comparison controls state
+  const [comparisonControls, setComparisonControls] = useState(null)
 
   // Reset loading state when switching to a new view
   useEffect(() => {
@@ -49,63 +44,94 @@ function App() {
       <header className="app-header">
         <div className="header-content">
           <h1>Government Expense Dashboard</h1>
-          <nav className="nav-tabs">
-            <button 
-              className={`nav-tab ${currentView === 'spending' ? 'active' : ''}`}
-              onClick={() => handleModuleSwitch('spending')}
-            >
-              Spending
-            </button>
-            <button 
-              className={`nav-tab ${currentView === 'gdp' ? 'active' : ''}`}
-              onClick={() => handleModuleSwitch('gdp')}
-            >
-              GDP
-            </button>
-            <button 
-              className={`nav-tab ${currentView === 'comparison' ? 'active' : ''}`}
-              onClick={() => handleModuleSwitch('comparison')}
-            >
-              Comparison
-            </button>
-          </nav>
+          
+          {/* Center section - Nav tabs or Comparison controls */}
+          {currentView === 'comparison' && comparisonControls ? (
+            <div className="comparison-header-controls">
+              <select
+                value={comparisonControls.chartType}
+                onChange={(e) => comparisonControls.onChartTypeChange(e.target.value)}
+                className="comparison-control-select"
+              >
+                {comparisonControls.chartTypes?.map(chartType => (
+                  <option key={chartType.id} value={chartType.id} style={{ color: '#000' }}>
+                    {chartType.icon} {chartType.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <nav className="nav-tabs">
+              <button 
+                className={`nav-tab ${currentView === 'about' ? 'active' : ''}`}
+                onClick={() => handleModuleSwitch('about')}
+              >
+                About
+              </button>
+              <button 
+                className={`nav-tab ${currentView === 'spending' ? 'active' : ''}`}
+                onClick={() => handleModuleSwitch('spending')}
+              >
+                Spending
+              </button>
+              <button 
+                className={`nav-tab ${currentView === 'gdp' ? 'active' : ''}`}
+                onClick={() => handleModuleSwitch('gdp')}
+              >
+                GDP
+              </button>
+              <button 
+                className={`nav-tab ${currentView === 'comparison' ? 'active' : ''}`}
+                onClick={() => handleModuleSwitch('comparison')}
+              >
+                Comparison
+              </button>
+            </nav>
+          )}
+          
+          {/* Right section - Nav tabs when in comparison view */}
+          {currentView === 'comparison' && (
+            <nav className="nav-tabs nav-tabs-right">
+              <button 
+                className={`nav-tab ${currentView === 'about' ? 'active' : ''}`}
+                onClick={() => handleModuleSwitch('about')}
+              >
+                About
+              </button>
+              <button 
+                className={`nav-tab ${currentView === 'spending' ? 'active' : ''}`}
+                onClick={() => handleModuleSwitch('spending')}
+              >
+                Spending
+              </button>
+              <button 
+                className={`nav-tab ${currentView === 'gdp' ? 'active' : ''}`}
+                onClick={() => handleModuleSwitch('gdp')}
+              >
+                GDP
+              </button>
+              <button 
+                className={`nav-tab ${currentView === 'comparison' ? 'active' : ''}`}
+                onClick={() => handleModuleSwitch('comparison')}
+              >
+                Comparison
+              </button>
+            </nav>
+          )}
         </div>
       </header>
 
       <main className={`app-content ${currentView === 'spending' ? 'spending-mode' : ''}`}>
         <div className={`content-container ${currentView === 'spending' ? 'spending-mode' : ''}`} style={{ position: 'relative' }}>
+          {currentView === 'about' && (
+            <div className="view-container">
+              <AboutPage />
+            </div>
+          )}
+          
           {currentView === 'spending' && (
             <div className={`view-container ${currentView === 'spending' ? 'spending-mode' : ''}`}>
-              <div className="sub-nav">
-                <div className="sub-nav-left">
-                  <button 
-                    className={`sub-nav-tab ${spendingSubView === 'global' ? 'active' : ''}`}
-                    onClick={() => setSpendingSubView('global')}
-                  >
-                    Global Analysis
-                  </button>
-                  <button 
-                    className={`sub-nav-tab ${spendingSubView === 'us' ? 'active' : ''}`}
-                    onClick={() => setSpendingSubView('us')}
-                  >
-                    US Analysis
-                  </button>
-                </div>
-                <div className="sub-nav-right">
-                  {exportData && (
-                    <ExportButton 
-                      data={exportData.data}
-                      chartElements={exportData.chartElements}
-                      reportType={exportData.reportType}
-                      fileName={exportData.fileName}
-                      metadata={exportData.metadata}
-                    />
-                  )}
-                </div>
-              </div>
-              
-              {spendingSubView === 'global' && <SpendingAnalysis onExportDataChange={setExportData} onLoadingChange={setSpendingLoading} />}
-              {spendingSubView === 'us' && <USReportGenerator onExportDataChange={setExportData} />}
+              <SpendingAnalysis onLoadingChange={setSpendingLoading} />
             </div>
           )}
           
@@ -117,12 +143,15 @@ function App() {
           
           {currentView === 'comparison' && (
             <div className="view-container comparison-view">
-              <ComparisonDashboard onLoadingChange={setComparisonLoading} />
+              <ComparisonPage 
+                onLoadingChange={setComparisonLoading}
+                onControlsReady={setComparisonControls}
+              />
             </div>
           )}
           
-          {/* Page-specific Loading Overlay - Only covers main content */}
-          {((currentView === 'spending' && spendingLoading) ||
+          {/* Page-specific Loading Overlay - Only covers main content (not for About page) */}
+          {currentView !== 'about' && ((currentView === 'spending' && spendingLoading) ||
             (currentView === 'gdp' && gdpLoading) ||
             (currentView === 'comparison' && comparisonLoading)) && (
             <div className="global-loading-overlay">

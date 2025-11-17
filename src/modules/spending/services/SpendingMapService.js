@@ -148,6 +148,30 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
               category: spendingData.category
             })
           }
+          
+          // Debug specific problematic countries
+          if (['Argentina', 'Malaysia', 'Vietnam', 'Morocco', 'Uruguay'].includes(countryName)) {
+            console.log(`🎨 Coloring ${countryName}:`, {
+              spendingValue,
+              finalColor,
+              passesFilters,
+              hasData: !!countryData,
+              dataKeys: countryData ? Object.keys(countryData.data || {}).length : 0
+            })
+          }
+        } else {
+          // Debug why color wasn't applied
+          if (['Argentina', 'Malaysia', 'Vietnam', 'Morocco', 'Uruguay'].includes(countryName)) {
+            console.log(`❌ NOT Coloring ${countryName}:`, {
+              spendingValue,
+              isNull: spendingValue === null,
+              isNaN: isNaN(spendingValue),
+              hasColorScale: !!colorScale,
+              colorScaleType: typeof colorScale,
+              hasCountryData: !!countryData,
+              hasData: countryData?.data ? Object.keys(countryData.data).length : 0
+            })
+          }
         }
         
         return finalColor
@@ -193,32 +217,15 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
     .style('cursor', 'pointer')
     .on('mouseenter', function(event, d) {
       const countryName = getCountryNameFromFeature(d)
-      const currentFill = d3.select(this).attr('fill')
       
-      // Brighten country on hover
+      // Only change stroke, don't change fill to avoid glitching
       d3.select(this)
-        .attr('data-original-fill', currentFill)
-        .attr('fill', d3.color(currentFill).brighter(0.3))
         .attr('stroke', '#000')
         .attr('stroke-width', 2)
       
       // Show tooltip
       if (callbacks.onCountryHover) {
         const spendingValue = getCountrySpendingForMap(spendingData, countryName, filters.yearRange)
-        const countryData = spendingData.countries?.[countryName]
-        
-        // Debug: Log first hover to see data structure
-        if (!window._firstHoverLogged) {
-          console.log('First hover debug:', {
-            countryName,
-            spendingValue,
-            hasCountryData: !!countryData,
-            countryDataKeys: countryData ? Object.keys(countryData) : [],
-            spendingDataKeys: spendingData.countries ? Object.keys(spendingData.countries).slice(0, 10) : [],
-            totalCountries: spendingData.countries ? Object.keys(spendingData.countries).length : 0
-          })
-          window._firstHoverLogged = true
-        }
         
         callbacks.onCountryHover({
           name: countryName,
@@ -252,9 +259,8 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
       const countryName = getCountryNameFromFeature(d)
       const isSelected = callbacks.selectedCountry && countryName === callbacks.selectedCountry.name
       
-      const originalFill = d3.select(this).attr('data-original-fill')
+      // Restore original stroke
       d3.select(this)
-        .attr('fill', originalFill)
         .attr('stroke', isSelected ? '#ff6b00' : '#333')
         .attr('stroke-width', isSelected ? 3 : 1)
       
@@ -348,12 +354,26 @@ function getCountrySpendingForMap(spendingData, countryName, yearRange = [2015, 
   // getIndicatorData returns: countries[name] = { name, code, data: {year: value} }
   // Calculate average spending for the year range
   const values = []
+  const allYears = Object.keys(countryData.data)
+  
   Object.entries(countryData.data).forEach(([year, value]) => {
     const y = parseInt(year)
     if (y >= yearRange[0] && y <= yearRange[1] && !isNaN(value) && value !== null) {
       values.push(value)
     }
   })
+  
+  // Debug problematic countries
+  const problematicCountries = ['Argentina', 'Malaysia', 'Vietnam', 'Morocco', 'Uruguay', 'Mozambique']
+  if (problematicCountries.includes(countryName)) {
+    console.log(`📊 getCountrySpendingForMap for ${countryName}:`, {
+      hasData: !!countryData.data,
+      allYears: allYears,
+      yearRange,
+      valuesInRange: values.length,
+      avgSpending: values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : null
+    })
+  }
   
   if (values.length === 0) return null
   

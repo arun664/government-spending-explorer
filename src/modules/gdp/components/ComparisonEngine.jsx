@@ -4,7 +4,6 @@ import { getCountryRegion, groupCountriesByRegion } from '../utils/regionMapping
 import SearchBar from './SearchBar.jsx'
 import WorldMap from './WorldMap.jsx'
 import CountryStatistics from './CountryStatistics.jsx'
-import ExportButton from './ExportButton.jsx'
 import '../styles/ComparisonEngine.css'
 
 /**
@@ -303,46 +302,6 @@ const ComparisonEngine = () => {
           <div className="header-left">
             <h2>🌍 Integrated Country Comparison & Analysis</h2>
             <p>Search countries, explore the interactive map, and analyze government spending patterns with GDP metrics</p>
-          </div>
-          <div className="header-right">
-            <ExportButton 
-              data={{
-                summary: `Country comparison analysis covering ${comparisonData.length} countries with GDP metrics, spending data, and sector-wise analysis for the period ${yearRange[0]}-${yearRange[1]}.`,
-                csvData: comparisonData || [],
-                csvColumns: ['countryName', 'countryCode', 'region', 'gdpGrowth', 'totalSpending', 'perCapitaSpending', 'gdpPercentage'],
-                csvFormatter: (row) => ({
-                  countryName: row.countryName || '',
-                  countryCode: row.countryCode || '',
-                  region: row.region || '',
-                  gdpGrowth: row.gdpGrowth || 0,
-                  totalSpending: row.totalSpending || 0,
-                  perCapitaSpending: row.perCapitaSpending || 0,
-                  gdpPercentage: row.gdpPercentage || 0
-                }),
-                overview: {
-                  totalCountries: comparisonData.length || 0,
-                  yearRange: `${yearRange[0]} - ${yearRange[1]}`,
-                  selectedCountry: selectedCountry?.countryName || 'None',
-                  selectedMetric: selectedMetric || 'GDP Growth',
-                  regionFilter: regionFilter || 'All Regions'
-                },
-                comparisons: comparisonData || [],
-                sectorAnalysis: sectorAnalysis || {}
-              }}
-              chartElements={[
-                document.querySelector('.comparison-content'),
-                document.querySelector('.country-statistics'),
-                document.querySelector('.sector-analysis')
-              ].filter(Boolean)}
-              reportType="comparison"
-              metadata={{
-                dateRange: `${yearRange[0]} - ${yearRange[1]}`,
-                countries: selectedCountry ? [selectedCountry.countryName] : ['All Countries'],
-                generatedBy: 'Government Expense Dashboard',
-                analysisType: 'Country Comparison Analysis'
-              }}
-              className="export-btn-header"
-            />
           </div>
         </div>
 

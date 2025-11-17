@@ -1,0 +1,714 @@
+/**
+ * ComparisonPage.css - Styles for simplified GDP vs Expense comparison
+ */
+
+.comparison-page-simple {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+.comparison-header-simple {
+  background: white;
+  padding: 20px 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 20px;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.comparison-header-simple h2 {
+  margin: 0 0 4px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.header-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.header-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.country-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.country-selector label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.country-dropdown {
+  padding: 8px 16px;
+  font-size: 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  color: #2d3748;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 200px;
+}
+
+.country-dropdown:hover {
+  border-color: #007bff;
+}
+
+.country-dropdown:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* Anomaly indicator styling in dropdown */
+.country-dropdown option {
+  padding: 8px;
+  font-size: 14px;
+}
+
+/* Style for options with anomaly warning emoji */
+.country-dropdown option[value]:not([value="WORLD"]) {
+  color: #2d3748;
+}
+
+.chart-area-simple {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  min-height: 500px;
+}
+
+.gdp-expense-chart {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f1f3f5;
+  border-top-color: #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-icon {
+  font-size: 60px;
+  margin-bottom: 16px;
+}
+
+.error-state p {
+  color: #e53e3e;
+  font-size: 16px;
+}
+
+.info-section {
+  background: white;
+  padding: 20px 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.info-card h3 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.info-card p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4a5568;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .comparison-header-simple {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .comparison-header-simple h2 {
+    font-size: 20px;
+  }
+
+  .country-selector {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .country-dropdown {
+    width: 100%;
+  }
+
+  .chart-area-simple {
+    padding: 15px;
+  }
+}
+
+/* Currency warning styling */
+.currency-warning {
+  background: #fff3e0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 4px solid #ffa726;
+  margin-top: 12px;
+  color: #e65100;
+  font-size: 14px;
+}
+
+.currency-warning strong {
+  font-weight: 600;
+}
+
+
+/* Chart with Insights Layout */
+.chart-with-insights {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 20px;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.chart-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: calc(100% - 340px);
+}
+
+/* Insights Panel */
+.chart-with-insights .insights-panel {
+  width: 320px;
+  flex-shrink: 0;
+  background: white !important;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.insights-panel h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.insights-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.insights-section h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Trends */
+.insights-panel .trend-item {
+  padding: 0 !important;
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+.insights-panel .trend-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #334155;
+}
+
+/* Anomalies */
+.insights-panel .anomalies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 0;
+  list-style: none;
+}
+
+.insights-panel .anomaly-item {
+  padding: 8px 0 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-bottom: 1px solid #e2e8f0 !important;
+  background: none !important;
+  border-left: none !important;
+  border-radius: 0 !important;
+}
+
+.anomaly-item:last-child {
+  border-bottom: none;
+}
+
+.anomaly-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.anomaly-country {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.anomaly-country::before {
+  content: "• ";
+  color: #ef4444;
+  margin-right: 6px;
+}
+
+.anomaly-year {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.anomaly-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  padding-left: 16px;
+}
+
+.anomaly-type {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.anomaly-value {
+  color: #64748b;
+  font-family: 'Courier New', monospace;
+}
+
+/* Statistics */
+.insights-panel .stats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.insights-panel .stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  background: none !important;
+  border-radius: 0 !important;
+  text-align: left !important;
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  font-family: 'Courier New', monospace;
+}
+
+/* No Data Message */
+.no-data {
+  margin: 0;
+  font-size: 13px;
+  color: #94a3b8;
+  font-style: italic;
+  text-align: center;
+  padding: 12px;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .chart-with-insights {
+    flex-direction: column;
+  }
+  
+  .insights-panel {
+    width: 100%;
+    max-height: none;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .insights-panel {
+    padding: 16px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ========================================
+   COMPARISON PAGE INSIGHTS PANEL
+   Independent styles - no conflicts
+   ======================================== */
+
+.comparison-insights-panel {
+  position: relative;
+  width: 320px;
+  flex-shrink: 0;
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.comparison-insights-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.comparison-insights-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.comparison-section-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Trends */
+.comparison-trend-content {
+  padding: 0;
+}
+
+.comparison-trend-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #334155;
+}
+
+/* Anomalies */
+.comparison-anomalies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+}
+
+.comparison-anomaly-item {
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.comparison-anomaly-item:last-child {
+  border-bottom: none;
+}
+
+.comparison-anomaly-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.comparison-anomaly-country {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.comparison-anomaly-country::before {
+  content: "• ";
+  color: #ef4444;
+  margin-right: 6px;
+}
+
+.comparison-anomaly-year {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.comparison-anomaly-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  padding-left: 16px;
+}
+
+.comparison-anomaly-type {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.comparison-anomaly-value {
+  color: #64748b;
+  font-family: 'Courier New', monospace;
+}
+
+/* Statistics */
+.comparison-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comparison-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.comparison-stat-row:last-child {
+  border-bottom: none;
+}
+
+.comparison-stat-label {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.comparison-stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  font-family: 'Courier New', monospace;
+}
+
+/* No Data Message */
+.comparison-no-data {
+  margin: 0;
+  font-size: 13px;
+  color: #94a3b8;
+  font-style: italic;
+  text-align: center;
+  padding: 12px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .chart-with-insights {
+    flex-direction: column;
+  }
+  
+  .comparison-insights-panel {
+    width: 100%;
+    max-height: none;
+  }
+}
+
+
+/* ========================================
+   TOOLTIP STYLES - Same as Spending Page
+   ======================================== */
+
+/* Map Tooltip Styles */
+.map-tooltip {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0;
+  min-width: 200px;
+  max-width: 300px;
+  font-size: 13px;
+  border: 2px solid #667eea;
+  animation: tooltipFadeIn 0.2s ease;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.map-tooltip .tooltip-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px 6px 0 0;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.map-tooltip .tooltip-body {
+  padding: 10px 12px;
+}
+
+.map-tooltip .tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  gap: 12px;
+}
+
+.map-tooltip .tooltip-row.highlight {
+  background: #f0f0ff;
+  margin: 4px -12px;
+  padding: 6px 12px;
+  border-radius: 4px;
+}
+
+.map-tooltip .label {
+  font-size: 11px;
+  color: #555 !important;
+  font-weight: 500;
+}
+
+.map-tooltip .value {
+  font-size: 13px;
+  color: #1a1a1a !important;
+  font-weight: 600;
+}
+
+.map-tooltip .no-data {
+  color: #999;
+  font-style: italic;
+  font-size: 12px;
+}
+
+/* Override all possible tooltip classes with light background */
+.d3-tip,
+.tooltip,
+div[class*="tooltip"],
+div[id*="tooltip"],
+[role="tooltip"] {
+  background: white !important;
+  background-color: white !important;
+  color: #1a1a1a !important;
+  border: 2px solid #667eea !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  pointer-events: none !important;
+  z-index: 9999 !important;
+}
+
+/* Chart container specific tooltip overrides */
+.chart-main .tooltip,
+.chart-main div[class*="tooltip"],
+.gdp-expense-chart .tooltip,
+.gdp-expense-chart div[class*="tooltip"],
+svg .tooltip,
+svg div[class*="tooltip"] {
+  background: white !important;
+  background-color: white !important;
+  color: #1a1a1a !important;
+  border: 2px solid #667eea !important;
+}
+
+/* Tooltip text elements */
+.tooltip .label,
+div[class*="tooltip"] .label {
+  font-size: 11px;
+  color: #555 !important;
+  font-weight: 500;
+}
+
+.tooltip .value,
+div[class*="tooltip"] .value {
+  font-size: 13px;
+  color: #1a1a1a !important;
+  font-weight: 600;
+}
+
+/* SVG text elements used as tooltips */
+svg text.tooltip-text,
+svg text[class*="tooltip"] {
+  fill: #1a1a1a !important;
+}

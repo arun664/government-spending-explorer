@@ -6,6 +6,7 @@ import {
   handleResetZoom as mapResetZoom,
   zoomToCountry
 } from '../services/SpendingMapService.js'
+import { getCurrencyCode } from '../../../shared/utils/CurrencyMapping.js'
 import '../styles/SpendingWorldMap.css'
 
 const SpendingWorldMap = ({ 
@@ -173,12 +174,12 @@ const SpendingWorldMap = ({
 
             {spendingData.globalStats && (
               <div className="info-section">
-                <h5>Statistics</h5>
+                <h5>Statistics (Mixed Currencies)</h5>
                 <p className="info-item">
-                  <strong>Average:</strong> {spendingData.globalStats.avgSpending.toFixed(2)}M USD
+                  <strong>Average:</strong> {spendingData.globalStats.avgSpending.toFixed(2)}M
                 </p>
                 <p className="info-item">
-                  <strong>Range:</strong> {spendingData.globalStats.minSpending.toFixed(2)}M - {spendingData.globalStats.maxSpending.toFixed(2)}M USD
+                  <strong>Range:</strong> {spendingData.globalStats.minSpending.toFixed(2)}M - {spendingData.globalStats.maxSpending.toFixed(2)}M
                 </p>
               </div>
             )}
@@ -221,7 +222,7 @@ const SpendingWorldMap = ({
                   <span className="label">Value:</span>
                   <span className="value">
                     {tooltip.data.spending !== null 
-                      ? `${tooltip.data.spending.toFixed(2)}M USD`
+                      ? `${tooltip.data.spending.toFixed(2)}M ${getCurrencyCode(tooltip.data.name)}`
                       : 'N/A'}
                   </span>
                 </div>

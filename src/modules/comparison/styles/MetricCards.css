@@ -1,0 +1,543 @@
+/**
+ * MetricCards.css - Styles for metric cards and sidebar components
+ * 
+ * Features:
+ * - Grid layouts for top and bottom metric cards
+ * - Sidebar section styles
+ * - Responsive design
+ * - Compact card designs
+ * 
+ * Requirements: 5.1, 5.2, 5.6, 5.8, 9.7, 9.8
+ */
+
+/* ===== Metric Card Base Styles ===== */
+.metric-card {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-height: 70px;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.metric-card-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.metric-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.metric-card-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.metric-card-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2d3748;
+  line-height: 1.2;
+}
+
+.metric-card-unit {
+  font-size: 14px;
+  font-weight: 400;
+  color: #6c757d;
+  margin-left: 4px;
+}
+
+.metric-card-no-data {
+  color: #adb5bd;
+  font-style: italic;
+}
+
+.metric-card-trend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.metric-card-trend.up {
+  color: #28a745;
+}
+
+.metric-card-trend.down {
+  color: #dc3545;
+}
+
+.metric-card-trend.neutral {
+  color: #6c757d;
+}
+
+.trend-icon {
+  font-size: 14px;
+}
+
+.trend-value {
+  font-weight: 500;
+}
+
+/* Metric with country (for min/max cards) */
+.metric-with-country {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metric-with-country .metric-value {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.metric-with-country .metric-country {
+  font-size: 11px;
+  color: #6c757d;
+  font-weight: 400;
+}
+
+/* ===== Top Metric Cards Grid ===== */
+.top-metric-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.top-metric-cards .summary-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.metric-cards-loading {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 20px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* ===== Bottom Metric Cards Grid ===== */
+.bottom-metric-cards {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+}
+
+.bottom-metric-cards .statistical-card {
+  background: white;
+}
+
+/* ===== Right Sidebar Styles ===== */
+.right-sidebar {
+  background: #f8f9fa;
+  padding: 16px;
+  overflow-y: auto;
+  max-height: calc(100vh - 60px);
+  border-left: 1px solid #dee2e6;
+}
+
+.right-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.right-sidebar::-webkit-scrollbar-track {
+  background: #f1f3f5;
+}
+
+.right-sidebar::-webkit-scrollbar-thumb {
+  background: #adb5bd;
+  border-radius: 3px;
+}
+
+.right-sidebar::-webkit-scrollbar-thumb:hover {
+  background: #868e96;
+}
+
+/* Sidebar loading and error states */
+.sidebar-loading,
+.sidebar-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f1f3f5;
+  border-top-color: #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+/* ===== Sidebar Section Styles ===== */
+.sidebar-section {
+  margin-bottom: 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-section:last-child {
+  margin-bottom: 0;
+}
+
+.sidebar-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #2d3748;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 8px;
+}
+
+.sidebar-section .no-data {
+  text-align: center;
+  padding: 20px;
+  color: #adb5bd;
+  font-style: italic;
+  font-size: 13px;
+}
+
+/* ===== Top Performers Styles ===== */
+.performer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.performer-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.performer-item:hover {
+  background: #e9ecef;
+}
+
+.performer-rank {
+  font-size: 16px;
+  font-weight: 700;
+  color: #007bff;
+  min-width: 30px;
+  text-align: center;
+}
+
+.performer-flag {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.performer-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.performer-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2d3748;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.performer-value {
+  font-size: 12px;
+  color: #6c757d;
+  margin-top: 2px;
+}
+
+/* ===== Notable Trends Styles ===== */
+.trend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trend-item {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #6c757d;
+  transition: background 0.2s;
+}
+
+.trend-item:hover {
+  background: #e9ecef;
+}
+
+.trend-item.trend-positive {
+  border-left-color: #28a745;
+}
+
+.trend-item.trend-negative {
+  border-left-color: #dc3545;
+}
+
+.trend-icon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.trend-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.trend-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 4px;
+}
+
+.trend-description {
+  font-size: 12px;
+  color: #495057;
+  margin-bottom: 6px;
+}
+
+.trend-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: #6c757d;
+}
+
+.trend-strength {
+  font-weight: 500;
+}
+
+.trend-confidence {
+  font-style: italic;
+}
+
+/* ===== Significant Outliers Styles ===== */
+.outlier-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.outlier-item {
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #6c757d;
+  transition: background 0.2s;
+}
+
+.outlier-item:hover {
+  background: #e9ecef;
+}
+
+.outlier-item.outlier-high {
+  border-left-color: #ffc107;
+}
+
+.outlier-item.outlier-low {
+  border-left-color: #17a2b8;
+}
+
+.outlier-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.outlier-flag {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.outlier-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.outlier-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.outlier-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.outlier-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #495057;
+}
+
+.outlier-reason {
+  font-size: 11px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.outlier-deviation {
+  font-size: 11px;
+  color: #868e96;
+  font-weight: 500;
+}
+
+/* ===== Responsive Design ===== */
+
+/* Tablet (768px - 1200px) */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .top-metric-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bottom-metric-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .right-sidebar {
+    max-height: 250px;
+  }
+
+  .sidebar-section {
+    margin-bottom: 16px;
+    padding: 12px;
+  }
+}
+
+/* Mobile (<768px) */
+@media (max-width: 767px) {
+  .top-metric-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .bottom-metric-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .metric-card {
+    padding: 8px;
+    gap: 8px;
+    min-height: 60px;
+  }
+
+  .metric-card-icon {
+    font-size: 20px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .metric-card-label {
+    font-size: 10px;
+  }
+
+  .metric-card-value {
+    font-size: 16px;
+  }
+
+  .right-sidebar {
+    padding: 12px;
+    max-height: 200px;
+  }
+
+  .sidebar-section {
+    margin-bottom: 12px;
+    padding: 12px;
+  }
+
+  .sidebar-section h3 {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .performer-item,
+  .trend-item,
+  .outlier-item {
+    padding: 8px;
+  }
+
+  .performer-name,
+  .trend-title,
+  .outlier-name {
+    font-size: 12px;
+  }
+
+  .performer-value,
+  .trend-description,
+  .outlier-value {
+    font-size: 11px;
+  }
+}
+
+/* Very small screens (<480px) */
+@media (max-width: 479px) {
+  .top-metric-cards,
+  .bottom-metric-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-card {
+    flex-direction: row;
+  }
+}

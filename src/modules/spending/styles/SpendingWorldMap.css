@@ -569,13 +569,13 @@ Tooltip Styles */
 
 .map-tooltip .label {
   font-size: 11px;
-  color: #666;
+  color: #555 !important;
   font-weight: 500;
 }
 
 .map-tooltip .value {
   font-size: 13px;
-  color: #333;
+  color: #1a1a1a !important;
   font-weight: 600;
 }
 
@@ -583,4 +583,32 @@ Tooltip Styles */
   color: #999;
   font-style: italic;
   font-size: 12px;
+}
+
+/* Currency indicators in tooltips and info panels */
+.currency-note {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 8px;
+  margin-top: 8px;
+}
+
+.currency-label {
+  font-size: 11px;
+  color: #f57c00;
+  font-weight: 600;
+  display: block;
+  text-align: center;
+}
+
+.currency-warning {
+  color: #f57c00;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.currency-info {
+  background: #fff3e0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border-left: 3px solid #ffa726;
 }

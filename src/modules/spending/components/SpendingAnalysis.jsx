@@ -25,7 +25,7 @@ import '../styles/SpendingAnalysis.css'
  * - Advanced filtering by categories, countries, and time periods
  * - Export functionality with charts and data
  */
-const SpendingAnalysis = ({ onExportDataChange, onLoadingChange }) => {
+const SpendingAnalysis = ({ onLoadingChange }) => {
   // Core state
   const [unifiedData, setUnifiedData] = useState(null) // All 48 indicators pre-loaded
   const [spendingData, setSpendingData] = useState({})
@@ -76,48 +76,7 @@ const SpendingAnalysis = ({ onExportDataChange, onLoadingChange }) => {
 
 
 
-  // Update export data for parent component
-  useEffect(() => {
-    if (onExportDataChange && spendingData.name) {
-      onExportDataChange({
-        data: {
-          summary: `Government spending analysis: ${spendingData.name}`,
-          csvData: Object.values(spendingData.countries || {}).flatMap(country => 
-            Object.entries(country.data || {}).map(([year, value]) => ({
-              countryName: country.name,
-              countryCode: country.code,
-              year: parseInt(year),
-              indicator: selectedIndicator,
-              indicatorName: spendingData.name,
-              value: value,
-              category: spendingData.category
-            }))
-          ),
-          indicator: selectedIndicator,
-          yearRange: filters.yearRange,
-          selectedCountry: selectedCountry?.name
-        },
-        chartElements: () => {
-          const elements = []
-          const mapContainer = document.querySelector('.map-container')
-          const categoriesPanel = document.querySelector('.categories-sidebar')
-          
-          if (mapContainer) elements.push(mapContainer)
-          if (categoriesPanel) elements.push(categoriesPanel)
-          
-          return elements
-        },
-        reportType: "spending",
-        fileName: `spending-analysis-${selectedIndicator}-${filters.yearRange[0]}-${filters.yearRange[1]}`,
-        metadata: {
-          dateRange: `${filters.yearRange[0]} - ${filters.yearRange[1]}`,
-          countries: selectedCountry ? [selectedCountry.name] : ['All Countries'],
-          generatedBy: 'Government Expense Dashboard',
-          analysisType: 'Spending Analysis'
-        }
-      })
-    }
-  }, [spendingData, selectedIndicator, filters, selectedCountry, onExportDataChange])
+
 
   const loadInitialData = async () => {
     try {

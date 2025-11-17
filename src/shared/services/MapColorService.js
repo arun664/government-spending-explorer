@@ -125,35 +125,44 @@ export const MapColorService = {
       return countries || []
     }
 
-    // Debug: Log all countries with no data to fix mapping
+    // Debug: Log countries with and without data
     const countriesWithNoData = []
     const countriesWithData = []
-    const availableCodes = spendingData?.countries ? Object.keys(spendingData.countries) : []
+    const problematicCountries = ['Malaysia', 'Vietnam', 'Argentina', 'Morocco', 'Uruguay', 'Mozambique']
     
     countries.forEach(country => {
       const mapName = this.getCountryNameFromFeature(country)
       if (mapName && mapName !== 'Unknown Country') {
-        const countryCode = getCountryCodeFromMapName(mapName)
+        const countryData = this.findCountryData(mapName, spendingData)
         
-        // Try lookup by CODE first, then by NAME (UnifiedDataService uses names as keys!)
-        let hasData = spendingData?.countries?.[countryCode]
-        if (!hasData) {
-          // Try direct name lookup
-          hasData = spendingData?.countries?.[mapName]
-        }
-        if (!hasData) {
-          // Try normalized name lookup
-          const normalizedName = this.normalizeCountryName(mapName)
-          hasData = spendingData?.countries?.[normalizedName]
+        // Debug specific problematic countries
+        if (problematicCountries.includes(mapName)) {
+          console.log(`🔍 Checking ${mapName}:`, {
+            mapName,
+            foundData: !!countryData,
+            dataKeys: spendingData?.countries ? Object.keys(spendingData.countries).filter(k => 
+              k.toLowerCase().includes(mapName.toLowerCase())
+            ) : []
+          })
         }
         
-        if (hasData) {
-          countriesWithData.push({ mapName, code: countryCode, dataKey: hasData.name })
+        if (countryData) {
+          countriesWithData.push({ mapName, dataKey: countryData.name })
         } else {
-          countriesWithNoData.push({ mapName, code: countryCode })
+          countriesWithNoData.push({ mapName })
         }
       }
     })
+    
+    // Log summary
+    console.log(`📊 Map Data Summary:`)
+    console.log(`  ✅ ${countriesWithData.length} countries WITH data`)
+    console.log(`  ⚠️ ${countriesWithNoData.length} countries WITHOUT data`)
+    
+    if (countriesWithNoData.length > 0) {
+      console.log(`\n⚠️ Countries without data (first 20):`, 
+        countriesWithNoData.slice(0, 20).map(c => c.mapName))
+    }
     
 
 
@@ -167,6 +176,9 @@ export const MapColorService = {
       // Find country data (handles both code and name lookups)
       const countryData = this.findCountryData(countryName, spendingData)
       if (!countryData) {
+        if (problematicCountries.includes(countryName)) {
+          console.log(`❌ ${countryName} filtered: NO COUNTRY DATA`)
+        }
         return false
       }
 
@@ -174,48 +186,27 @@ export const MapColorService = {
       if (filters?.regions && Array.isArray(filters.regions) && filters.regions.length > 0) {
         const countryRegion = getCountryRegion(countryName)
         if (!filters.regions.includes(countryRegion)) {
+          if (problematicCountries.includes(countryName)) {
+            console.log(`❌ ${countryName} filtered: REGION (${countryRegion} not in ${filters.regions})`)
+          }
           return false
         }
       }
 
-      // Value range filter - ONLY apply if explicitly set and different from defaults
-      if (filters?.valueRange && Array.isArray(filters.valueRange) && filters.valueRange.length === 2) {
-        const [minValue, maxValue] = filters.valueRange
-        
-        // Skip if using default max values (likely not a real filter)
-        if (maxValue >= 999999999) {
-          return true // Don't filter by value range
-        }
-        
-        // Get spending value - could be totalSpending or calculated from data
-        let spendingValue = countryData.totalSpending
-        
-        // If totalSpending is not set (undefined/null), try to get from data object
-        if (spendingValue === undefined || spendingValue === null) {
-          if (countryData.data) {
-            const values = Object.values(countryData.data).filter(v => !isNaN(v) && v !== null)
-            if (values.length > 0) {
-              spendingValue = values.reduce((sum, v) => sum + v, 0) / values.length
-            }
-          }
-        }
-        
-        // If no spending value, include the country (don't filter it out)
-        if (spendingValue === null || spendingValue === undefined || isNaN(spendingValue)) {
-          return true // Include countries without spending data
-        }
-        
-        // Apply value range filter
-        if (spendingValue < minValue || spendingValue > maxValue) {
-          return false
-        }
-      }
+      // Value range filter - DISABLED
+      // Since countries use different currencies (USD, EUR, INR, etc.), 
+      // filtering by absolute spending values doesn't make sense
+      // This filter is disabled until USD conversion is implemented
 
       // Sector filter - ONLY apply if sectors are explicitly selected
       if (filters?.sectors && Array.isArray(filters.sectors) && filters.sectors.length > 0) {
         // For now, skip sector filtering as the data structure doesn't have sectors
         // This would need to be implemented based on actual data structure
         return true
+      }
+
+      if (problematicCountries.includes(countryName)) {
+        console.log(`✅ ${countryName} PASSED all filters`)
       }
 
       return true
@@ -299,11 +290,15 @@ export const MapColorService = {
       'Macedonia': 'North Macedonia',
       'São Tomé and Príncipe': 'Sao Tome and Principe',
       'Sao Tome and Principe': 'Sao Tome and Principe',
+      'Morocco': 'Morocco',
+      'Mozambique': 'Mozambique',
       
       // South America
       'Venezuela, Bolivarian Republic of': 'Venezuela, RB',
       'Venezuela': 'Venezuela, RB',
       'Bolivia, Plurinational State of': 'Bolivia',
+      'Argentina': 'Argentina',
+      'Uruguay': 'Uruguay',
       
       // Europe
       'Czech Republic': 'Czechia',
@@ -336,21 +331,35 @@ export const MapColorService = {
     
     // Try 2: Normalized name
     const normalizedName = this.normalizeCountryName(mapName)
-    countryData = spendingData.countries[normalizedName]
-    if (countryData) return countryData
+    if (normalizedName !== mapName) {
+      countryData = spendingData.countries[normalizedName]
+      if (countryData) return countryData
+    }
     
     // Try 3: Code lookup
     const countryCode = getCountryCodeFromMapName(mapName)
-    countryData = spendingData.countries[countryCode]
-    if (countryData) return countryData
+    if (countryCode) {
+      countryData = spendingData.countries[countryCode]
+      if (countryData) return countryData
+    }
     
-    // Try 4: Search by name property
+    // Try 4: Search by name property in data
     const countryEntries = Object.entries(spendingData.countries)
-    const match = countryEntries.find(([key, data]) => 
-      data.name === mapName || 
-      data.name === normalizedName ||
-      data.code === countryCode
-    )
+    const match = countryEntries.find(([key, data]) => {
+      if (!data) return false
+      
+      // Check if data.name matches
+      if (data.name === mapName || data.name === normalizedName) return true
+      
+      // Check if data.code matches
+      if (data.code === countryCode) return true
+      
+      // Check if key matches (case-insensitive)
+      if (key.toLowerCase() === mapName.toLowerCase() || 
+          key.toLowerCase() === normalizedName.toLowerCase()) return true
+      
+      return false
+    })
     
     return match ? match[1] : null
   },
@@ -381,32 +390,8 @@ export const MapColorService = {
       }
     }
 
-    // Value range filter
-    if (filters.valueRange && filters.valueRange.length === 2) {
-      const [minValue, maxValue] = filters.valueRange
-      
-      // Get spending value - could be totalSpending or calculated from data
-      let spendingValue = countryData.totalSpending
-      
-      // If totalSpending is not set (undefined/null), try to get from data object
-      if (spendingValue === undefined || spendingValue === null) {
-        if (countryData.data) {
-          const values = Object.values(countryData.data).filter(v => !isNaN(v) && v !== null)
-          if (values.length > 0) {
-            spendingValue = values.reduce((sum, v) => sum + v, 0) / values.length
-          }
-        }
-      }
-      
-      // Skip filter check if no spending value available
-      if (spendingValue === null || spendingValue === undefined || isNaN(spendingValue)) {
-        return false
-      }
-      
-      if (spendingValue < minValue || spendingValue > maxValue) {
-        return false
-      }
-    }
+    // Value range filter - DISABLED
+    // Since countries use different currencies, filtering by absolute values doesn't make sense
 
     // Sector filter
     if (filters.sectors && filters.sectors.length > 0) {

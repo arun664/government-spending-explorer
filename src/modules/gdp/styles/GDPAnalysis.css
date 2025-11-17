@@ -109,42 +109,59 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 20px;
   padding-bottom: 70px;
   box-sizing: border-box;
   max-width: 100%;
+  padding: 5px;
 }
 
+/* Global Insights Header - Independent styles matching filters-header format */
 .insights-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
   border-bottom: 2px solid #667eea;
 }
 
 .insights-icon {
-  font-size: 20px;
+  font-size: 14px;
+  margin-right: 8px;
 }
 
 .insights-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: #667eea;
-  flex-grow: 1;
+  margin: 0 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #667eea !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
 }
 
 .year-range-badge {
   display: inline-block;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 5px 12px;
-  border-radius: 16px;
-  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 9px;
   font-weight: 600;
-  margin-left: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 
 .insights-grid {

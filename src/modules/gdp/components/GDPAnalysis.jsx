@@ -8,7 +8,6 @@ import ZoomControls from './ZoomControls.jsx';
 import Legend from './Legend.jsx';
 import InfoPanel from './InfoPanel.jsx';
 import CompareView from './CompareView.jsx';
-import ExportButton from './ExportButton.jsx'
 import '../styles/GDPAnalysis.css'
 
 const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange }) => {
@@ -891,54 +890,10 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
 
   return (
     <div className="world-map-container">
-      {/* Export Button in Header */}
       <div className="gdp-header">
         <div className="header-left">
           <h2>GDP Analysis Dashboard</h2>
           <p>Interactive GDP growth analysis with country comparisons</p>
-        </div>
-        <div className="header-right">
-          <ExportButton 
-            data={{
-              summary: `GDP analysis covering ${Object.keys(gdpData).length} countries with growth rates, per capita calculations, and correlation analysis.`,
-              csvData: Object.values(gdpData).flatMap(country => 
-                country.data.map(d => ({
-                  countryName: country.name,
-                  countryCode: country.code,
-                  year: d.year,
-                  gdpGrowth: d.growth
-                }))
-              ),
-              csvColumns: ['countryName', 'countryCode', 'year', 'gdpGrowth'],
-              overview: {
-                totalCountries: Object.keys(gdpData).length,
-                yearRange: `${filters.yearRange[0]} - ${filters.yearRange[1]}`,
-                averageGrowth: globalStats?.avgGrowth || 0,
-                selectedCountries: filters.countries.length || 'All'
-              },
-              trends: [],
-              comparisons: globalStats?.top10 || []
-            }}
-            chartElements={() => {
-              // Use a function to get fresh references at export time
-              const elements = []
-              const mapContainer = document.querySelector('.world-map-container')
-              const insightsPanel = document.querySelector('.insights-panel')
-              
-              if (mapContainer) elements.push(mapContainer)
-              if (insightsPanel) elements.push(insightsPanel)
-              
-              return elements
-            }}
-            reportType="gdp"
-            metadata={{
-              dateRange: `${filters.yearRange[0]} - ${filters.yearRange[1]}`,
-              countries: filters.countries.length > 0 ? filters.countries.map(c => c.name) : ['All Countries'],
-              generatedBy: 'Government Expense Dashboard',
-              analysisType: 'GDP Analysis'
-            }}
-            className="export-btn-header"
-          />
         </div>
       </div>
 
@@ -997,20 +952,17 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
           {activeInsightTab === 'global' && globalStats && (
             <div className="global-insights-content">
               <div className="insights-header">
-                <span className="insights-icon">📊</span>
-                <div>
-                  <h3>
-                    {filters.countries && filters.countries.length > 0 
-                      ? 'Selected Countries Insights' 
-                      : 'Global Insights'}
-                  </h3>
-                  <span className="year-range-badge">
-                    {globalStats.yearRange[0] === globalStats.yearRange[1] 
-                      ? globalStats.yearRange[0]
-                      : `${globalStats.yearRange[0]} - ${globalStats.yearRange[1]}`
-                    }
-                  </span>
-                </div>
+                <h3>
+                  {filters.countries && filters.countries.length > 0 
+                    ? 'SELECTED COUNTRIES INSIGHTS' 
+                    : 'GLOBAL INSIGHTS'}
+                </h3>
+                <span className="year-range-badge">
+                  {globalStats.yearRange[0] === globalStats.yearRange[1] 
+                    ? globalStats.yearRange[0]
+                    : `${globalStats.yearRange[0]} - ${globalStats.yearRange[1]}`
+                  }
+                </span>
               </div>
 
               {/* Data Availability Warning */}

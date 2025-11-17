@@ -1,7 +1,7 @@
 
 import React from 'react'
 
-const USReportGenerator = ({ onExportDataChange }) => {
+const USReportGenerator = () => {
   return (
     <div className="placeholder-container" style={{
       display: 'flex',

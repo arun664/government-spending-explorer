@@ -281,7 +281,8 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
 
     // Get the actual container width
     const containerWidth = chartRef.current.offsetWidth || 320
-    const margin = { top: 20, right: 120, bottom: 30, left: 40 }
+    const legendHeight = Math.ceil(countriesData.length / Math.floor((containerWidth - 80) / 120)) * 20 + 20
+    const margin = { top: 20, right: 20, bottom: 30 + legendHeight, left: 40 }
     const width = containerWidth - margin.left - margin.right
     const height = 250 - margin.top - margin.bottom
 
@@ -362,16 +363,22 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
         .text((d) => `${countryData.name} ${d.year}: ${d.growth.toFixed(2)}%`)
     })
 
-    // Add legend
+    // Add legend below the chart
     const legend = svg
       .append('g')
       .attr('class', 'legend')
-      .attr('transform', `translate(${width + 10}, 0)`)
+      .attr('transform', `translate(0, ${height + 50})`)
+
+    const legendItemWidth = 120
+    const itemsPerRow = Math.floor(width / legendItemWidth)
 
     countriesData.forEach((countryData, index) => {
+      const row = Math.floor(index / itemsPerRow)
+      const col = index % itemsPerRow
+      
       const legendRow = legend
         .append('g')
-        .attr('transform', `translate(0, ${index * 20})`)
+        .attr('transform', `translate(${col * legendItemWidth}, ${row * 20})`)
 
       legendRow
         .append('rect')

@@ -2,50 +2,59 @@
  * Comparison Module Exports
  */
 
-// Components - Core interactive visualizations
-export { default as GDPSpendingComparison } from './components/GDPSpendingComparison.jsx'
-export { default as ScatterPlotChart } from './components/ScatterPlotChart.jsx'
-export { default as BubbleChart } from './components/BubbleChart.jsx'
+// Main Page Component (NEW - uses ComparisonProvider + ComparisonLayout)
+export { default as ComparisonPage } from './components/ComparisonPage.jsx'
 
-// Components - Statistical Analysis Charts
-export { default as CorrelationHeatmap } from './components/CorrelationHeatmap.jsx'
-export { default as ParallelCoordinates } from './components/ParallelCoordinates.jsx'
-export { default as StatisticalAnalysisCharts } from './components/StatisticalAnalysisCharts.jsx'
+// Context and Layout
+export { ComparisonProvider, useComparison } from './context/ComparisonContext.jsx'
+export { default as ComparisonLayout } from './components/ComparisonLayout.jsx'
 
-// Components - Specialized Flow & Hierarchical Charts
-export { default as SankeyDiagram } from './components/SankeyDiagram.jsx'
-// export { default as RadarChart } from './components/RadarChart.jsx'
-export { default as TreemapChart } from './components/TreemapChart.jsx'
-export { default as SpecializedFlowCharts } from './components/SpecializedFlowCharts.jsx'
+// Header and Controls
+export { default as ComparisonHeader } from './components/ComparisonHeader.jsx'
+export { default as ChartTypeDropdown } from './components/ChartTypeDropdown.jsx'
+export { default as FilterButton } from './components/FilterButton.jsx'
+export { default as ExportButton } from './components/ExportButton.jsx'
 
-// Components - Advanced Network & Temporal Charts
-export { default as NetworkGraph } from './components/NetworkGraph.jsx'
-export { default as StreamGraph } from './components/StreamGraph.jsx'
-export { default as AdvancedNetworkTemporalCharts } from './components/AdvancedNetworkTemporalCharts.jsx'
+// Panels
+export { default as FilterPanel } from './components/FilterPanel.jsx'
+export { default as ExportMenu } from './components/ExportMenu.jsx'
 
-// Components - Dashboard and Layout
-export { default as ComparisonDashboard } from './components/ComparisonDashboard.jsx'
-export { default as ChartWrapper } from './components/ChartWrapper.jsx'
-export { default as DashboardDemo } from './components/DashboardDemo.jsx'
+// Chart Components (NEW - from charts/ folder)
+export { default as TimeSeriesChart } from './charts/TimeSeriesChart.jsx'
+export { default as RankingBarChart } from './charts/RankingBarChart.jsx'
+export { default as ScatterPlotChart } from './charts/ScatterPlotChart.jsx'
+export { default as BubbleChart } from './charts/BubbleChart.jsx'
+export { default as HeatmapChart } from './charts/HeatmapChart.jsx'
+export { default as BoxPlotChart } from './charts/BoxPlotChart.jsx'
 
-// Services - Independent data infrastructure
-export { ComparisonDataLoader, comparisonDataLoader } from './services/ComparisonDataLoader.js'
-export { ComparisonDataProcessor, comparisonDataProcessor } from './services/ComparisonDataProcessor.js'
+// Chart Container
+export { default as ChartContainer } from './components/ChartContainer.jsx'
+export { default as ChartTooltip } from './components/ChartTooltip.jsx'
+
+// Metric Cards
+export { default as TopMetricCards } from './components/TopMetricCards.jsx'
+export { default as BottomMetricCards } from './components/BottomMetricCards.jsx'
+export { default as MetricCard } from './components/MetricCard.jsx'
+
+// Sidebar Components
+export { default as RightSidebar } from './components/RightSidebar.jsx'
+export { default as TopPerformers } from './components/TopPerformers.jsx'
+export { default as NotableTrends } from './components/NotableTrends.jsx'
+export { default as SignificantOutliers } from './components/SignificantOutliers.jsx'
+
+// Services - NEW data infrastructure
+export { comparisonDataService } from './services/ComparisonDataService.js'
+export { default as ExportService } from './services/ExportService.js'
 export { ChartInteractionManager, chartInteractionManager } from './services/ChartInteractionManager.js'
 
-// Services - Export and Performance
-export { default as ComparisonExporter } from './services/ComparisonExporter.js'
-export { default as ExportPerformanceIntegration } from './services/ExportPerformanceIntegration.js'
-
-// Utils - Independent utilities with M/B formatting and validation
+// Utilities
 export { NumberFormatter, numberFormatter, formatMB, formatCurrency, formatPercentage, formatGDPGrowth, formatTrend } from './utils/NumberFormatter.js'
 export { ValidationUtils, validationUtils } from './utils/ValidationUtils.js'
 export { TimeSeriesAnimator, timeSeriesAnimator, createAnimator, animationPresets } from './utils/TimeSeriesAnimator.js'
 export { InteractionUtils, interactionUtils, createZoomBehavior, createBrushBehavior, analyzeQuadrants } from './utils/InteractionUtils.js'
-
-// Utils - Performance Management
 export { default as PerformanceManager } from './utils/PerformanceManager.js'
-
-// Legacy exports (existing utilities)
-export * from './utils/comparisonDataLoader.js'
 export * from './utils/regionMapping.js'
+
+// Accessibility
+export { default as FocusTrap } from './components/FocusTrap.jsx'
+export { default as useKeyboardShortcuts } from './hooks/useKeyboardShortcuts.js'

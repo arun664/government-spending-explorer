@@ -4,7 +4,8 @@
 
 /**
  * Format spending values with M/B suffixes
- * @param {number} value - The value to format
+ * NOTE: CSV data is already in millions (UNIT_MULT=6), so values are in millions of domestic currency
+ * @param {number} value - The value in millions
  * @returns {string} Formatted value with appropriate suffix
  */
 export function formatSpendingValue(value) {
@@ -12,14 +13,20 @@ export function formatSpendingValue(value) {
   
   const absValue = Math.abs(value)
   
+  // Values are already in millions from CSV (UNIT_MULT=6)
+  // So we just need to format them appropriately
   if (absValue >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}B`
+    // If value is >= 1 trillion (in millions), show as T
+    return `${(value / 1000000).toFixed(1)}T`
   } else if (absValue >= 1000) {
-    return `${(value / 1000).toFixed(1)}M`
+    // If value is >= 1 billion (in millions), show as B
+    return `${(value / 1000).toFixed(1)}B`
   } else if (absValue >= 1) {
-    return `${value.toFixed(1)}K`
+    // If value is >= 1 million, show as M
+    return `${value.toFixed(1)}M`
   } else {
-    return value.toFixed(2)
+    // If value is < 1 million, show with decimals
+    return `${value.toFixed(2)}M`
   }
 }
 
