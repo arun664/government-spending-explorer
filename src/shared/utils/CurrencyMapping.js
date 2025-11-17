@@ -269,6 +269,23 @@ export function formatValueWithCurrency(value, countryName, decimals = 2) {
     return 'N/A'
   }
   
+  const absValue = Math.abs(value)
+  const sign = value < 0 ? '-' : ''
   const currency = getCurrencyCode(countryName)
-  return `${value.toFixed(decimals)}M ${currency}`
+  
+  if (absValue >= 1000) {
+    // Display in billions
+    return `${sign}${(absValue / 1000).toFixed(decimals)}B ${currency}`
+  } else if (absValue >= 1) {
+    // Display in millions
+    return `${sign}${absValue.toFixed(decimals)}M ${currency}`
+  } else if (absValue >= 0.01) {
+    // Small values with 2 decimals
+    return `${sign}${absValue.toFixed(2)}M ${currency}`
+  } else if (absValue > 0) {
+    // Very small values with 3 decimals
+    return `${sign}${absValue.toFixed(3)}M ${currency}`
+  } else {
+    return `0.0M ${currency}`
+  }
 }

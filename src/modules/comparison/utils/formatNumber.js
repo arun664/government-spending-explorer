@@ -61,21 +61,28 @@ export function formatValueInMillions(value, decimals = 1) {
   if (value === null || value === undefined || isNaN(value)) return 'N/A'
   
   const absValue = Math.abs(value)
+  const sign = value < 0 ? '-' : ''
   
   // Values are already in millions from CSV
   // So we just need to format them appropriately
   if (absValue >= 1000000) {
     // If value is >= 1 trillion (in millions), show as T
-    return `${(value / 1000000).toFixed(decimals)}T`
+    return `${sign}${(absValue / 1000000).toFixed(decimals)}T`
   } else if (absValue >= 1000) {
     // If value is >= 1 billion (in millions), show as B
-    return `${(value / 1000).toFixed(decimals)}B`
+    return `${sign}${(absValue / 1000).toFixed(decimals)}B`
   } else if (absValue >= 1) {
     // If value is >= 1 million, show as M
-    return `${value.toFixed(decimals)}M`
+    return `${sign}${absValue.toFixed(decimals)}M`
+  } else if (absValue >= 0.01) {
+    // If value is >= 10,000 (0.01M), show with 2 decimals
+    return `${sign}${absValue.toFixed(2)}M`
+  } else if (absValue > 0) {
+    // For very small values, show with more precision
+    return `${sign}${absValue.toFixed(3)}M`
   } else {
-    // If value is < 1 million, show with decimals
-    return `${value.toFixed(2)}M`
+    // Exactly zero
+    return '0.0M'
   }
 }
 
