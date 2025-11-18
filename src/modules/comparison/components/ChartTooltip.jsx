@@ -41,6 +41,22 @@ function formatValue(value, unit = '%') {
     return `${value.toFixed(2)}%`
   }
   
+  // Handle USD currency formatting
+  // Note: Values are in millions USD, so we need to adjust the thresholds
+  if (unit === 'USD' || unit === 'millions_usd') {
+    const absValue = Math.abs(value)
+    // Value is in millions USD
+    // 1,000,000 millions = 1 trillion
+    // 1,000 millions = 1 billion
+    if (absValue >= 1_000_000) {
+      return `$${(value / 1_000_000).toFixed(2)}T`
+    } else if (absValue >= 1_000) {
+      return `$${(value / 1_000).toFixed(2)}B`
+    } else {
+      return `$${value.toFixed(2)}M`
+    }
+  }
+  
   return value.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2

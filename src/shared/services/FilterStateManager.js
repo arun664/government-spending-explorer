@@ -77,6 +77,39 @@ export class FilterStateManager {
   }
 
   /**
+   * Get count of active (non-default) filters
+   * @param {string} module - Optional module name to count only module-specific filters
+   * @returns {number} Count of active filters
+   */
+  getActiveFilterCount(module = null) {
+    const currentFilters = this.getFilters()
+    const defaultFilters = this.getDefaultFilters()
+    let count = 0
+    
+    // Don't count categories as an active filter (it's always set)
+    const filtersToCheck = ['regions', 'sectors', 'countries']
+    
+    filtersToCheck.forEach(key => {
+      const current = currentFilters[key]
+      const defaultVal = defaultFilters[key]
+      
+      // Check if filter is active (different from default)
+      if (Array.isArray(current) && current.length > 0) {
+        count++
+      }
+    })
+    
+    // Check year range (only if different from default)
+    if (currentFilters.yearRange && 
+        (currentFilters.yearRange[0] !== defaultFilters.yearRange[0] || 
+         currentFilters.yearRange[1] !== defaultFilters.yearRange[1])) {
+      count++
+    }
+    
+    return count
+  }
+
+  /**
    * Update filters with debouncing and notify listeners
    * Merges new filters with existing state
    * Debounces updates to prevent excessive re-renders (300ms delay)
@@ -324,8 +357,8 @@ export class FilterStateManager {
       // Region selection - empty means all regions
       regions: [],
       
-      // Year range - default to full available range (last 2 decades)
-      yearRange: [2005, 2023],
+      // Year range - default to full available range (1980-2023)
+      yearRange: [1980, 2023],
       
       // Value range in millions - default to full range
       valueRange: [0, 100000],
@@ -761,6 +794,21 @@ export class FilterStateManager {
     this.listeners = []
     this.loadingListeners = []
     this.moduleListeners = {}
+  }
+
+  /**
+   * Get incompatible filters (disabled - always returns empty array)
+   * @returns {Array} Empty array
+   */
+  getIncompatibleFilters() {
+    return []
+  }
+
+  /**
+   * Clear incompatible filters (disabled - no-op)
+   */
+  clearIncompatibleFilters() {
+    // No-op: incompatible filter warnings are disabled
   }
 }
 

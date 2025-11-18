@@ -6,69 +6,73 @@ import * as d3 from 'd3'
  */
 
 // All 48 indicators with their metadata
-// Note: All values are in millions of domestic currency (USD, EUR, INR, etc.)
+// Note: All values are in domestic currency (actual values from IMF data)
+// All 48 indicators now have data from the updated expense_clean.csv
 export const INDICATOR_METADATA = {
-  'GE': { name: 'Total Government Expense', category: 'overview', icon: '💰', unit: 'Millions' },
-  'GECE': { name: 'Compensation of Employees', category: 'personnel', icon: '👥', unit: 'Millions' },
-  'GECES': { name: 'Compensation + Social Benefits', category: 'personnel', icon: '👥💼', unit: 'M (Local)' },
-  'GECESA': { name: 'Compensation + Social Benefits (Adjusted)', category: 'personnel', icon: '👥📊', unit: 'M (Local)' },
-  'GECESI': { name: 'Compensation + Social Benefits (Insurance)', category: 'personnel', icon: '👥🛡️', unit: 'M (Local)' },
-  'GECEW': { name: 'Compensation + Welfare', category: 'personnel', icon: '👥🤝', unit: 'M (Local)' },
-  'GEG': { name: 'Total Grants', category: 'transfers', icon: '🎁', unit: 'M (Local)' },
-  'GEG_FG': { name: 'Federal Grants', category: 'transfers', icon: '🏛️', unit: 'M (Local)' },
-  'GEG_GG': { name: 'General Government Grants', category: 'transfers', icon: '🏢', unit: 'M (Local)' },
-  'GEG_IO': { name: 'International Organization Grants', category: 'transfers', icon: '🌍', unit: 'M (Local)' },
-  'GEGC_FG': { name: 'Current Federal Grants', category: 'transfers', icon: '🏛️💸', unit: 'M (Local)' },
-  'GEGC_GG': { name: 'Current General Government Grants', category: 'transfers', icon: '🏢💸', unit: 'M (Local)' },
-  'GEGC_IO': { name: 'Current International Grants', category: 'transfers', icon: '🌍💸', unit: 'M (Local)' },
-  'GEGK_FG': { name: 'Capital Federal Grants', category: 'transfers', icon: '🏛️🏗️', unit: 'M (Local)' },
-  'GEGK_GG': { name: 'Capital General Government Grants', category: 'transfers', icon: '🏢🏗️', unit: 'M (Local)' },
-  'GEGK_IO': { name: 'Capital International Grants', category: 'transfers', icon: '🌍🏗️', unit: 'M (Local)' },
-  'GEGS': { name: 'Subsidies', category: 'transfers', icon: '💰🏭', unit: 'M (Local)' },
-  'GEI': { name: 'Total Interest', category: 'debt', icon: '📈', unit: 'M (Local)' },
-  'GEI_GG': { name: 'Interest to General Government', category: 'debt', icon: '📈🏢', unit: 'M (Local)' },
-  'GEI_NGG': { name: 'Interest to Non-Government', category: 'debt', icon: '📈🏦', unit: 'M (Local)' },
-  'GEI_NRES': { name: 'Interest to Non-Residents', category: 'debt', icon: '📈🌍', unit: 'M (Local)' },
-  'GEKC': { name: 'Consumption of Fixed Capital', category: 'debt', icon: '🏗️📉', unit: 'M (Local)' },
-  'GEO': { name: 'Total Other Expenses', category: 'other', icon: '📋', unit: 'M (Local)' },
-  'GEOM': { name: 'Use of Goods and Services', category: 'operations', icon: '🛒', unit: 'M (Local)' },
-  'GEOMC': { name: 'Use of Goods and Services (Current)', category: 'operations', icon: '🛒💸', unit: 'M (Local)' },
-  'GEOMK': { name: 'Use of Goods and Services (Capital)', category: 'operations', icon: '🛒🏗️', unit: 'M (Local)' },
-  'GEOO': { name: 'Other Miscellaneous Expenses', category: 'other', icon: '📋❓', unit: 'M (Local)' },
-  'GEOOC': { name: 'Other Current Expenses', category: 'other', icon: '📋💸', unit: 'M (Local)' },
-  'GEOOP': { name: 'Other Property Expenses', category: 'other', icon: '🏠💸', unit: 'M (Local)' },
-  'GEOOPC': { name: 'Other Property Current Expenses', category: 'other', icon: '🏠💰', unit: 'M (Local)' },
-  'GEOOPF': { name: 'Other Property Financial Expenses', category: 'other', icon: '🏠💳', unit: 'M (Local)' },
-  'GEOP': { name: 'Public Order and Safety', category: 'services', icon: '👮‍♂️', unit: 'M (Local)' },
-  'GEOPD': { name: 'Defense', category: 'services', icon: '🛡️', unit: 'M (Local)' },
-  'GEOPE': { name: 'Economic Affairs', category: 'services', icon: '💼', unit: 'M (Local)' },
-  'GEOPP': { name: 'Public Order', category: 'services', icon: '⚖️', unit: 'M (Local)' },
-  'GEOPR': { name: 'Recreation and Culture', category: 'services', icon: '🎭', unit: 'M (Local)' },
-  'GEOPW': { name: 'Environmental Protection', category: 'services', icon: '🌱', unit: 'M (Local)' },
-  'GES': { name: 'Total Social Benefits', category: 'social', icon: '🤝', unit: 'M (Local)' },
-  'GES_CA': { name: 'Social Benefits (Cash)', category: 'social', icon: '💵', unit: 'M (Local)' },
-  'GES_IK': { name: 'Social Benefits (In-Kind)', category: 'social', icon: '🎁', unit: 'M (Local)' },
-  'GESA': { name: 'Social Assistance', category: 'social', icon: '🤲', unit: 'M (Local)' },
-  'GESE': { name: 'Employment Benefits', category: 'social', icon: '💼🤝', unit: 'M (Local)' },
-  'GESS': { name: 'Social Security', category: 'social', icon: '🛡️🤝', unit: 'M (Local)' },
-  'GEST': { name: 'Education', category: 'programs', icon: '🎓', unit: 'M (Local)' },
-  'GEST_OS': { name: 'Other Services', category: 'programs', icon: '🏛️', unit: 'M (Local)' },
-  'GEST_PCO': { name: 'Public Order (Detailed)', category: 'programs', icon: '👮‍♂️📊', unit: 'M (Local)' },
-  'GEST_PE': { name: 'Public Enterprises', category: 'programs', icon: '🏭', unit: 'M (Local)' }
+  // Overview
+  'GE': { name: 'Total Government Expense', category: 'overview', icon: '💰' },
+  
+  // Personnel
+  'GECE': { name: 'Compensation of Employees', category: 'personnel', icon: '👥' },
+  
+  // Transfers & Grants
+  'GEG': { name: 'Total Grants', category: 'transfers', icon: '🎁' },
+  'GEG_FG': { name: 'Federal Grants', category: 'transfers', icon: '🏛️' },
+  'GEG_GG': { name: 'General Government Grants', category: 'transfers', icon: '🏢' },
+  'GEG_IO': { name: 'International Organization Grants', category: 'transfers', icon: '🌍' },
+  'GEGC_FG': { name: 'Current Federal Grants', category: 'transfers', icon: '🏛️💸' },
+  'GEGC_GG': { name: 'Current General Government Grants', category: 'transfers', icon: '🏢💸' },
+  'GEGC_IO': { name: 'Current International Grants', category: 'transfers', icon: '🌍💸' },
+  'GEGK_FG': { name: 'Capital Federal Grants', category: 'transfers', icon: '🏛️🏗️' },
+  'GEGK_GG': { name: 'Capital General Government Grants', category: 'transfers', icon: '🏢🏗️' },
+  'GEGK_IO': { name: 'Capital International Grants', category: 'transfers', icon: '🌍🏗️' },
+  'GEGS': { name: 'Subsidies', category: 'transfers', icon: '💰🏭' },
+  
+  // Debt & Interest
+  'GEI': { name: 'Total Interest', category: 'debt', icon: '📈' },
+  'GEI_GG': { name: 'Interest to General Government', category: 'debt', icon: '📈🏢' },
+  'GEI_NGG': { name: 'Interest to Non-Government', category: 'debt', icon: '📈🏦' },
+  'GEI_NRES': { name: 'Interest to Non-Residents', category: 'debt', icon: '📈🌍' },
+  'GEKC': { name: 'Consumption of Fixed Capital', category: 'debt', icon: '🏗️📉' },
+  
+  // Operations & Other
+  'GEO': { name: 'Total Other Expenses', category: 'other', icon: '📋' },
+  'GEOM': { name: 'Use of Goods and Services', category: 'operations', icon: '🛒' },
+  'GEOO': { name: 'Other Miscellaneous Expenses', category: 'other', icon: '📋❓' },
+  'GEOOC': { name: 'Other Current Expenses', category: 'other', icon: '📋💸' },
+  'GEOOP': { name: 'Other Property Expenses', category: 'other', icon: '🏠💸' },
+  'GEOOPF': { name: 'Other Property Financial Expenses', category: 'other', icon: '🏠💳' },
+  
+  // Social Benefits
+  'GES': { name: 'Total Social Benefits', category: 'social', icon: '🤝' },
+  'GES_CA': { name: 'Social Benefits (Cash)', category: 'social', icon: '💵' },
+  'GES_IK': { name: 'Social Benefits (In-Kind)', category: 'social', icon: '🎁' },
+  'GESA': { name: 'Social Assistance', category: 'social', icon: '🤲' },
+  'GESE': { name: 'Employment Benefits', category: 'social', icon: '💼🤝' },
+  'GESS': { name: 'Social Security', category: 'social', icon: '🛡️🤝' }
 }
 
-// Import category colors from ColorSchemeService to ensure consistency
+// Category colors - only for categories with actual data
 // These colors MUST match ColorSchemeService.js exactly
 export const CATEGORY_COLORS = {
-  overview: '#667eea',      // Purple-blue
-  personnel: '#f093fb',     // Pink-purple
-  transfers: '#4facfe',     // Light blue
-  debt: '#f5576c',          // Red-pink
-  operations: '#43e97b',    // Green
-  other: '#ffa726',         // Orange
-  services: '#ab47bc',      // Purple
-  social: '#26c6da',        // Cyan
-  programs: '#66bb6a'       // Green
+  overview: '#667eea',      // Purple-blue - Total Expense
+  personnel: '#f093fb',     // Pink-purple - Compensation
+  transfers: '#4facfe',     // Light blue - Grants & Subsidies
+  debt: '#f5576c',          // Red-pink - Interest & Capital
+  operations: '#43e97b',    // Green - Goods & Services
+  other: '#ffa726',         // Orange - Other Expenses & Property
+  social: '#26c6da'         // Cyan - Social Benefits
+}
+
+// Category descriptions with indicator counts
+export const CATEGORY_DESCRIPTIONS = {
+  overview: 'Total Government Expense (1 indicator)',
+  personnel: 'Compensation of Employees (1 indicator)',
+  transfers: 'Grants & Subsidies (13 indicators)',
+  debt: 'Interest & Capital (5 indicators)',
+  operations: 'Goods & Services (1 indicator)',
+  other: 'Other Expenses & Property (5 indicators)',
+  social: 'Social Benefits (6 indicators)'
 }
 
 /**
@@ -135,12 +139,16 @@ export function preloadUnifiedData() {
 
 /**
  * Load and process all 48 indicators into unified structure
+ * @param {Object} options - Loading options
+ * @param {boolean} options.useUSD - If true, load USD-converted data for world comparisons
  * @returns {Promise<Object>} Unified data structure
  */
-export async function loadUnifiedData() {
-  // Return cached data if available
-  if (unifiedData) {
-    console.log('✅ Using cached unified data')
+export async function loadUnifiedData(options = {}) {
+  const { useUSD = false } = options
+  
+  // Return cached data if available and currency matches
+  if (unifiedData && unifiedData.currency === (useUSD ? 'USD' : 'LOCAL')) {
+    console.log(`✅ Using cached unified data (${unifiedData.currency})`)
     return unifiedData
   }
 
@@ -155,7 +163,7 @@ export async function loadUnifiedData() {
   loadingStatus.loadedIndicators = 0
   loadingStatus.errors = []
 
-  loadingPromise = processAllIndicators()
+  loadingPromise = processAllIndicators(useUSD)
   unifiedData = await loadingPromise
   loadingPromise = null
   
@@ -166,11 +174,248 @@ export async function loadUnifiedData() {
 }
 
 /**
- * Process all indicator CSV files into unified structure
+ * Mapping of expense categories to indicator codes
+ * Maps all 48 expense categories from IMF data to the 48 indicator codes
  */
-async function processAllIndicators() {
+const CATEGORY_TO_CODE = {
+  // Overview
+  'Expense': 'GE',
+  
+  // Personnel / Compensation
+  'Compensation of employees': 'GECE',
+  'Compensation of Employees: Wages and salaries': 'GECE',
+  'Compensation of Employees: Employers\' social contributions': 'GECE',
+  'Compensation of Employees, employer\'s social contributions: Actual employers\' social contributions': 'GECE',
+  'Compensation of Employees, employer\'s social contributions: Imputed employers\' social contributions': 'GECE',
+  
+  // Grants and Transfers
+  'Grants expense': 'GEG',
+  'Grants expense to foreign governments': 'GEG_FG',
+  'Grants expense to other general government': 'GEG_GG',
+  'Grants expense to international organizations': 'GEG_IO',
+  'Grants expense to foreign governments: current': 'GEGC_FG',
+  'Grants expense to other general government: current': 'GEGC_GG',
+  'Grants expense to international organizations: current': 'GEGC_IO',
+  'Grants expense to foreign governments: capital': 'GEGK_FG',
+  'Grants expense to other general government: capital': 'GEGK_GG',
+  'Grants expense to international organizations: capital': 'GEGK_IO',
+  'Subsidies expense': 'GEGS',
+  'Subsidies expense to private enterprises': 'GEGS',
+  'Subsidies expense to public corporations': 'GEGS',
+  'Subsidies expense to other sectors': 'GEGS',
+  
+  // Interest and Debt
+  'Interest expense': 'GEI',
+  'Interest expense to other gen gov': 'GEI_GG',
+  'Interest expense to nonresidents': 'GEI_NRES',
+  'Interest expense to residents other than general government': 'GEI_NGG',
+  'Consumption of fixed capital': 'GEKC',
+  
+  // Other Transfers and Expenses
+  'Expense on other transfers': 'GEO',
+  'Expense on other transfers, current': 'GEOOC',
+  'Expense on other transfers, capital': 'GEO',
+  'Other expense': 'GEOO',
+  
+  // Operations
+  'Use of goods and services': 'GEOM',
+  
+  // Property Expenses
+  'Property expense other than interest': 'GEOOP',
+  'Property expense other than interest: Dividend expense': 'GEOOP',
+  'Property expense other than interest: Rent expense': 'GEOOP',
+  'Property expense other than interest: Withdrawals of income from quasi-corporations': 'GEOOP',
+  'Property expense other than interest: Property expense for investment income disbursements': 'GEOOPF',
+  'Property expense other than interest: Reinvested earnings on FDI': 'GEOOPF',
+  
+  // Social Benefits
+  'Social benefits expense': 'GES',
+  'Social benefits expense in cash': 'GES_CA',
+  'Social benefits expense in kind': 'GES_IK',
+  'Social benefits expense: Employment-related social benefits expense': 'GESE',
+  'Social benefits expense: Social assistance benefits expense': 'GESA',
+  'Social benefits expense: Social security benefits expense': 'GESS',
+  
+  // Insurance and Social Security
+  'Expense on NI & SGS: Premiums': 'GEO',
+  'Expense on NI & SGS: Fees': 'GEO',
+  'Expense on NI & SGS: Capital claims': 'GEO',
+  'Expense on NI & SGS: Current claims': 'GEO',
+  'Expense on NI & SGS: Premiums, fees, & claims': 'GEO',
+  'Expense on NI & SGS: Premiums, fees, & current claims': 'GEO',
+}
+
+/**
+ * Load data from unified expense_clean.csv file
+ * @param {boolean} useUSD - If true, load USD data from expense_clean_usd.csv
+ */
+async function loadFromUnifiedFile(useUSD = false) {
+  try {
+    const fileName = useUSD ? 'expense_clean_usd.csv' : 'expense_clean.csv'
+    const currency = useUSD ? 'USD' : 'LOCAL'
+    
+    console.log(`📊 Attempting to load from ${fileName} (${currency})...`)
+    const { getDataPath } = await import('../../../utils/pathUtils.js')
+    const csvData = await d3.csv(getDataPath(fileName))
+    
+    console.log(`✓ Loaded expense_clean.csv with ${csvData.length} rows`)
+    
+    const data = {
+      countries: {},
+      indicators: {},
+      years: new Set(),
+      categories: Object.keys(CATEGORY_COLORS),
+      lastUpdated: new Date().toISOString()
+    }
+
+    // Group by indicator code
+    const indicatorGroups = {}
+    
+    csvData.forEach(row => {
+      const country = row['Country Name']
+      const category = row['Expense Category']
+      const year = parseInt(row['Year'])
+      const value = parseFloat(row['Value'])
+      
+      if (!country || !category || isNaN(year) || isNaN(value)) return
+      
+      // Map category to indicator code
+      const indicatorCode = CATEGORY_TO_CODE[category]
+      if (!indicatorCode) {
+        return // Skip unmapped categories
+      }
+      
+      // Initialize structures
+      if (!indicatorGroups[indicatorCode]) {
+        indicatorGroups[indicatorCode] = []
+      }
+      
+      indicatorGroups[indicatorCode].push({
+        country,
+        year,
+        value
+      })
+      
+      data.years.add(year)
+    })
+
+    // Process each indicator
+    Object.entries(indicatorGroups).forEach(([indicatorCode, rows]) => {
+      const metadata = INDICATOR_METADATA[indicatorCode]
+      if (!metadata) return
+      
+      const indicatorData = {
+        metadata,
+        countries: new Set(),
+        years: new Set(),
+        values: [],
+        globalStats: null
+      }
+
+      // Aggregate by country-year (handle multiple categories mapping to same code)
+      const countryYearData = {}
+      
+      rows.forEach(({ country, year, value }) => {
+        const key = `${country}-${year}`
+        
+        if (!countryYearData[key]) {
+          countryYearData[key] = {
+            country,
+            year,
+            values: []
+          }
+        }
+        
+        countryYearData[key].values.push(value)
+      })
+
+      // Process aggregated data
+      Object.values(countryYearData).forEach(({ country, year, values }) => {
+        // Initialize country in unified data
+        if (!data.countries[country]) {
+          data.countries[country] = {
+            name: country,
+            code: country.substring(0, 3).toUpperCase(),
+            indicators: {}
+          }
+        }
+
+        // Initialize indicator for country
+        if (!data.countries[country].indicators[indicatorCode]) {
+          data.countries[country].indicators[indicatorCode] = {}
+        }
+
+        // Average multiple values if they exist
+        const aggregatedValue = values.reduce((sum, v) => sum + v, 0) / values.length
+
+        // Store in unified structure
+        data.countries[country].indicators[indicatorCode][year] = aggregatedValue
+        
+        // Track for indicator stats
+        indicatorData.countries.add(country)
+        indicatorData.years.add(year)
+        indicatorData.values.push(aggregatedValue)
+      })
+
+      // Calculate global statistics for indicator
+      if (indicatorData.values.length > 0) {
+        indicatorData.globalStats = {
+          minValue: Math.min(...indicatorData.values),
+          maxValue: Math.max(...indicatorData.values),
+          avgValue: indicatorData.values.reduce((a, b) => a + b, 0) / indicatorData.values.length,
+          totalCountries: indicatorData.countries.size,
+          totalDataPoints: indicatorData.values.length,
+          yearRange: [Math.min(...indicatorData.years), Math.max(...indicatorData.years)]
+        }
+      }
+
+      // Convert sets to arrays
+      indicatorData.countries = Array.from(indicatorData.countries)
+      indicatorData.years = Array.from(indicatorData.years).sort()
+      
+      data.indicators[indicatorCode] = indicatorData
+    })
+
+    // Convert years set to sorted array
+    data.years = Array.from(data.years).sort()
+    
+    // Mark currency type
+    data.currency = currency
+
+    console.log(`✅ Loaded from unified file (${currency}):`, {
+      countries: Object.keys(data.countries).length,
+      indicators: Object.keys(data.indicators).length,
+      years: data.years.length,
+      yearRange: [data.years[0], data.years[data.years.length - 1]],
+      currency: currency
+    })
+
+    return data
+  } catch (error) {
+    console.warn('⚠️ Failed to load from unified file:', error.message)
+    return null
+  }
+}
+
+/**
+ * Process all indicator CSV files into unified structure
+ * @param {boolean} useUSD - If true, load USD data for world comparisons
+ */
+async function processAllIndicators(useUSD = false) {
   const startTime = Date.now()
-  console.log('📊 Loading and processing all 48 indicators...')
+  
+  // Try loading from unified file first
+  const unifiedFileData = await loadFromUnifiedFile(useUSD)
+  if (unifiedFileData) {
+    const loadTime = ((Date.now() - startTime) / 1000).toFixed(2)
+    console.log(`✅ Successfully loaded from unified file in ${loadTime}s`)
+    loadingStatus.loadedIndicators = Object.keys(unifiedFileData.indicators).length
+    loadingStatus.progress = 100
+    return unifiedFileData
+  }
+  
+  // Fallback to loading individual files
+  console.log('📊 Falling back to loading individual 48 indicator files...')
   
   const data = {
     countries: {},
@@ -309,24 +554,44 @@ async function processAllIndicators() {
 
   // Convert years set to sorted array
   data.years = Array.from(data.years).sort()
+  
+  // Mark currency type (fallback always uses local currency from individual files)
+  data.currency = 'LOCAL'
 
-  console.log('Unified data processing complete:', {
+  console.log('Unified data processing complete (LOCAL currency):', {
     countries: Object.keys(data.countries).length,
     indicators: Object.keys(data.indicators).length,
     years: data.years.length,
-    yearRange: [data.years[0], data.years[data.years.length - 1]]
+    yearRange: [data.years[0], data.years[data.years.length - 1]],
+    currency: 'LOCAL'
   })
 
   return data
 }
 
 /**
- * Get indicator data for visualization
+ * Determine if USD conversion should be used based on context
+ * @param {Array} countries - List of countries being compared
+ * @returns {boolean} True if USD should be used
  */
-export function getIndicatorData(indicatorCode, yearRange = null) {
+export function shouldUseUSD(countries = []) {
+  // Use USD for world/multi-country comparisons (more than 1 country)
+  return countries && countries.length > 1
+}
+
+/**
+ * Get indicator data for visualization
+ * @param {indicatorCode} string - Indicator code
+ * @param {yearRange} Array - Optional year range [start, end]
+ * @param {options} Object - Additional options
+ * @param {options.useUSD} boolean - Force USD conversion for world comparisons
+ */
+export function getIndicatorData(indicatorCode, yearRange = null, options = {}) {
   if (!unifiedData || !unifiedData.indicators[indicatorCode]) {
     return null
   }
+  
+  const { useUSD = false } = options
 
   const indicator = unifiedData.indicators[indicatorCode]
   const countries = {}
@@ -379,6 +644,7 @@ export function getIndicatorData(indicatorCode, yearRange = null) {
     category: indicator.metadata.category,
     icon: indicator.metadata.icon,
     unit: indicator.metadata.unit,
+    currency: unifiedData.currency || 'LOCAL',
     countries,
     years: indicator.years.filter(y => y >= startYear && y <= endYear),
     globalStats

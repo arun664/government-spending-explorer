@@ -478,7 +478,7 @@ const ComparisonEngine = () => {
                         <div className="sector-header">
                           <h4>{sector.category}</h4>
                           <div className={`trend-indicator ${sector.trend}`}>
-                            {sector.trend === 'growth' ? '📈' : sector.trend === 'decline' ? '📉' : '➡️'}
+                            {sector.trend === 'growth' ? '🟢↑' : sector.trend === 'decline' ? '🔴↓' : '⚪→'}
                             {sector.growthRate.toFixed(1)}%
                           </div>
                         </div>

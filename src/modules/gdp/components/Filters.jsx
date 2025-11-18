@@ -19,7 +19,7 @@ const Filters = ({
   const [tempFilters, setTempFilters] = useState({
     regions: initialFilters.regions || [],
     yearRange: initialFilters.yearRange || [minYear, maxYear],
-    gdpRange: initialFilters.gdpRange || [-100, 100],
+    gdpRange: initialFilters.gdpRange || [0, 30000],
     countries: selectedCountries
   });
 
@@ -34,7 +34,7 @@ const Filters = ({
         ...prev,
         regions: gdpFilters.regions || [],
         yearRange: gdpFilters.yearRange || [minYear, maxYear],
-        gdpRange: gdpFilters.gdpRange || [-100, 100]
+        gdpRange: gdpFilters.gdpRange || [0, 30000]
       }))
     }, 'gdp')
     return unsubscribe
@@ -76,7 +76,17 @@ const Filters = ({
 
   const handleYearRangeChange = (index, value) => {
     const newYearRange = [...tempFilters.yearRange];
-    newYearRange[index] = parseInt(value) || minYear;
+    const newValue = parseInt(value) || minYear;
+    
+    // Ensure left slider never goes past right slider and vice versa
+    if (index === 0) {
+      // Left slider (start year) - cannot exceed end year
+      newYearRange[0] = Math.min(newValue, tempFilters.yearRange[1]);
+    } else {
+      // Right slider (end year) - cannot go before start year
+      newYearRange[1] = Math.max(newValue, tempFilters.yearRange[0]);
+    }
+    
     const updatedFilters = { ...tempFilters, yearRange: newYearRange };
     setTempFilters(updatedFilters);
     // Update FilterStateManager
@@ -102,7 +112,7 @@ const Filters = ({
     const resetFilters = {
       regions: [],
       yearRange: [minYear, maxYear],
-      gdpRange: [-100, 100],
+      gdpRange: [0, 30000],
       countries: []
       // Removed compareMode and compareYear
     };
@@ -161,6 +171,7 @@ const Filters = ({
               value={tempFilters.yearRange[0]}
               onChange={(e) => handleYearRangeChange(0, e.target.value)}
               className="slider-input slider-min"
+              aria-label="Start year"
             />
             <input
               type="range"
@@ -169,17 +180,55 @@ const Filters = ({
               value={tempFilters.yearRange[1]}
               onChange={(e) => handleYearRangeChange(1, e.target.value)}
               className="slider-input slider-max"
+              aria-label="End year"
             />
           </div>
           <div className="year-display">
             {tempFilters.yearRange[0]} - {tempFilters.yearRange[1]}
+          </div>
+          
+          {/* Direct year input fields */}
+          <div className="year-inputs">
+            <div className="year-input-field">
+              <label htmlFor="gdp-start-year">From</label>
+              <input
+                id="gdp-start-year"
+                type="number"
+                min={minYear}
+                max={maxYear}
+                value={tempFilters.yearRange[0]}
+                onChange={(e) => handleYearRangeChange(0, e.target.value)}
+                onBlur={(e) => {
+                  const val = parseInt(e.target.value)
+                  if (val < minYear) handleYearRangeChange(0, minYear)
+                  if (val > maxYear) handleYearRangeChange(0, maxYear)
+                }}
+              />
+            </div>
+            <span className="year-separator">to</span>
+            <div className="year-input-field">
+              <label htmlFor="gdp-end-year">To</label>
+              <input
+                id="gdp-end-year"
+                type="number"
+                min={minYear}
+                max={maxYear}
+                value={tempFilters.yearRange[1]}
+                onChange={(e) => handleYearRangeChange(1, e.target.value)}
+                onBlur={(e) => {
+                  const val = parseInt(e.target.value)
+                  if (val < minYear) handleYearRangeChange(1, minYear)
+                  if (val > maxYear) handleYearRangeChange(1, maxYear)
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
 
       <div className="filter-section">
         <label className="filter-label">
-          GDP GROWTH (%):
+          GDP (Billions USD):
           {tempFilters.regions.length > 0 && (
             <span className="disabled-label"> (disabled when region selected)</span>
           )}
@@ -187,7 +236,7 @@ const Filters = ({
         <div className="range-inputs">
           <input
             type="number"
-            step="0.1"
+            step="100"
             value={tempFilters.gdpRange[0]}
             onChange={(e) => handleGdpRangeChange(0, e.target.value)}
             className="range-input"
@@ -197,7 +246,7 @@ const Filters = ({
           <span>to</span>
           <input
             type="number"
-            step="0.1"
+            step="100"
             value={tempFilters.gdpRange[1]}
             onChange={(e) => handleGdpRangeChange(1, e.target.value)}
             className="range-input"

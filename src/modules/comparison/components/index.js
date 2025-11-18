@@ -34,3 +34,10 @@ export { default as FocusTrap } from './FocusTrap.jsx'
 
 // Demo Component
 export { default as MetricCardsDemo } from './MetricCardsDemo.jsx'
+
+// Dashboard Components (Task 12)
+export { default as ComparisonDashboard } from './ComparisonDashboard.jsx'
+export { default as UnifiedLegend } from './UnifiedLegend.jsx'
+export { default as TrendLineChart } from './TrendLineChart.jsx'
+export { default as RatioAreaChart } from './RatioAreaChart.jsx'
+export { default as YearComparisonBarChart } from './YearComparisonBarChart.jsx'

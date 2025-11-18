@@ -203,8 +203,8 @@ const SpendingWorldMap = ({
           className="map-tooltip"
           style={{
             position: 'fixed',
-            left: `${tooltip.x + 15}px`,
-            top: `${tooltip.y - 10}px`,
+            left: `${Math.min(tooltip.x + 15, window.innerWidth - 300)}px`,
+            top: `${Math.min(Math.max(tooltip.y - 10, 10), window.innerHeight - 150)}px`,
             pointerEvents: 'none',
             zIndex: 10000
           }}
@@ -220,7 +220,7 @@ const SpendingWorldMap = ({
                   <span className="value">{tooltip.data.indicatorName}</span>
                 </div>
                 <div className="tooltip-row highlight">
-                  <span className="label">Value:</span>
+                  <span className="label">Avg Value:</span>
                   <span className="value">
                     {tooltip.data.spending !== null 
                       ? `${formatSpendingValue(tooltip.data.spending)} ${getCurrencyCode(tooltip.data.name)}`

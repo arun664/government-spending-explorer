@@ -18,7 +18,7 @@ import '../styles/SpendingAnalysis.css'
  * Enhanced Government Spending Analysis Component
  * 
  * Features:
- * - 48 IMF Government Finance Statistics indicators
+ * - 48 IMF Government Finance Statistics indicators (all categories)
  * - Category-based organization (Personnel, Transfers, Debt, Operations, etc.)
  * - Interactive world map with category-colored spending heatmaps
  * - Sector-specific filtering with dynamic map updates
@@ -27,7 +27,7 @@ import '../styles/SpendingAnalysis.css'
  */
 const SpendingAnalysis = ({ onLoadingChange }) => {
   // Core state
-  const [unifiedData, setUnifiedData] = useState(null) // All 48 indicators pre-loaded
+  const [unifiedData, setUnifiedData] = useState(null) // 48 indicators pre-loaded
   const [spendingData, setSpendingData] = useState({})
   const [selectedIndicator, setSelectedIndicator] = useState('GE')
   const [selectedCategory, setSelectedCategory] = useState('overview')
@@ -42,7 +42,7 @@ const SpendingAnalysis = ({ onLoadingChange }) => {
   
   // Filter state
   const [filters, setFilters] = useState({ 
-    yearRange: [2005, 2023], // Last 2 decades
+    yearRange: [1980, 2023], // Full data range: 1980-2023
     categories: ['overview'],
     countries: [],
     sectors: [],
@@ -408,7 +408,7 @@ const SpendingAnalysis = ({ onLoadingChange }) => {
                 📊
               </button>
             </div>
-            <p>48 IMF Government Finance Statistics</p>
+            <p>48 IMF Indicators (all categories)</p>
             
             {/* Stats Popup */}
             {showStatsPopup && spendingData.globalStats && (

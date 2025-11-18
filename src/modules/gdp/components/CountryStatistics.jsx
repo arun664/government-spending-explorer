@@ -155,10 +155,10 @@ const CountryStatistics = ({
   // Get trend icon
   const getTrendIcon = (trend) => {
     switch (trend) {
-      case 'increasing': return '📈'
-      case 'decreasing': return '📉'
-      case 'stable': return '➡️'
-      default: return '❓'
+      case 'increasing': return '🟢↑' // Green up arrow for positive growth
+      case 'decreasing': return '🔴↓' // Red down arrow for decline
+      case 'stable': return '⚪→'     // Neutral for no change
+      default: return '⚪→'           // Neutral for insufficient data
     }
   }
 

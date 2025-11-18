@@ -14,33 +14,9 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
     return
   }
   
-  const firstCountry = Object.keys(spendingData.countries)[0]
-  const firstCountryData = spendingData.countries[firstCountry]
-  
-  console.log('=== MAP INITIALIZATION ===')
-  console.log('Map init:', {
-    hasColorScale: !!colorScale,
-    colorScaleType: typeof colorScale,
-    category: spendingData.category,
-    countriesCount: Object.keys(spendingData.countries).length,
-    sampleCountry: firstCountry,
-    sampleData: firstCountryData,
-    filters: filters
-  })
-  
   if (!colorScale) {
     console.error('ColorScale is null/undefined! Category:', spendingData.category)
     return
-  }
-  
-  // Test the color scale with sample data
-  if (firstCountryData?.totalSpending) {
-    const testColor = colorScale(firstCountryData.totalSpending)
-    console.log('Color scale test:', {
-      country: firstCountry,
-      spending: firstCountryData.totalSpending,
-      resultColor: testColor
-    })
   }
 
   const svg = d3.select(svgRef.current)
@@ -84,18 +60,6 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
   const filteredCountries = MapColorService.applyFiltersToMapData(countries.features, filters, spendingData)
   const filteredCountryNames = new Set(filteredCountries.map(f => getCountryNameFromFeature(f)))
   
-  console.log('Filter processing:', {
-    totalCountries: countries.features.length,
-    filteredCount: filteredCountries.length,
-    filters: filters,
-    sampleFiltered: Array.from(filteredCountryNames).slice(0, 5),
-    hasSpendingData: !!spendingData?.countries,
-    spendingDataKeys: spendingData?.countries ? Object.keys(spendingData.countries).slice(0, 5) : []
-  })
-  
-  // Track color assignments for debugging
-  const colorAssignments = []
-  
   // Draw countries
   countriesGroup.selectAll('path')
     .data(countries.features)
@@ -134,44 +98,6 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
         let finalColor = '#e8e8e8'
         if (spendingValue !== null && !isNaN(spendingValue) && colorScale && typeof colorScale === 'function') {
           finalColor = colorScale(spendingValue)
-          
-          // Log first 5 countries for debugging
-          if (colorAssignments.length < 5) {
-            colorAssignments.push({
-              country: countryName,
-              code: countryData.code,
-              spendingValue,
-              hasColorScale: !!colorScale,
-              colorScaleType: typeof colorScale,
-              finalColor,
-              passesFilters,
-              category: spendingData.category
-            })
-          }
-          
-          // Debug specific problematic countries
-          if (['Argentina', 'Malaysia', 'Vietnam', 'Morocco', 'Uruguay'].includes(countryName)) {
-            console.log(`🎨 Coloring ${countryName}:`, {
-              spendingValue,
-              finalColor,
-              passesFilters,
-              hasData: !!countryData,
-              dataKeys: countryData ? Object.keys(countryData.data || {}).length : 0
-            })
-          }
-        } else {
-          // Debug why color wasn't applied
-          if (['Argentina', 'Malaysia', 'Vietnam', 'Morocco', 'Uruguay'].includes(countryName)) {
-            console.log(`❌ NOT Coloring ${countryName}:`, {
-              spendingValue,
-              isNull: spendingValue === null,
-              isNaN: isNaN(spendingValue),
-              hasColorScale: !!colorScale,
-              colorScaleType: typeof colorScale,
-              hasCountryData: !!countryData,
-              hasData: countryData?.data ? Object.keys(countryData.data).length : 0
-            })
-          }
         }
         
         return finalColor
@@ -322,26 +248,44 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
         }
       }
     })
-  
-  // Log color assignments after all countries are processed
-  if (colorAssignments.length > 0) {
-    console.log('=== 🎨 COLOR ASSIGNMENTS (First 5 countries) ===')
-    colorAssignments.forEach(assignment => {
-      console.log(`${assignment.country} (${assignment.code}):`, {
-        category: assignment.category,
-        spending: assignment.spendingValue,
-        color: assignment.finalColor,
-        passes: assignment.passesFilters,
-        hasScale: assignment.hasColorScale
-      })
-    })
-  } else {
-    console.warn('⚠️  NO COLOR ASSIGNMENTS - Check if colorScale is working!')
+}
+
+/**
+ * Calculate country spending statistics for a given year range
+ * This is the single source of truth for spending calculations
+ */
+export function calculateCountrySpending(countryData, yearRange) {
+  if (!countryData || !countryData.data) {
+    return null
   }
   
-  console.log('=== MAP RENDER COMPLETE ===')
-  console.log(`Total countries rendered: ${countries.features.length}`)
-  console.log(`Countries passing filters: ${filteredCountries.length}`)
+  const values = []
+  const years = []
+  
+  Object.entries(countryData.data).forEach(([year, value]) => {
+    const y = parseInt(year)
+    if (y >= yearRange[0] && y <= yearRange[1] && !isNaN(value) && value !== null) {
+      values.push(value)
+      years.push(y)
+    }
+  })
+  
+  if (values.length === 0) {
+    return null
+  }
+  
+  const sortedYears = years.sort((a, b) => a - b)
+  const sortedValues = sortedYears.map(y => countryData.data[y])
+  
+  return {
+    average: values.reduce((sum, v) => sum + v, 0) / values.length,
+    min: Math.min(...values),
+    max: Math.max(...values),
+    latest: sortedValues[sortedValues.length - 1],
+    latestYear: sortedYears[sortedYears.length - 1],
+    years: sortedYears,
+    dataPoints: values.length
+  }
 }
 
 function getCountrySpendingForMap(spendingData, countryName, yearRange = [2015, 2023]) {
@@ -349,35 +293,10 @@ function getCountrySpendingForMap(spendingData, countryName, yearRange = [2015, 
   
   // Use MapColorService to find country data (handles both code and name lookups)
   const countryData = MapColorService.findCountryData(countryName, spendingData)
-  if (!countryData || !countryData.data) return null
+  if (!countryData) return null
   
-  // getIndicatorData returns: countries[name] = { name, code, data: {year: value} }
-  // Calculate average spending for the year range
-  const values = []
-  const allYears = Object.keys(countryData.data)
-  
-  Object.entries(countryData.data).forEach(([year, value]) => {
-    const y = parseInt(year)
-    if (y >= yearRange[0] && y <= yearRange[1] && !isNaN(value) && value !== null) {
-      values.push(value)
-    }
-  })
-  
-  // Debug problematic countries
-  const problematicCountries = ['Argentina', 'Malaysia', 'Vietnam', 'Morocco', 'Uruguay', 'Mozambique']
-  if (problematicCountries.includes(countryName)) {
-    console.log(`📊 getCountrySpendingForMap for ${countryName}:`, {
-      hasData: !!countryData.data,
-      allYears: allYears,
-      yearRange,
-      valuesInRange: values.length,
-      avgSpending: values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : null
-    })
-  }
-  
-  if (values.length === 0) return null
-  
-  return values.reduce((sum, v) => sum + v, 0) / values.length
+  const stats = calculateCountrySpending(countryData, yearRange)
+  return stats ? stats.average : null
 }
 
 function getCountryNameFromFeature(feature) {

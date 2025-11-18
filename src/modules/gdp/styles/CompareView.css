@@ -140,6 +140,23 @@
   margin-top: 2px;
 }
 
+/* Chart Section */
+.chart-section {
+  padding: 30px;
+  margin-bottom: 30px;
+  background: linear-gradient(135deg, rgba(30, 30, 46, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%);
+  border: 2px solid rgba(139, 92, 246, 0.4);
+  border-radius: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: auto;
+}
+
+.chart-section svg {
+  display: block;
+}
+
 /* Insights Section */
 .insights-section {
   padding: 30px;

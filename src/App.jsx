@@ -45,79 +45,33 @@ function App() {
         <div className="header-content">
           <h1>Government Expense Dashboard</h1>
           
-          {/* Center section - Nav tabs or Comparison controls */}
-          {currentView === 'comparison' && comparisonControls ? (
-            <div className="comparison-header-controls">
-              <select
-                value={comparisonControls.chartType}
-                onChange={(e) => comparisonControls.onChartTypeChange(e.target.value)}
-                className="comparison-control-select"
-              >
-                {comparisonControls.chartTypes?.map(chartType => (
-                  <option key={chartType.id} value={chartType.id} style={{ color: '#000' }}>
-                    {chartType.icon} {chartType.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : (
-            <nav className="nav-tabs">
-              <button 
-                className={`nav-tab ${currentView === 'about' ? 'active' : ''}`}
-                onClick={() => handleModuleSwitch('about')}
-              >
-                About
-              </button>
-              <button 
-                className={`nav-tab ${currentView === 'spending' ? 'active' : ''}`}
-                onClick={() => handleModuleSwitch('spending')}
-              >
-                Spending
-              </button>
-              <button 
-                className={`nav-tab ${currentView === 'gdp' ? 'active' : ''}`}
-                onClick={() => handleModuleSwitch('gdp')}
-              >
-                GDP
-              </button>
-              <button 
-                className={`nav-tab ${currentView === 'comparison' ? 'active' : ''}`}
-                onClick={() => handleModuleSwitch('comparison')}
-              >
-                Comparison
-              </button>
-            </nav>
-          )}
-          
-          {/* Right section - Nav tabs when in comparison view */}
-          {currentView === 'comparison' && (
-            <nav className="nav-tabs nav-tabs-right">
-              <button 
-                className={`nav-tab ${currentView === 'about' ? 'active' : ''}`}
-                onClick={() => handleModuleSwitch('about')}
-              >
-                About
-              </button>
-              <button 
-                className={`nav-tab ${currentView === 'spending' ? 'active' : ''}`}
-                onClick={() => handleModuleSwitch('spending')}
-              >
-                Spending
-              </button>
-              <button 
-                className={`nav-tab ${currentView === 'gdp' ? 'active' : ''}`}
-                onClick={() => handleModuleSwitch('gdp')}
-              >
-                GDP
-              </button>
-              <button 
-                className={`nav-tab ${currentView === 'comparison' ? 'active' : ''}`}
-                onClick={() => handleModuleSwitch('comparison')}
-              >
-                Comparison
-              </button>
-            </nav>
-          )}
+          {/* Center section - Always show nav tabs */}
+          <nav className="nav-tabs">
+            <button 
+              className={`nav-tab ${currentView === 'about' ? 'active' : ''}`}
+              onClick={() => handleModuleSwitch('about')}
+            >
+              About
+            </button>
+            <button 
+              className={`nav-tab ${currentView === 'spending' ? 'active' : ''}`}
+              onClick={() => handleModuleSwitch('spending')}
+            >
+              Spending
+            </button>
+            <button 
+              className={`nav-tab ${currentView === 'gdp' ? 'active' : ''}`}
+              onClick={() => handleModuleSwitch('gdp')}
+            >
+              GDP
+            </button>
+            <button 
+              className={`nav-tab ${currentView === 'comparison' ? 'active' : ''}`}
+              onClick={() => handleModuleSwitch('comparison')}
+            >
+              Comparison
+            </button>
+          </nav>
         </div>
       </header>
 

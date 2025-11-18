@@ -113,14 +113,29 @@ export function GdpExpenseChart({ selectedCountry, data, chartType = 'line', wid
 
     const { gdpData, expenseData, years } = data
     
+    // Filter years to only include 2005 onwards
+    const filteredYears = years.filter(year => year >= 2005)
+    
     // Get GDP and expense data for selected country
-    const gdpCountryData = getCountryData(gdpData, selectedCountry, years)
-    const expenseCountryData = getCountryData(expenseData, selectedCountry, years)
+    const gdpCountryData = getCountryData(gdpData, selectedCountry, filteredYears)
+      .filter(d => d.year >= 2005)
+    const expenseCountryData = getCountryData(expenseData, selectedCountry, filteredYears)
+      .filter(d => d.year >= 2005)
+
+    console.log(`📊 Chart data for ${selectedCountry}:`)
+    console.log(`  GDP data points: ${gdpCountryData.length}`)
+    console.log(`  Expense data points: ${expenseCountryData.length}`)
+    if (gdpCountryData.length > 0) {
+      console.log(`  GDP sample:`, gdpCountryData[0])
+    }
+    if (expenseCountryData.length > 0) {
+      console.log(`  Expense sample:`, expenseCountryData[0])
+    }
 
     return {
       gdpData: gdpCountryData,
       expenseData: expenseCountryData,
-      years
+      years: filteredYears
     }
   }, [data, selectedCountry])
 
@@ -609,8 +624,16 @@ export function GdpExpenseChart({ selectedCountry, data, chartType = 'line', wid
         .domain(d3.extent(chartData.years))
         .range([0, innerWidth])
 
-      const allValues = [...chartData.gdpData, ...chartData.expenseData].map(d => d.value)
+      const allValues = [...chartData.gdpData, ...chartData.expenseData].map(d => d.value).filter(v => v > 0)
       const maxValue = d3.max(allValues) || 0
+      const minValue = d3.min(allValues) || 0
+      
+      console.log(`📊 Line chart scale:`)
+      console.log(`  Min value: ${minValue}`)
+      console.log(`  Max value: ${maxValue}`)
+      console.log(`  GDP values: ${chartData.gdpData.length}`)
+      console.log(`  Expense values: ${chartData.expenseData.length}`)
+      
       yAxisFormatter = getNumberFormatter(maxValue)
 
       yScale = d3.scaleLinear()
@@ -680,36 +703,71 @@ export function GdpExpenseChart({ selectedCountry, data, chartType = 'line', wid
       renderScatterPlot(svg, chartData, { xScale, yScale }, margin, innerWidth, innerHeight, data)
     } else {
       // Render line chart (default)
-      // Line generators
+      // Line generators with defined check to skip null/undefined values
       const gdpLine = d3.line()
+        .defined(d => d && d.year && d.value && !isNaN(d.value) && d.value > 0)
         .x(d => xScale(d.year))
         .y(d => yScale(d.value))
         .curve(d3.curveMonotoneX)
 
       const expenseLine = d3.line()
+        .defined(d => d && d.year && d.value && !isNaN(d.value) && d.value > 0)
         .x(d => xScale(d.year))
         .y(d => yScale(d.value))
         .curve(d3.curveMonotoneX)
 
-      // Draw GDP line
-      g.append('path')
-        .datum(chartData.gdpData)
-        .attr('class', 'line gdp-line')
-        .attr('d', gdpLine)
-        .attr('fill', 'none')
-        .attr('stroke', '#4e79a7')
-        .attr('stroke-width', 3)
-        .attr('opacity', 0.9)
+      console.log(`📈 Drawing lines:`)
+      console.log(`  GDP line data:`, chartData.gdpData.length, 'points')
+      console.log(`  Expense line data:`, chartData.expenseData.length, 'points')
 
-      // Draw Expense line
-      g.append('path')
-        .datum(chartData.expenseData)
-        .attr('class', 'line expense-line')
-        .attr('d', expenseLine)
-        .attr('fill', 'none')
-        .attr('stroke', '#e15759')
-        .attr('stroke-width', 3)
-        .attr('opacity', 0.9)
+      // Draw GDP line
+      if (chartData.gdpData.length > 0) {
+        g.append('path')
+          .datum(chartData.gdpData)
+          .attr('class', 'line gdp-line')
+          .attr('d', gdpLine)
+          .attr('fill', 'none')
+          .attr('stroke', '#4e79a7')
+          .attr('stroke-width', 3)
+          .attr('opacity', 0.9)
+        
+        console.log(`  ✅ GDP line drawn`)
+      } else {
+        console.log(`  ⚠️ No GDP data to draw`)
+      }
+
+      // Draw Expense line - REWRITTEN for proper normalization
+      if (chartData.expenseData.length > 0) {
+        // Filter out invalid data points
+        const validExpenseData = chartData.expenseData.filter(d => 
+          d && d.year && d.value && !isNaN(d.value) && d.value > 0
+        )
+        
+        console.log(`  📊 Expense data validation:`)
+        console.log(`    Total points: ${chartData.expenseData.length}`)
+        console.log(`    Valid points: ${validExpenseData.length}`)
+        if (validExpenseData.length > 0) {
+          console.log(`    First point:`, validExpenseData[0])
+          console.log(`    Last point:`, validExpenseData[validExpenseData.length - 1])
+        }
+        
+        if (validExpenseData.length > 0) {
+          g.append('path')
+            .datum(validExpenseData)
+            .attr('class', 'line expense-line')
+            .attr('d', expenseLine)
+            .attr('fill', 'none')
+            .attr('stroke', '#e15759')
+            .attr('stroke-width', 3)
+            .attr('opacity', 0.9)
+          
+          console.log(`  ✅ Expense line drawn with ${validExpenseData.length} points`)
+        } else {
+          console.log(`  ⚠️ No valid expense data points to draw`)
+        }
+      } else {
+        console.log(`  ⚠️ No expense data to draw`)
+      }
 
       // Add data points for GDP
       g.selectAll('.gdp-point')
@@ -736,7 +794,7 @@ export function GdpExpenseChart({ selectedCountry, data, chartType = 'line', wid
             year: d.year,
             value: d.value,
             indicator: 'GDP',
-            unit: 'USD'
+            unit: 'millions_usd'
           })
           setTooltipPosition({ x: event.pageX, y: event.pageY })
         })
@@ -749,9 +807,13 @@ export function GdpExpenseChart({ selectedCountry, data, chartType = 'line', wid
           setTooltipPosition(null)
         })
 
-      // Add data points for Expense
+      // Add data points for Expense - REWRITTEN for proper normalization
+      const validExpensePoints = chartData.expenseData.filter(d => 
+        d && d.year && d.value && !isNaN(d.value) && d.value > 0
+      )
+      
       g.selectAll('.expense-point')
-        .data(chartData.expenseData)
+        .data(validExpensePoints)
         .enter()
         .append('circle')
         .attr('class', 'expense-point')
@@ -774,7 +836,7 @@ export function GdpExpenseChart({ selectedCountry, data, chartType = 'line', wid
             year: d.year,
             value: d.value,
             indicator: 'Government Expense',
-            unit: 'USD'
+            unit: 'millions_usd'
           })
           setTooltipPosition({ x: event.pageX, y: event.pageY })
         })

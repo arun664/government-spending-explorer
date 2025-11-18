@@ -50,10 +50,10 @@ export const MapColorService = {
     const minValue = options.minValue ?? spendingData.globalStats?.minSpending ?? 0
     const maxValue = options.maxValue ?? spendingData.globalStats?.maxSpending ?? 100
 
-    // Create sequential scale using the category color
-    // Use a NARROWER range to keep colors closer to the base category color
-    const lightColor = d3.color(baseColor).brighter(1).toString()
-    const darkColor = d3.color(baseColor).darker(0.3).toString()
+    // Create sequential scale with subtle gradient from light to dark
+    // Light color for low values, dark color for high values
+    const lightColor = d3.color(baseColor).brighter(1).toString()    // Slightly lighter for low values
+    const darkColor = d3.color(baseColor).darker(0.3).toString()     // Slightly darker for high values
     
     return d3.scaleSequential()
       .domain([minValue, maxValue])
@@ -125,47 +125,6 @@ export const MapColorService = {
       return countries || []
     }
 
-    // Debug: Log countries with and without data
-    const countriesWithNoData = []
-    const countriesWithData = []
-    const problematicCountries = ['Malaysia', 'Vietnam', 'Argentina', 'Morocco', 'Uruguay', 'Mozambique']
-    
-    countries.forEach(country => {
-      const mapName = this.getCountryNameFromFeature(country)
-      if (mapName && mapName !== 'Unknown Country') {
-        const countryData = this.findCountryData(mapName, spendingData)
-        
-        // Debug specific problematic countries
-        if (problematicCountries.includes(mapName)) {
-          console.log(`🔍 Checking ${mapName}:`, {
-            mapName,
-            foundData: !!countryData,
-            dataKeys: spendingData?.countries ? Object.keys(spendingData.countries).filter(k => 
-              k.toLowerCase().includes(mapName.toLowerCase())
-            ) : []
-          })
-        }
-        
-        if (countryData) {
-          countriesWithData.push({ mapName, dataKey: countryData.name })
-        } else {
-          countriesWithNoData.push({ mapName })
-        }
-      }
-    })
-    
-    // Log summary
-    console.log(`📊 Map Data Summary:`)
-    console.log(`  ✅ ${countriesWithData.length} countries WITH data`)
-    console.log(`  ⚠️ ${countriesWithNoData.length} countries WITHOUT data`)
-    
-    if (countriesWithNoData.length > 0) {
-      console.log(`\n⚠️ Countries without data (first 20):`, 
-        countriesWithNoData.slice(0, 20).map(c => c.mapName))
-    }
-    
-
-
     const filteredCountries = countries.filter(country => {
       const countryName = this.getCountryNameFromFeature(country)
       
@@ -176,9 +135,6 @@ export const MapColorService = {
       // Find country data (handles both code and name lookups)
       const countryData = this.findCountryData(countryName, spendingData)
       if (!countryData) {
-        if (problematicCountries.includes(countryName)) {
-          console.log(`❌ ${countryName} filtered: NO COUNTRY DATA`)
-        }
         return false
       }
 
@@ -186,9 +142,6 @@ export const MapColorService = {
       if (filters?.regions && Array.isArray(filters.regions) && filters.regions.length > 0) {
         const countryRegion = getCountryRegion(countryName)
         if (!filters.regions.includes(countryRegion)) {
-          if (problematicCountries.includes(countryName)) {
-            console.log(`❌ ${countryName} filtered: REGION (${countryRegion} not in ${filters.regions})`)
-          }
           return false
         }
       }
@@ -203,10 +156,6 @@ export const MapColorService = {
         // For now, skip sector filtering as the data structure doesn't have sectors
         // This would need to be implemented based on actual data structure
         return true
-      }
-
-      if (problematicCountries.includes(countryName)) {
-        console.log(`✅ ${countryName} PASSED all filters`)
       }
 
       return true
@@ -237,20 +186,45 @@ export const MapColorService = {
   normalizeCountryName(name) {
     if (!name) return name
     
-    // Comprehensive name variations - maps GeoJSON names to IMF data names
+    // Exclude non-countries that appear in map data
+    const excludedTerritories = [
+      'Antarctica',
+      'Fr. S. Antarctic Lands',
+      'French Southern and Antarctic Lands',
+      'Greenland',
+      'N. Cyprus',
+      'Somaliland',
+      'W. Sahara',
+      'Falkland Is.',
+      'Puerto Rico'
+    ]
+    
+    if (excludedTerritories.includes(name)) {
+      return null // Return null to indicate no data should exist
+    }
+    
+    // Comprehensive name variations - maps GeoJSON names to spending data names
     const nameMap = {
       // Americas
       'United States of America': 'United States',
       'The Bahamas': 'Bahamas, The',
       'Bahamas': 'Bahamas, The',
       'Saint Kitts and Nevis': 'St. Kitts and Nevis',
+      'St Kitts and Nevis': 'St. Kitts and Nevis',
       'Saint Lucia': 'St. Lucia',
+      'St Lucia': 'St. Lucia',
       'Saint Vincent and the Grenadines': 'St. Vincent and the Grenadines',
+      'St Vincent and the Grenadines': 'St. Vincent and the Grenadines',
+      'St. Vin. and Gren.': 'St. Vincent and the Grenadines',
+      'Antigua and Barb.': 'Antigua and Barbuda',
+      'Dominican Rep.': 'Dominican Republic',
+      'Trinidad and Tobago': 'Trinidad and Tobago',
       
       // Asia
       'Russia': 'Russian Federation',
       'Korea, Republic of': 'Korea, Rep.',
       'South Korea': 'Korea, Rep.',
+      'Korea': 'Korea, Rep.',
       'Korea, Democratic People\'s Republic of': 'Korea, Dem. People\'s Rep.',
       'North Korea': 'Korea, Dem. People\'s Rep.',
       'Iran, Islamic Republic of': 'Iran, Islamic Rep.',
@@ -260,18 +234,27 @@ export const MapColorService = {
       'Syria': 'Syrian Arab Republic',
       'Syrian Arab Republic': 'Syrian Arab Republic',
       'Vietnam': 'Viet Nam',
+      'Viet Nam': 'Viet Nam',
       'Burma': 'Myanmar',
       'Brunei': 'Brunei Darussalam',
+      'Brunei Darussalam': 'Brunei Darussalam',
       'Hong Kong': 'Hong Kong SAR, China',
+      'Hong Kong S.A.R.': 'Hong Kong SAR, China',
       'Macao': 'Macao SAR, China',
       'Macau': 'Macao SAR, China',
+      'Macao S.A.R': 'Macao SAR, China',
       'Palestine': 'West Bank and Gaza',
+      'West Bank': 'West Bank and Gaza',
       'Kyrgyzstan': 'Kyrgyz Republic',
       'Turkey': 'Turkiye',
       'Türkiye': 'Turkiye',
       'Timor': 'Timor-Leste',
       'East Timor': 'Timor-Leste',
+      'Timor-Leste': 'Timor-Leste',
       'Micronesia': 'Micronesia, Fed. Sts.',
+      'Federated States of Micronesia': 'Micronesia, Fed. Sts.',
+      'United Arab Emirates': 'United Arab Emirates',
+      'U.A.E.': 'United Arab Emirates',
       
       // Africa
       'The Gambia': 'Gambia, The',
@@ -279,38 +262,86 @@ export const MapColorService = {
       'Democratic Republic of the Congo': 'Congo, Dem. Rep.',
       'Dem. Rep. Congo': 'Congo, Dem. Rep.',
       'Congo, Dem. Rep.': 'Congo, Dem. Rep.',
+      'Congo (Kinshasa)': 'Congo, Dem. Rep.',
       'Republic of the Congo': 'Congo, Rep.',
       'Congo': 'Congo, Rep.',
+      'Congo, Rep.': 'Congo, Rep.',
+      'Congo (Brazzaville)': 'Congo, Rep.',
       'Ivory Coast': 'Cote d\'Ivoire',
       'Côte d\'Ivoire': 'Cote d\'Ivoire',
+      'Cote d\'Ivoire': 'Cote d\'Ivoire',
       'Egypt': 'Egypt, Arab Rep.',
+      'Egypt, Arab Rep.': 'Egypt, Arab Rep.',
       'Cape Verde': 'Cabo Verde',
+      'Cabo Verde': 'Cabo Verde',
       'Swaziland': 'Eswatini',
       'eSwatini': 'Eswatini',
       'Macedonia': 'North Macedonia',
+      'North Macedonia': 'North Macedonia',
       'São Tomé and Príncipe': 'Sao Tome and Principe',
       'Sao Tome and Principe': 'Sao Tome and Principe',
+      'S. Tomé and Principe': 'Sao Tome and Principe',
       'Morocco': 'Morocco',
       'Mozambique': 'Mozambique',
+      'Central African Rep.': 'Central African Republic',
+      'Eq. Guinea': 'Equatorial Guinea',
+      'Equatorial Guinea': 'Equatorial Guinea',
+      'South Sudan': 'South Sudan',
+      'S. Sudan': 'South Sudan',
       
       // South America
       'Venezuela, Bolivarian Republic of': 'Venezuela, RB',
       'Venezuela': 'Venezuela, RB',
       'Bolivia, Plurinational State of': 'Bolivia',
+      'Bolivia': 'Bolivia',
       'Argentina': 'Argentina',
       'Uruguay': 'Uruguay',
       
       // Europe
       'Czech Republic': 'Czechia',
+      'Czech Rep.': 'Czechia',
+      'Czechia': 'Czechia',
       'Slovakia': 'Slovak Republic',
+      'Slovak Republic': 'Slovak Republic',
       'Great Britain': 'United Kingdom',
       'UK': 'United Kingdom',
+      'United Kingdom': 'United Kingdom',
       'Bosnia and Herz.': 'Bosnia and Herzegovina',
+      'Bosnia and Herzegovina': 'Bosnia and Herzegovina',
+      'Serbia': 'Serbia',
+      'Montenegro': 'Montenegro',
+      'Kosovo': 'Kosovo',
       
-      // Other
+      // Oceania
+      'Solomon Is.': 'Solomon Islands',
+      'Solomon Islands': 'Solomon Islands',
+      'Papua New Guinea': 'Papua New Guinea',
+      'New Zealand': 'New Zealand',
+      'Australia': 'Australia',
+      'Fiji': 'Fiji',
+      'Vanuatu': 'Vanuatu',
+      'Samoa': 'Samoa',
+      'Tonga': 'Tonga',
+      'Kiribati': 'Kiribati',
+      'Marshall Islands': 'Marshall Islands',
+      'Palau': 'Palau',
+      'Nauru': 'Nauru',
+      
+      // Middle East
       'Tanzania, United Republic of': 'Tanzania',
+      'Tanzania': 'Tanzania',
       'Yemen': 'Yemen, Rep.',
-      'Solomon Is.': 'Solomon Islands'
+      'Yemen, Rep.': 'Yemen, Rep.',
+      'United Arab Emirates': 'United Arab Emirates',
+      'Saudi Arabia': 'Saudi Arabia',
+      'Oman': 'Oman',
+      'Kuwait': 'Kuwait',
+      'Qatar': 'Qatar',
+      'Bahrain': 'Bahrain',
+      'Jordan': 'Jordan',
+      'Lebanon': 'Lebanon',
+      'Israel': 'Israel',
+      'Iraq': 'Iraq'
     }
     
     return nameMap[name] || name
@@ -331,6 +362,10 @@ export const MapColorService = {
     
     // Try 2: Normalized name
     const normalizedName = this.normalizeCountryName(mapName)
+    
+    // If normalization returns null, this territory should have no data
+    if (normalizedName === null) return null
+    
     if (normalizedName !== mapName) {
       countryData = spendingData.countries[normalizedName]
       if (countryData) return countryData
@@ -435,12 +470,6 @@ export const MapColorService = {
       if (visualizationMode === 'dominant') {
         // ALWAYS use ColorSchemeService for consistent colors
         const categoryColor = ColorSchemeService.getCategoryColor(countryData.dominantCategory)
-        
-        console.log(`🎨 Color for ${countryName}:`, {
-          category: countryData.dominantCategory,
-          color: categoryColor,
-          spending: countryData.totalSpending
-        })
         
         // Create intensity based on spending value
         const intensity = Math.min(

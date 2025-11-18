@@ -3,9 +3,9 @@
  */
 
 /**
- * Format spending values with M/B suffixes
- * NOTE: CSV data is already in millions (UNIT_MULT=6), so values are in millions of domestic currency
- * @param {number} value - The value in millions
+ * Format spending values with M/B/T suffixes
+ * NOTE: CSV data now contains actual values in domestic currency (not pre-converted to millions)
+ * @param {number} value - The value in actual domestic currency
  * @returns {string} Formatted value with appropriate suffix
  */
 export function formatSpendingValue(value) {
@@ -14,26 +14,25 @@ export function formatSpendingValue(value) {
   const absValue = Math.abs(value)
   const sign = value < 0 ? '-' : ''
   
-  // Values are already in millions from CSV (UNIT_MULT=6)
-  // So we just need to format them appropriately
-  if (absValue >= 1000000) {
-    // If value is >= 1 trillion (in millions), show as T
-    return `${sign}${(absValue / 1000000).toFixed(1)}T`
-  } else if (absValue >= 1000) {
-    // If value is >= 1 billion (in millions), show as B
-    return `${sign}${(absValue / 1000).toFixed(1)}B`
-  } else if (absValue >= 1) {
-    // If value is >= 1 million, show as M
-    return `${sign}${absValue.toFixed(1)}M`
-  } else if (absValue >= 0.01) {
-    // If value is >= 10,000 (0.01M), show with 2 decimals
-    return `${sign}${absValue.toFixed(2)}M`
+  // Values are in actual domestic currency, so we need to scale appropriately
+  if (absValue >= 1e12) {
+    // Trillions
+    return `${sign}${(absValue / 1e12).toFixed(1)}T`
+  } else if (absValue >= 1e9) {
+    // Billions
+    return `${sign}${(absValue / 1e9).toFixed(1)}B`
+  } else if (absValue >= 1e6) {
+    // Millions
+    return `${sign}${(absValue / 1e6).toFixed(1)}M`
+  } else if (absValue >= 1e3) {
+    // Thousands
+    return `${sign}${(absValue / 1e3).toFixed(1)}K`
   } else if (absValue > 0) {
-    // For very small values, show with more precision
-    return `${sign}${absValue.toFixed(3)}M`
+    // Less than 1000
+    return `${sign}${absValue.toFixed(0)}`
   } else {
     // Exactly zero
-    return '0.0M'
+    return '0'
   }
 }
 

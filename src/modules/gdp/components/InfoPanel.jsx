@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react'
 import * as d3 from 'd3'
 import '../styles/InfoPanel.css'
+import { formatGDPValue } from '../utils/dataLoader'
 
 const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = false, compareMode = false }) => {
   const chartRef = useRef(null)
@@ -32,22 +33,22 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
       }
 
       // Calculate combined statistics
-      const growthValues = allFilteredData.map(d => d.growth);
-      const avgGrowth = growthValues.reduce((sum, val) => sum + val, 0) / growthValues.length;
-      const maxGrowth = Math.max(...growthValues);
-      const minGrowth = Math.min(...growthValues);
+      const gdpValues = allFilteredData.map(d => d.gdp);
+      const avgGDP = gdpValues.reduce((sum, val) => sum + val, 0) / gdpValues.length;
+      const maxGDP = Math.max(...gdpValues);
+      const minGDP = Math.min(...gdpValues);
       
       // Find which country had max/min
-      const maxEntry = allFilteredData.find(d => d.growth === maxGrowth);
-      const minEntry = allFilteredData.find(d => d.growth === minGrowth);
+      const maxEntry = allFilteredData.find(d => d.gdp === maxGDP);
+      const minEntry = allFilteredData.find(d => d.gdp === minGDP);
       const maxCountry = countriesData.find(c => c.data.includes(maxEntry))?.name || 'Unknown';
       const minCountry = countriesData.find(c => c.data.includes(minEntry))?.name || 'Unknown';
       const maxYear = maxEntry?.year;
       const minYear = minEntry?.year;
       
       // Calculate volatility (standard deviation)
-      const mean = avgGrowth;
-      const variance = growthValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / growthValues.length;
+      const mean = avgGDP;
+      const variance = gdpValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / gdpValues.length;
       const volatility = Math.sqrt(variance);
       
       // Calculate trend (comparing first half vs second half)
@@ -55,30 +56,31 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
       const sortedByYear = [...allFilteredData].sort((a, b) => a.year - b.year);
       const firstHalf = sortedByYear.slice(0, midPoint);
       const secondHalf = sortedByYear.slice(midPoint);
-      const firstHalfAvg = firstHalf.reduce((sum, d) => sum + d.growth, 0) / firstHalf.length;
-      const secondHalfAvg = secondHalf.reduce((sum, d) => sum + d.growth, 0) / secondHalf.length;
+      const firstHalfAvg = firstHalf.reduce((sum, d) => sum + d.gdp, 0) / firstHalf.length;
+      const secondHalfAvg = secondHalf.reduce((sum, d) => sum + d.gdp, 0) / secondHalf.length;
       const trend = secondHalfAvg - firstHalfAvg;
       
-      // Count positive and negative growth years
-      const positiveYears = growthValues.filter(v => v > 0).length;
-      const negativeYears = growthValues.filter(v => v < 0).length;
+      // Count increasing and decreasing GDP years
+      const increasingYears = sortedByYear.filter((d, i) => i > 0 && d.gdp > sortedByYear[i-1].gdp).length;
+      const decreasingYears = sortedByYear.filter((d, i) => i > 0 && d.gdp < sortedByYear[i-1].gdp).length;
       
       // Calculate individual country patterns
       const countryPatterns = countriesData.map(c => {
-        const growths = c.data.map(d => d.growth);
-        const positive = growths.filter(v => v > 0).length;
-        const negative = growths.filter(v => v < 0).length;
-        const total = growths.length;
-        const avg = growths.reduce((sum, val) => sum + val, 0) / total;
+        const gdps = c.data.map(d => d.gdp);
+        const sortedData = [...c.data].sort((a, b) => a.year - b.year);
+        const increasing = sortedData.filter((d, i) => i > 0 && d.gdp > sortedData[i-1].gdp).length;
+        const decreasing = sortedData.filter((d, i) => i > 0 && d.gdp < sortedData[i-1].gdp).length;
+        const total = gdps.length;
+        const avg = gdps.reduce((sum, val) => sum + val, 0) / total;
         
         return {
           name: c.name,
-          positiveYears: positive,
-          negativeYears: negative,
+          increasingYears: increasing,
+          decreasingYears: decreasing,
           totalYears: total,
-          positivePercent: (positive / total) * 100,
-          negativePercent: (negative / total) * 100,
-          avgGrowth: avg
+          increasingPercent: (increasing / (total - 1)) * 100,
+          decreasingPercent: (decreasing / (total - 1)) * 100,
+          avgGDP: avg
         };
       });
       
@@ -88,32 +90,32 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
         if (!yearMap.has(d.year)) {
           yearMap.set(d.year, []);
         }
-        yearMap.get(d.year).push(d.growth);
+        yearMap.get(d.year).push(d.gdp);
       });
       
       const aggregatedData = Array.from(yearMap.entries()).map(([year, values]) => ({
         year,
-        growth: values.reduce((sum, val) => sum + val, 0) / values.length
+        gdp: values.reduce((sum, val) => sum + val, 0) / values.length
       })).sort((a, b) => a.year - b.year);
       
       return {
-        avgGrowth,
-        maxGrowth,
-        minGrowth,
+        avgGDP,
+        maxGDP,
+        minGDP,
         maxYear,
         minYear,
         maxCountry,
         minCountry,
         volatility,
         trend,
-        positiveYears,
-        negativeYears,
+        increasingYears,
+        decreasingYears,
         totalYears: allFilteredData.length,
         filteredData: aggregatedData,
         isMultiple: true,
         countryCount: country.countries.length,
         countriesData, // Keep individual country data for multi-line chart
-        countryPatterns // Individual country growth patterns
+        countryPatterns // Individual country GDP patterns
       };
     }
 
@@ -132,40 +134,41 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
     }
 
     // Calculate statistics
-    const growthValues = filteredData.map(d => d.growth);
-    const avgGrowth = growthValues.reduce((sum, val) => sum + val, 0) / growthValues.length;
-    const maxGrowth = Math.max(...growthValues);
-    const minGrowth = Math.min(...growthValues);
-    const maxYear = filteredData.find(d => d.growth === maxGrowth)?.year;
-    const minYear = filteredData.find(d => d.growth === minGrowth)?.year;
+    const gdpValues = filteredData.map(d => d.gdp);
+    const avgGDP = gdpValues.reduce((sum, val) => sum + val, 0) / gdpValues.length;
+    const maxGDP = Math.max(...gdpValues);
+    const minGDP = Math.min(...gdpValues);
+    const maxYear = filteredData.find(d => d.gdp === maxGDP)?.year;
+    const minYear = filteredData.find(d => d.gdp === minGDP)?.year;
     
     // Calculate volatility (standard deviation)
-    const mean = avgGrowth;
-    const variance = growthValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / growthValues.length;
+    const mean = avgGDP;
+    const variance = gdpValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / gdpValues.length;
     const volatility = Math.sqrt(variance);
     
     // Calculate trend (comparing first half vs second half)
     const midPoint = Math.floor(filteredData.length / 2);
     const firstHalf = filteredData.slice(0, midPoint);
     const secondHalf = filteredData.slice(midPoint);
-    const firstHalfAvg = firstHalf.reduce((sum, d) => sum + d.growth, 0) / firstHalf.length;
-    const secondHalfAvg = secondHalf.reduce((sum, d) => sum + d.growth, 0) / secondHalf.length;
+    const firstHalfAvg = firstHalf.reduce((sum, d) => sum + d.gdp, 0) / firstHalf.length;
+    const secondHalfAvg = secondHalf.reduce((sum, d) => sum + d.gdp, 0) / secondHalf.length;
     const trend = secondHalfAvg - firstHalfAvg;
     
-    // Count positive and negative growth years
-    const positiveYears = growthValues.filter(v => v > 0).length;
-    const negativeYears = growthValues.filter(v => v < 0).length;
+    // Count increasing and decreasing GDP years
+    const sortedData = [...filteredData].sort((a, b) => a.year - b.year);
+    const increasingYears = sortedData.filter((d, i) => i > 0 && d.gdp > sortedData[i-1].gdp).length;
+    const decreasingYears = sortedData.filter((d, i) => i > 0 && d.gdp < sortedData[i-1].gdp).length;
     
     return {
-      avgGrowth,
-      maxGrowth,
-      minGrowth,
+      avgGDP,
+      maxGDP,
+      minGDP,
       maxYear,
       minYear,
       volatility,
       trend,
-      positiveYears,
-      negativeYears,
+      increasingYears,
+      decreasingYears,
       totalYears: filteredData.length,
       filteredData,
       isMultiple: false
@@ -196,7 +199,7 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
 
     // Get the actual container width
     const containerWidth = chartRef.current.offsetWidth || 320
-    const margin = { top: 10, right: 10, bottom: 30, left: 40 }
+    const margin = { top: 10, right: 10, bottom: 30, left: 60 } // Increased left margin from 40 to 60
     const width = containerWidth - margin.left - margin.right
     const height = 200 - margin.top - margin.bottom
 
@@ -216,11 +219,13 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
       .domain(d3.extent(sortedData, (d) => d.year))
       .range([0, width])
 
+    const gdpExtent = d3.extent(sortedData, (d) => d.gdp)
+    const gdpRange = gdpExtent[1] - gdpExtent[0]
     const y = d3
       .scaleLinear()
       .domain([
-        d3.min(sortedData, (d) => d.growth) - 2,
-        d3.max(sortedData, (d) => d.growth) + 2,
+        gdpExtent[0] - gdpRange * 0.1,
+        gdpExtent[1] + gdpRange * 0.1,
       ])
       .range([height, 0])
 
@@ -228,7 +233,7 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
     const line = d3
       .line()
       .x((d) => x(d.year))
-      .y((d) => y(d.growth))
+      .y((d) => y(d.gdp))
 
     // Add axes
     svg
@@ -242,7 +247,9 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
       .attr('transform', 'rotate(-45)')
       .style('text-anchor', 'end')
 
-    svg.append('g').call(d3.axisLeft(y)).style('font-size', '10px')
+    svg.append('g')
+      .call(d3.axisLeft(y).tickFormat(d => formatGDPValue(d)))
+      .style('font-size', '10px')
 
     // Add line
     svg
@@ -260,11 +267,17 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
       .enter()
       .append('circle')
       .attr('cx', (d) => x(d.year))
-      .attr('cy', (d) => y(d.growth))
+      .attr('cy', (d) => y(d.gdp))
       .attr('r', 3)
       .attr('fill', '#667eea')
       .append('title')
-      .text((d) => `${d.year}: ${d.growth.toFixed(2)}%`)
+      .text((d) => {
+        const gdpValue = d.gdp || d.GDP
+        if (gdpValue) {
+          return `${d.year}\nGDP: ${formatGDPValue(gdpValue)}`
+        }
+        return `${d.year}: N/A`
+      })
   }
 
   const drawMultiCountryChart = (countriesData) => {
@@ -282,7 +295,7 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
     // Get the actual container width
     const containerWidth = chartRef.current.offsetWidth || 320
     const legendHeight = Math.ceil(countriesData.length / Math.floor((containerWidth - 80) / 120)) * 20 + 20
-    const margin = { top: 20, right: 20, bottom: 30 + legendHeight, left: 40 }
+    const margin = { top: 20, right: 20, bottom: 30 + legendHeight, left: 60 } // Increased left margin from 40 to 60
     const width = containerWidth - margin.left - margin.right
     const height = 250 - margin.top - margin.bottom
 
@@ -306,11 +319,13 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
       .domain(d3.extent(allData, (d) => d.year))
       .range([0, width])
 
+    const gdpExtent = d3.extent(allData, (d) => d.gdp)
+    const gdpRange = gdpExtent[1] - gdpExtent[0]
     const y = d3
       .scaleLinear()
       .domain([
-        d3.min(allData, (d) => d.growth) - 2,
-        d3.max(allData, (d) => d.growth) + 2,
+        gdpExtent[0] - gdpRange * 0.1,
+        gdpExtent[1] + gdpRange * 0.1,
       ])
       .range([height, 0])
 
@@ -318,7 +333,7 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
     const line = d3
       .line()
       .x((d) => x(d.year))
-      .y((d) => y(d.growth))
+      .y((d) => y(d.gdp))
 
     // Add axes
     svg
@@ -332,7 +347,9 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
       .attr('transform', 'rotate(-45)')
       .style('text-anchor', 'end')
 
-    svg.append('g').call(d3.axisLeft(y)).style('font-size', '10px')
+    svg.append('g')
+      .call(d3.axisLeft(y).tickFormat(d => formatGDPValue(d)))
+      .style('font-size', '10px')
 
     // Draw line for each country
     countriesData.forEach((countryData, index) => {
@@ -356,11 +373,17 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
         .append('circle')
         .attr('class', `dots-${index}`)
         .attr('cx', (d) => x(d.year))
-        .attr('cy', (d) => y(d.growth))
+        .attr('cy', (d) => y(d.gdp))
         .attr('r', 3)
         .attr('fill', color)
         .append('title')
-        .text((d) => `${countryData.name} ${d.year}: ${d.growth.toFixed(2)}%`)
+        .text((d) => {
+          const gdpValue = d.gdp || d.GDP
+          if (gdpValue) {
+            return `${countryData.name} ${d.year}\nGDP: ${formatGDPValue(gdpValue)}`
+          }
+          return `${countryData.name} ${d.year}: N/A`
+        })
     })
 
     // Add legend below the chart
@@ -379,19 +402,34 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
       const legendRow = legend
         .append('g')
         .attr('transform', `translate(${col * legendItemWidth}, ${row * 20})`)
+        .attr('class', 'legend-item')
+
+      // Add background highlight for better visibility
+      legendRow
+        .append('rect')
+        .attr('x', -4)
+        .attr('y', -2)
+        .attr('width', legendItemWidth - 10)
+        .attr('height', 16)
+        .attr('fill', '#f3f4f6')
+        .attr('rx', 4)
+        .attr('opacity', 0.5)
 
       legendRow
         .append('rect')
         .attr('width', 12)
         .attr('height', 12)
         .attr('fill', colorScale(index))
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 1.5)
 
       legendRow
         .append('text')
         .attr('x', 18)
         .attr('y', 10)
-        .style('font-size', '10px')
-        .style('fill', '#333')
+        .style('font-size', '11px')
+        .style('font-weight', '600')
+        .style('fill', '#1f2937')
         .text(countryData.name.length > 15 ? countryData.name.substring(0, 12) + '...' : countryData.name)
         .append('title')
         .text(countryData.name)
@@ -451,18 +489,18 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
               <h3>Period Statistics ({yearRange[0]}-{yearRange[1]})</h3>
               <div className="stats-grid">
                 <div className="stat-card">
-                  <label>Average Growth</label>
-                  <span className={`stat-value ${insights.avgGrowth >= 0 ? 'positive' : 'negative'}`}>
-                    {insights.avgGrowth.toFixed(2)}%
+                  <label>Average GDP</label>
+                  <span className="stat-value">
+                    {formatGDPValue(insights.avgGDP)}
                   </span>
                   {insights.isMultiple && (
                     <span className="stat-year">combined avg</span>
                   )}
                 </div>
                 <div className="stat-card">
-                  <label>Peak Growth</label>
+                  <label>Highest GDP</label>
                   <span className="stat-value positive">
-                    {insights.maxGrowth.toFixed(2)}%
+                    {formatGDPValue(insights.maxGDP)}
                   </span>
                   <span className="stat-year">
                     {insights.isMultiple 
@@ -471,9 +509,9 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
                   </span>
                 </div>
                 <div className="stat-card">
-                  <label>Lowest Growth</label>
+                  <label>Lowest GDP</label>
                   <span className="stat-value negative">
-                    {insights.minGrowth.toFixed(2)}%
+                    {formatGDPValue(insights.minGDP)}
                   </span>
                   <span className="stat-year">
                     {insights.isMultiple 
@@ -484,7 +522,7 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
                 <div className="stat-card">
                   <label>Volatility</label>
                   <span className="stat-value">
-                    {insights.volatility.toFixed(2)}%
+                    {formatGDPValue(insights.volatility)}
                   </span>
                 </div>
               </div>
@@ -499,10 +537,10 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
                       <div className="country-pattern-header">
                         <span className="country-pattern-name">{pattern.name}</span>
                         <span className="country-pattern-avg" style={{
-                          color: pattern.avgGrowth >= 0 ? '#10b981' : '#ef4444',
+                          color: '#667eea',
                           fontWeight: '600'
                         }}>
-                          {pattern.avgGrowth >= 0 ? '+' : ''}{pattern.avgGrowth.toFixed(2)}%
+                          ${formatGDPValue(pattern.avgGDP)}
                         </span>
                       </div>
                       <div className="pattern-bars-container">
@@ -510,22 +548,22 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
                           <div className="pattern-bar">
                             <div 
                               className="pattern-fill positive" 
-                              style={{width: `${pattern.positivePercent}%`}}
+                              style={{width: `${pattern.increasingPercent}%`}}
                             ></div>
                           </div>
                           <span className="pattern-label">
-                            {pattern.positiveYears} positive ({pattern.positivePercent.toFixed(0)}%)
+                            {pattern.increasingYears} increasing ({pattern.increasingPercent.toFixed(0)}%)
                           </span>
                         </div>
                         <div className="pattern-item">
                           <div className="pattern-bar">
                             <div 
                               className="pattern-fill negative" 
-                              style={{width: `${pattern.negativePercent}%`}}
+                              style={{width: `${pattern.decreasingPercent}%`}}
                             ></div>
                           </div>
                           <span className="pattern-label">
-                            {pattern.negativeYears} negative ({pattern.negativePercent.toFixed(0)}%)
+                            {pattern.decreasingYears} decreasing ({pattern.decreasingPercent.toFixed(0)}%)
                           </span>
                         </div>
                       </div>
@@ -535,9 +573,9 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
                     <label>Overall Trend:</label>
                     <span className={`trend-value ${insights.trend >= 0 ? 'positive' : 'negative'}`}>
                       {insights.trend >= 0 ? '↑' : '↓'} 
-                      {insights.trend >= 0 ? ' Growing' : ' Declining'}
+                      {insights.trend >= 0 ? ' Increasing' : ' Decreasing'}
                       <span className="trend-detail">
-                        ({Math.abs(insights.trend).toFixed(2)}pp change)
+                        ({formatGDPValue(Math.abs(insights.trend))} change)
                       </span>
                     </span>
                   </div>
@@ -548,31 +586,31 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
                     <div className="pattern-bar">
                       <div 
                         className="pattern-fill positive" 
-                        style={{width: `${(insights.positiveYears / insights.totalYears) * 100}%`}}
+                        style={{width: `${(insights.increasingYears / (insights.totalYears - 1)) * 100}%`}}
                       ></div>
                     </div>
                     <span className="pattern-label">
-                      {insights.positiveYears} positive years ({((insights.positiveYears / insights.totalYears) * 100).toFixed(0)}%)
+                      {insights.increasingYears} increasing years ({((insights.increasingYears / (insights.totalYears - 1)) * 100).toFixed(0)}%)
                     </span>
                   </div>
                   <div className="pattern-item">
                     <div className="pattern-bar">
                       <div 
                         className="pattern-fill negative" 
-                        style={{width: `${(insights.negativeYears / insights.totalYears) * 100}%`}}
+                        style={{width: `${(insights.decreasingYears / (insights.totalYears - 1)) * 100}%`}}
                       ></div>
                     </div>
                     <span className="pattern-label">
-                      {insights.negativeYears} negative years ({((insights.negativeYears / insights.totalYears) * 100).toFixed(0)}%)
+                      {insights.decreasingYears} decreasing years ({((insights.decreasingYears / (insights.totalYears - 1)) * 100).toFixed(0)}%)
                     </span>
                   </div>
                   <div className="trend-indicator">
                     <label>Trend Direction:</label>
                     <span className={`trend-value ${insights.trend >= 0 ? 'positive' : 'negative'}`}>
                       {insights.trend >= 0 ? '↑' : '↓'} 
-                      {insights.trend >= 0 ? ' Growing' : ' Declining'}
+                      {insights.trend >= 0 ? ' Increasing' : ' Decreasing'}
                       <span className="trend-detail">
-                        ({Math.abs(insights.trend).toFixed(2)}pp change)
+                        ({formatGDPValue(Math.abs(insights.trend))} change)
                       </span>
                     </span>
                   </div>
@@ -581,7 +619,7 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
             </div>
 
             <div className="info-section gdp-growth-trend-section">
-              <h3>GDP Growth Trend</h3>
+              <h3>GDP Trend</h3>
               <div className="gdp-chart-wrapper">
                 <div ref={chartRef} className="gdp-chart"></div>
               </div>
@@ -637,66 +675,66 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
               <h3>Period Statistics ({yearRange[0]}-{yearRange[1]})</h3>
               <div className="stats-grid">
                 <div className="stat-card">
-                  <label>Average Growth</label>
-                  <span className={`stat-value ${insights.avgGrowth >= 0 ? 'positive' : 'negative'}`}>
-                    {insights.avgGrowth.toFixed(2)}%
+                  <label>Average GDP</label>
+                  <span className="stat-value">
+                    ${formatGDPValue(insights.avgGDP)}
                   </span>
                 </div>
                 <div className="stat-card">
-                  <label>Peak Growth</label>
+                  <label>Highest GDP</label>
                   <span className="stat-value positive">
-                    {insights.maxGrowth.toFixed(2)}%
+                    ${formatGDPValue(insights.maxGDP)}
                   </span>
                   <span className="stat-year">in {insights.maxYear}</span>
                 </div>
                 <div className="stat-card">
-                  <label>Lowest Growth</label>
+                  <label>Lowest GDP</label>
                   <span className="stat-value negative">
-                    {insights.minGrowth.toFixed(2)}%
+                    ${formatGDPValue(insights.minGDP)}
                   </span>
                   <span className="stat-year">in {insights.minYear}</span>
                 </div>
                 <div className="stat-card">
                   <label>Volatility</label>
                   <span className="stat-value">
-                    {insights.volatility.toFixed(2)}%
+                    ${formatGDPValue(insights.volatility)}
                   </span>
                 </div>
               </div>
             </div>
 
             <div className="info-section">
-              <h3>Growth Pattern</h3>
+              <h3>GDP Pattern</h3>
               <div className="pattern-stats">
                 <div className="pattern-item">
                   <div className="pattern-bar">
                     <div 
                       className="pattern-fill positive" 
-                      style={{width: `${(insights.positiveYears / insights.totalYears) * 100}%`}}
+                      style={{width: `${(insights.increasingYears / (insights.totalYears - 1)) * 100}%`}}
                     ></div>
                   </div>
                   <span className="pattern-label">
-                    {insights.positiveYears} positive years ({((insights.positiveYears / insights.totalYears) * 100).toFixed(0)}%)
+                    {insights.increasingYears} increasing years ({((insights.increasingYears / (insights.totalYears - 1)) * 100).toFixed(0)}%)
                   </span>
                 </div>
                 <div className="pattern-item">
                   <div className="pattern-bar">
                     <div 
                       className="pattern-fill negative" 
-                      style={{width: `${(insights.negativeYears / insights.totalYears) * 100}%`}}
+                      style={{width: `${(insights.decreasingYears / (insights.totalYears - 1)) * 100}%`}}
                     ></div>
                   </div>
                   <span className="pattern-label">
-                    {insights.negativeYears} negative years ({((insights.negativeYears / insights.totalYears) * 100).toFixed(0)}%)
+                    {insights.decreasingYears} decreasing years ({((insights.decreasingYears / (insights.totalYears - 1)) * 100).toFixed(0)}%)
                   </span>
                 </div>
                 <div className="trend-indicator">
                   <label>Trend Direction:</label>
                   <span className={`trend-value ${insights.trend >= 0 ? 'positive' : 'negative'}`}>
                     {insights.trend >= 0 ? '↑' : '↓'} 
-                    {insights.trend >= 0 ? ' Growing' : ' Declining'}
+                    {insights.trend >= 0 ? ' Increasing' : ' Decreasing'}
                     <span className="trend-detail">
-                      ({Math.abs(insights.trend).toFixed(2)}pp change)
+                      (${formatGDPValue(Math.abs(insights.trend))} change)
                     </span>
                   </span>
                 </div>
@@ -704,7 +742,7 @@ const InfoPanel = ({ country, onClose, yearRange = [2005, 2024], embedded = fals
             </div>
 
             <div className="info-section gdp-growth-trend-section">
-              <h3>GDP Growth Trend</h3>
+              <h3>GDP Trend</h3>
               <div className="gdp-chart-wrapper">
                 <div ref={chartRef} className="gdp-chart"></div>
               </div>

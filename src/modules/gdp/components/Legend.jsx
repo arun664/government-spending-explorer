@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import * as d3 from 'd3'
+import { formatGDPValue } from '../utils/dataLoader'
 import '../styles/Legend.css'
 
 const Legend = ({ extent, colorScale }) => {
@@ -33,11 +34,11 @@ const Legend = ({ extent, colorScale }) => {
 
   return (
     <div className="legend">
-      <h3>GDP Growth Rate (%)</h3>
+      <h3>GDP (Billions USD)</h3>
       <div className="legend-scale" ref={gradientRef}></div>
       <div className="legend-labels">
-        <span>{extent[0].toFixed(1)}%</span>
-        <span>{extent[1].toFixed(1)}%</span>
+        <span>{formatGDPValue(extent[0])}</span>
+        <span>{formatGDPValue(extent[1])}</span>
       </div>
     </div>
   )

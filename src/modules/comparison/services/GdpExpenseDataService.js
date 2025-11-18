@@ -2,10 +2,14 @@
  * GdpExpenseDataService - Load and process GDP and Government Expense data
  * 
  * Features:
- * - Load GDP data from gdp_clean.csv
- * - Load total government expense from total_government_expense_matrix.csv
+ * - Load GDP data from gdp_vals.csv (GDP in current US$)
+ * - Load total government expense from expense_clean_usd.csv (USD-converted values)
  * - Calculate world averages
  * - Format data for chart visualization
+ * 
+ * Data Sources:
+ * - GDP: gdp_vals.csv - World Bank GDP data in current US$
+ * - Expense: expense_clean_usd.csv - Government spending converted to USD for comparison
  */
 
 import * as d3 from 'd3'
@@ -63,118 +67,208 @@ const SECTOR_METADATA = {
 }
 
 /**
- * Load GDP Growth data from gdp_clean.csv
- * Note: This contains growth rates, not absolute values
- * We'll use this for trend analysis and anomaly detection
+ * Load GDP data from gdp_vals.csv
+ * Note: This contains actual GDP values in current US$
+ * We calculate growth rates from the values
  */
 async function loadGDPGrowthData() {
   try {
-    const data = await d3.csv(getDataPath('gdp_clean.csv'))
+    const data = await d3.csv(getDataPath('gdp_vals.csv'))
+    
+    if (data.length === 0) {
+      throw new Error('No GDP data loaded from CSV')
+    }
+    
+    // Regional aggregate codes to filter out
+    const regionalCodes = new Set([
+      'ARB', 'CSS', 'CEB', 'EAR', 'EAS', 'EAP', 'TEA', 'EMU', 'ECS', 'ECA', 'TEC',
+      'EUU', 'FCS', 'HPC', 'HIC', 'IBD', 'IBT', 'IDB', 'IDX', 'IDA', 'LTE', 'LCN',
+      'LAC', 'TLA', 'LDC', 'LMY', 'LIC', 'LMC', 'MEA', 'MNA', 'TMN', 'MIC', 'NAC',
+      'OED', 'OSS', 'PSS', 'PST', 'PRE', 'SST', 'SAS', 'TSA', 'SSF', 'SSA', 'TSS',
+      'UMC', 'WLD', 'AFE', 'AFW'
+    ])
+    
+    // Transform to our format
+    const gdpGrowthData = []
+    const countryDataMap = new Map()
+    
+    data.forEach(row => {
+      const countryName = row['Country Name']
+      const countryCode = row['Country Code']
+      
+      // Skip regional aggregates
+      if (regionalCodes.has(countryCode)) return
+      
+      // Get year columns (starting from column index 4)
+      const headers = Object.keys(row)
+      const yearColumns = headers.slice(4).filter(h => !isNaN(parseInt(h)))
+      
+      if (!countryDataMap.has(countryCode)) {
+        countryDataMap.set(countryCode, {
+          countryName,
+          countryCode,
+          yearlyData: []
+        })
+      }
+      
+      const countryData = countryDataMap.get(countryCode)
+      
+      // Parse GDP values for each year
+      yearColumns.forEach(yearStr => {
+        const year = parseInt(yearStr)
+        const gdpValue = parseFloat(row[yearStr])
+        
+        if (!isNaN(gdpValue) && gdpValue > 0) {
+          countryData.yearlyData.push({ year, gdpValue })
+        }
+      })
+    })
+    
+    // Calculate growth rates from GDP values
+    countryDataMap.forEach(countryData => {
+      // Sort by year
+      countryData.yearlyData.sort((a, b) => a.year - b.year)
+      
+      // Calculate growth rates
+      for (let i = 1; i < countryData.yearlyData.length; i++) {
+        const current = countryData.yearlyData[i]
+        const previous = countryData.yearlyData[i - 1]
+        
+        if (previous.gdpValue > 0) {
+          const growth = ((current.gdpValue - previous.gdpValue) / previous.gdpValue) * 100
+          
+          gdpGrowthData.push({
+            countryName: countryData.countryName,
+            countryCode: countryData.countryCode,
+            year: current.year,
+            growth: growth,
+            gdpValue: current.gdpValue
+          })
+        }
+      }
+    })
+    
+    return gdpGrowthData
+  } catch (error) {
+    console.error('Error loading GDP data:', error)
+    throw new Error('Failed to load GDP growth data')
+  }
+}
+
+/**
+ * Load GDP data (actual absolute values from World Bank)
+ * Uses gdp_vals.csv which contains GDP in current US$
+ */
+async function loadGDPAbsoluteData() {
+  try {
+    // Load actual GDP values from World Bank data
+    const data = await d3.csv(getDataPath('gdp_vals.csv'))
     
     if (data.length === 0) {
       throw new Error('No GDP data loaded from CSV')
     }
     
     // Transform to our format
-    const gdpGrowthData = []
+    const gdpData = []
+    const headers = Object.keys(data[0])
+    // Filter for year columns (1960-2024)
+    const years = headers.filter(h => !isNaN(parseInt(h)) && parseInt(h) >= 2005 && parseInt(h) <= 2023)
     
     data.forEach(row => {
       const countryName = row['Country Name']
       const countryCode = row['Country Code']
-      const year = parseInt(row['Year'])
-      const growth = parseFloat(row['GDP Growth'])
       
-      if (countryName && !isNaN(year) && !isNaN(growth)) {
-        gdpGrowthData.push({
-          countryName,
-          countryCode,
-          year,
-          growth
-        })
-      }
-    })
-    
-    return gdpGrowthData
-  } catch (error) {
-    throw new Error('Failed to load GDP growth data')
-  }
-}
-
-/**
- * Load GDP data (approximate absolute values from expense data)
- * Since we don't have actual GDP absolute values, we approximate:
- * GDP ≈ Government Expense / 0.30 (assuming ~30% expense-to-GDP ratio)
- */
-async function loadGDPAbsoluteData() {
-  try {
-    // Load the total government expense matrix which has absolute values
-    const data = await d3.csv(getDataPath('total_government_expense_matrix.csv'))
-    
-    if (data.length === 0) {
-      throw new Error('No data loaded from CSV')
-    }
-    
-    // Transform to our format
-    const gdpData = []
-    const headers = Object.keys(data[0])
-    const years = headers.filter(h => !isNaN(parseInt(h)))
-    
-    data.forEach(row => {
-      const countryName = row['Country'] || row['Country Name']
-      const countryCode = row['Country Code'] || countryName?.substring(0, 3).toUpperCase()
+      if (!countryName || !countryCode) return
       
       years.forEach(year => {
-        const value = parseFloat(row[year])
+        const rawValue = row[year]
+        if (!rawValue || rawValue === '') return
+        
+        // Parse value (handles scientific notation like 1.09E+11)
+        const value = parseFloat(rawValue)
+        
         if (!isNaN(value) && value > 0) {
-          // Approximate GDP based on typical expense-to-GDP ratios
-          // Using 30% as baseline (expense = 30% of GDP, so GDP = expense / 0.30)
+          // Convert GDP from actual USD to millions USD for consistent units with expense data
+          // GDP values are in actual USD (e.g., 2.60E+13)
+          // Divide by 1,000,000 to get millions USD
           gdpData.push({
             countryName,
             countryCode,
             year: parseInt(year),
-            value: value / 0.30 // Approximate GDP from expense
+            value: value / 1_000_000 // Convert to millions USD
           })
         }
       })
     })
     
+    console.log(`Loaded ${gdpData.length} GDP data points from gdp_vals.csv`)
+    
+    // Log sample data for verification
+    const sampleUSA = gdpData.find(d => d.countryName === 'United States' && d.year === 2022)
+    if (sampleUSA) {
+      console.log('Sample GDP data (USA 2022):', {
+        valueInMillions: sampleUSA.value,
+        formatted: `$${(sampleUSA.value / 1_000_000).toFixed(2)}T USD`
+      })
+    }
+    
     return gdpData
   } catch (error) {
+    console.error('Failed to load GDP data:', error)
     throw new Error('Failed to load GDP data')
   }
 }
 
 /**
- * Load total government expense data
+ * Load total government expense data from expense_clean_usd.csv
+ * Uses USD-converted values for proper comparison with GDP data
+ * Calculates total by summing all expense categories per country-year
  */
 async function loadTotalExpenseData() {
   try {
-    const data = await d3.csv(getDataPath('total_government_expense_matrix.csv'))
+    const data = await d3.csv(getDataPath('expense_clean_usd.csv'))
     
+    console.log(`📊 Loading expense data from expense_clean_usd.csv (${data.length} rows)`)
+    
+    // Filter for "Expense" category only (which is the total)
+    // Don't sum all categories as that would double-count
     const expenseData = []
-    const headers = Object.keys(data[0])
-    const years = headers.filter(h => !isNaN(parseInt(h)))
     
-    data.forEach((row) => {
-      const countryName = row['Country'] || row['Country Name']
-      const countryCode = row['Country Code'] || countryName?.substring(0, 3).toUpperCase()
+    data.forEach(row => {
+      const countryName = row['Country Name']
+      const year = parseInt(row['Year'])
+      const valueUSD = parseFloat(row['Value_USD']) // Use USD-converted value
+      const category = row['Expense Category']
       
-      years.forEach(year => {
-        const value = parseFloat(row[year])
-        if (!isNaN(value) && value > 0) {
-          expenseData.push({
-            countryName,
-            countryCode,
-            year: parseInt(year),
-            value
-          })
-        }
+      // Only use the "Expense" category which represents total government spending
+      if (category !== 'Expense') return
+      
+      if (!countryName || isNaN(year) || isNaN(valueUSD)) return
+      
+      // Value_USD is in millions USD - keep as millions for consistent units with GDP
+      expenseData.push({
+        countryName,
+        year,
+        value: valueUSD // In millions USD, same unit as GDP
       })
     })
     
+    console.log(`✅ Calculated total expenses for ${expenseData.length} country-year combinations`)
+    console.log(`Sample data (first 3):`, expenseData.slice(0, 3))
+    
+    // Log sample for verification
+    const sampleUSA = expenseData.find(d => d.countryName === 'United States' && d.year === 2022)
+    if (sampleUSA) {
+      console.log('Sample expense data (USA 2022):', {
+        value: sampleUSA.value,
+        formatted: `$${(sampleUSA.value / 1e12).toFixed(2)}T`
+      })
+    }
+    
     return expenseData
   } catch (error) {
-    throw new Error('Failed to load expense data')
+    console.error('Failed to load expense data:', error)
+    throw new Error('Failed to load expense data from expense_clean_usd.csv')
   }
 }
 
@@ -195,16 +289,29 @@ function calculateWorldAverage(data, year) {
 export function getCountryData(allData, countryName, years) {
   if (countryName === 'WORLD') {
     // Calculate world average for each year
-    return years.map(year => {
+    const result = years.map(year => {
       const avg = calculateWorldAverage(allData, year)
       return avg ? { year, value: avg } : null
     }).filter(d => d !== null)
+    
+    console.log(`getCountryData for WORLD: ${result.length} data points`)
+    return result
   } else {
     // Get specific country data
-    return allData
-      .filter(d => d.countryName === countryName)
+    const countryData = allData.filter(d => d.countryName === countryName)
+    console.log(`getCountryData for ${countryName}: found ${countryData.length} raw data points`)
+    
+    const result = countryData
       .map(d => ({ year: d.year, value: d.value }))
       .sort((a, b) => a.year - b.year)
+    
+    console.log(`getCountryData for ${countryName}: returning ${result.length} formatted data points`)
+    if (result.length > 0) {
+      console.log(`  First point:`, result[0])
+      console.log(`  Last point:`, result[result.length - 1])
+    }
+    
+    return result
   }
 }
 
@@ -248,9 +355,13 @@ export async function loadGdpExpenseData() {
       loadGDPGrowthData()
     ])
     
-    // Get available countries and years
-    const countries = getAvailableCountries(expenseData)
+    // Get available countries from GDP data (more complete than expense data)
+    // This ensures we include all countries like United States
+    const countries = getAvailableCountries(gdpGrowthData)
     const years = getAvailableYears(expenseData)
+    
+    console.log(`Loaded ${countries.length} countries from GDP data`)
+    console.log('Sample countries:', countries.slice(0, 10).map(c => c.name))
     
     return {
       gdpData,

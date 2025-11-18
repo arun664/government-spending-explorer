@@ -77,7 +77,18 @@ export function BubbleChart({ width = 800, height = 500 }) {
         // Calculate metrics for bubble sizing
         const allValues = values.map(([_, v]) => v)
         const avgValue = allValues.reduce((sum, v) => sum + v, 0) / allValues.length
-        const variance = allValues.reduce((sum, v) => sum + Math.pow(v - avgValue, 2), 0) / allValues.length
+        
+        // Calculate max growth rate for bubble size
+        let maxGrowth = 0
+        for (let i = 1; i < values.length; i++) {
+          const [yearCurr, valueCurr] = values[i]
+          const [yearPrev, valuePrev] = values[i - 1]
+          if (valuePrev > 0) {
+            const growth = Math.abs(((valueCurr - valuePrev) / valuePrev) * 100)
+            maxGrowth = Math.max(maxGrowth, growth)
+          }
+        }
+        
         const [latestYear, latestValue] = values[0]
 
         return {
@@ -85,7 +96,7 @@ export function BubbleChart({ width = 800, height = 500 }) {
           code: countryData.code,
           x: latestValue, // Latest value on X axis
           y: avgValue, // Average value on Y axis
-          size: Math.sqrt(variance), // Variance determines bubble size
+          size: maxGrowth, // Max growth rate determines bubble size
           year: parseInt(latestYear),
           region: getCountryRegion(countryName),
           dataPoints: values.length
@@ -106,7 +117,7 @@ export function BubbleChart({ width = 800, height = 500 }) {
 
     const sizeScale = d3.scaleSqrt()
       .domain([0, d3.max(data, d => d.size)])
-      .range([5, 30])
+      .range([8, 40]) // Larger range for better visibility of growth differences
 
     const colorScale = d3.scaleOrdinal()
       .domain(Object.keys(REGION_COLORS))
@@ -197,7 +208,7 @@ export function BubbleChart({ width = 800, height = 500 }) {
           additionalInfo: {
             'Latest Value': d.x.toFixed(2),
             'Average Value': d.y.toFixed(2),
-            'Variance': d.size.toFixed(2),
+            'Max Growth Rate': d.size.toFixed(2) + '%',
             'Region': d.region,
             'Data Points': d.dataPoints
           }
@@ -261,7 +272,7 @@ export function BubbleChart({ width = 800, height = 500 }) {
       .attr('y', 0)
       .attr('font-size', '12px')
       .attr('font-weight', 'bold')
-      .text('Variance')
+      .text('Max Growth')
 
     const sizeValues = [
       { label: 'Low', value: d3.min(data, d => d.size) },

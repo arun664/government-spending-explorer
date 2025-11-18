@@ -1276,3 +1276,82 @@
     width: 100%;
   }
 }
+
+/* Currency Labels */
+.currency-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.currency-label {
+  color: #999;
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 4px;
+  text-transform: uppercase;
+}
+
+.country-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 12px;
+}
+
+/* Indicator Code Display */
+.indicator-code {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 6px 10px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.code-label {
+  color: #666;
+  font-weight: 500;
+}
+
+.code-value {
+  color: #2c3e50;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+}
+
+/* Note styling */
+.stat-row.note {
+  background: #fff3e0;
+  padding: 8px;
+  border-radius: 4px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.note-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.note-text {
+  color: #e65100;
+  font-size: 11px;
+  font-weight: 500;
+  font-style: italic;
+}
