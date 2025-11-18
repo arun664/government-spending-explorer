@@ -58,10 +58,19 @@ function TrendLineChart({
       spending: d3.mean(values, d => d.spending)
     })).sort((a, b) => a.year - b.year)
     
-    // Scales
-    const xScale = d3.scaleLinear()
-      .domain(d3.extent(aggregatedData, d => d.year))
-      .range([0, width])
+    // Get unique years for x-axis
+    const uniqueYears = [...new Set(aggregatedData.map(d => d.year))].sort((a, b) => a - b)
+    const yearCount = uniqueYears.length
+    
+    // Scales - use point scale for single year, linear for multiple
+    const xScale = yearCount === 1
+      ? d3.scalePoint()
+          .domain(uniqueYears)
+          .range([width / 2, width / 2]) // Center single point
+          .padding(0.5)
+      : d3.scaleLinear()
+          .domain(d3.extent(aggregatedData, d => d.year))
+          .range([0, width])
     
     const yScale = d3.scaleLinear()
       .domain([0, d3.max(aggregatedData, d => Math.max(d.gdp, d.spending)) * 1.1])
@@ -76,10 +85,14 @@ function TrendLineChart({
         .tickFormat('')
       )
     
-    // Axes
+    // X-Axis - show only unique years
+    const xAxis = d3.axisBottom(xScale)
+      .tickFormat(d3.format('d'))
+      .tickValues(uniqueYears) // Only show unique years
+    
     svg.append('g')
       .attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(xScale).tickFormat(d3.format('d')))
+      .call(xAxis)
       .style('font-size', '11px')
     
     svg.append('g')
@@ -107,8 +120,8 @@ function TrendLineChart({
       .y(d => yScale(d.spending))
       .curve(d3.curveMonotoneX)
     
-    // Draw GDP line
-    if (visibility.gdp) {
+    // Draw GDP line (only if more than 1 year)
+    if (visibility.gdp && yearCount > 1) {
       svg.append('path')
         .datum(aggregatedData)
         .attr('class', 'line-gdp')
@@ -118,8 +131,8 @@ function TrendLineChart({
         .attr('d', gdpLine)
     }
     
-    // Draw Spending line
-    if (visibility.spending) {
+    // Draw Spending line (only if more than 1 year)
+    if (visibility.spending && yearCount > 1) {
       svg.append('path')
         .datum(aggregatedData)
         .attr('class', 'line-spending')
@@ -127,6 +140,38 @@ function TrendLineChart({
         .attr('stroke', '#ef4444')
         .attr('stroke-width', 2.5)
         .attr('d', spendingLine)
+    }
+    
+    // Draw GDP dots (always show dots for data points)
+    if (visibility.gdp) {
+      svg.selectAll('.dot-gdp')
+        .data(aggregatedData)
+        .enter()
+        .append('circle')
+        .attr('class', 'dot-gdp')
+        .attr('cx', d => xScale(d.year))
+        .attr('cy', d => yScale(d.gdp))
+        .attr('r', yearCount === 1 ? 6 : 4) // Larger dot if single year
+        .attr('fill', '#3b82f6')
+        .attr('stroke', 'white')
+        .attr('stroke-width', 2)
+        .style('cursor', 'pointer')
+    }
+    
+    // Draw Spending dots (always show dots for data points)
+    if (visibility.spending) {
+      svg.selectAll('.dot-spending')
+        .data(aggregatedData)
+        .enter()
+        .append('circle')
+        .attr('class', 'dot-spending')
+        .attr('cx', d => xScale(d.year))
+        .attr('cy', d => yScale(d.spending))
+        .attr('r', yearCount === 1 ? 6 : 4) // Larger dot if single year
+        .attr('fill', '#ef4444')
+        .attr('stroke', 'white')
+        .attr('stroke-width', 2)
+        .style('cursor', 'pointer')
     }
     
     // Highlight year if provided

@@ -600,9 +600,19 @@
 
 /* Selected country highlighting - Requirements: 10.3 */
 .country.selected {
-  stroke: #ff6b00 !important;
+  stroke: #CC5500 !important;
   stroke-width: 3 !important;
-  filter: brightness(1.1);
+  filter: drop-shadow(0 0 8px rgba(255, 107, 0, 0.6));
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(255, 107, 0, 0.6));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px rgba(255, 107, 0, 0.9));
+  }
 }
 
 .country-label {

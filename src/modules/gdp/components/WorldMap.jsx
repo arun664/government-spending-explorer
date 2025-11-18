@@ -159,7 +159,7 @@ const WorldMap = ({
           d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
         )
 
-      // Highlight selected country (Requirement 10.3)
+      // Highlight selected country (Requirement 10.3) - Change fill color to bright orange
       svg.selectAll('.country')
         .classed('selected', d => {
           const featureName = d.properties.name || 'Unknown'
@@ -167,12 +167,24 @@ const WorldMap = ({
                  d.properties.name === selectedCountry.countryName ||
                  featureName === selectedCountry.name
         })
+        .attr('fill', d => {
+          const featureName = d.properties.name || 'Unknown'
+          const isSelected = d.id === selectedCountry.countryCode || 
+                            d.properties.name === selectedCountry.countryName ||
+                            featureName === selectedCountry.name
+          if (isSelected) {
+            return '#FF6B00' // Bright orange for selected country
+          }
+          // Keep original region color for non-selected
+          const region = getCountryRegion(d.id)
+          return getRegionColor(region)
+        })
         .attr('stroke', d => {
           const featureName = d.properties.name || 'Unknown'
           const isSelected = d.id === selectedCountry.countryCode || 
                             d.properties.name === selectedCountry.countryName ||
                             featureName === selectedCountry.name
-          return isSelected ? '#ff6b00' : '#ffffff'
+          return isSelected ? '#CC5500' : '#ffffff'
         })
         .attr('stroke-width', d => {
           const featureName = d.properties.name || 'Unknown'

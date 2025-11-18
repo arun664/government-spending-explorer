@@ -149,6 +149,17 @@ function ComparisonDashboard({ onLoadingChange }) {
     }
   }, [animationInterval])
   
+  // Ensure selectedYear stays within displayYearRange when user manually changes range
+  useEffect(() => {
+    if (selectedYear !== null) {
+      if (selectedYear < displayYearRange[0]) {
+        setSelectedYear(displayYearRange[0])
+      } else if (selectedYear > displayYearRange[1]) {
+        setSelectedYear(displayYearRange[1])
+      }
+    }
+  }, [displayYearRange, selectedYear])
+  
   // Memoize chart data and filter by display year range (for animation)
   const chartData = useMemo(() => {
     if (!rawData || rawData.length === 0) return []
@@ -342,7 +353,7 @@ function ComparisonDashboard({ onLoadingChange }) {
               
               <div className="metric-card">
                 <div className="metric-label">Year Range</div>
-                <div className="metric-value">{metadata.yearRange[0]}-{metadata.yearRange[1]}</div>
+                <div className="metric-value">{displayYearRange[0]}-{displayYearRange[1]}</div>
               </div>
               
               <div className="metric-card">

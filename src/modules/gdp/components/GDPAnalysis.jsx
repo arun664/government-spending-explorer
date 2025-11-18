@@ -578,6 +578,14 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
           c => c.code === mapCountry.code
         ) : null
         
+        // Check if country is in selected countries list - highlight with bright orange
+        if (mapCountry && filters.countries && filters.countries.length > 0) {
+          const isSelected = filters.countries.some(c => c.code === mapCountry.code)
+          if (isSelected) {
+            return '#FF6B00' // Bright orange for selected countries
+          }
+        }
+        
         // Use average GDP if available, otherwise check in full gdpData
         if (countryGDP && countryGDP.avgGDP !== null && !isNaN(countryGDP.avgGDP)) {
           const color = colorScale(countryGDP.avgGDP)
@@ -596,9 +604,12 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
       .attr('stroke', d => {
         const countryGDP = findCountryByName(d.properties.name, gdpData)
         
-        // Check if country is selected
-        if (selectedCountry && countryGDP && countryGDP.code === selectedCountry.code) {
-          return '#ff6b00'
+        // Check if country is in selected countries list
+        if (countryGDP && filters.countries && filters.countries.length > 0) {
+          const isSelected = filters.countries.some(c => c.code === countryGDP.code)
+          if (isSelected) {
+            return '#CC5500' // Darker orange stroke for selected countries
+          }
         }
         
         // Check if country's region is in selected regions
@@ -614,9 +625,12 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
       .attr('stroke-width', d => {
         const countryGDP = findCountryByName(d.properties.name, gdpData)
         
-        // Thicker stroke for selected country
-        if (selectedCountry && countryGDP && countryGDP.code === selectedCountry.code) {
-          return 3
+        // Thicker stroke for selected countries
+        if (countryGDP && filters.countries && filters.countries.length > 0) {
+          const isSelected = filters.countries.some(c => c.code === countryGDP.code)
+          if (isSelected) {
+            return 3
+          }
         }
         
         // Medium stroke for selected regions
@@ -638,7 +652,7 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
       })
       .on('mouseenter', function(event, d) {
         const countryGDP = findCountryByName(d.properties.name, gdpData)
-        const isSelected = selectedCountry && countryGDP && countryGDP.code === selectedCountry.code
+        const isSelected = countryGDP && filters.countries && filters.countries.some(c => c.code === countryGDP.code)
         
         if (!isSelected) {
           d3.select(this)
@@ -648,7 +662,7 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
       })
       .on('mouseleave', function(event, d) {
         const countryGDP = findCountryByName(d.properties.name, gdpData)
-        const isSelected = selectedCountry && countryGDP && countryGDP.code === selectedCountry.code
+        const isSelected = countryGDP && filters.countries && filters.countries.some(c => c.code === countryGDP.code)
         
         if (!isSelected) {
           d3.select(this)
