@@ -34,7 +34,7 @@ const CategoryMapExample = () => {
         d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'),
         loadCategorySpendingData(
           ['GE', 'GECE', 'GEG', 'GEI', 'GES', 'GEOM'], // Key indicators from different categories
-          [2015, 2023] // Year range
+          [2015, 2022] // Year range
         )
       ])
 
@@ -150,7 +150,7 @@ const CategoryMapExample = () => {
           spendingData={categoryData}
           colorScale={colorFunction}
           filters={{
-            yearRange: [2015, 2023],
+            yearRange: [2015, 2022],
             visualizationMode: 'dominant'
           }}
           selectedCountry={selectedCountry}

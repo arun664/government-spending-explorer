@@ -25,7 +25,7 @@ const initialState = {
   selectedIndicator: 'GE', // Total Government Expense (default)
   selectedCountries: [],
   selectedYear: null,
-  yearRange: [2010, 2023],
+  yearRange: [2010, 2022],
   
   // Filter State (persisted across chart type changes)
   filters: {

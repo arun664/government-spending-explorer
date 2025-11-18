@@ -172,7 +172,7 @@ async function loadGDPAbsoluteData() {
     const gdpData = []
     const headers = Object.keys(data[0])
     // Filter for year columns (1960-2024)
-    const years = headers.filter(h => !isNaN(parseInt(h)) && parseInt(h) >= 2005 && parseInt(h) <= 2023)
+    const years = headers.filter(h => !isNaN(parseInt(h)) && parseInt(h) >= 2005 && parseInt(h) <= 2022)
     
     data.forEach(row => {
       const countryName = row['Country Name']

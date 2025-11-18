@@ -12,11 +12,11 @@ import { getDataPath } from '../../../utils/pathUtils.js'
 /**
  * Load and normalize GDP data from gdp_vals.csv
  * OPTIMIZED: Filters during parsing to reduce memory usage
- * @param {Array} yearRange - [minYear, maxYear] to filter (default [2005, 2023])
+ * @param {Array} yearRange - [minYear, maxYear] to filter (default [2005, 2022])
  * @param {Array} countries - Optional array of country names to filter
  * @returns {Promise<Array>} Array of {country, year, gdp} in millions USD
  */
-async function loadNormalizedGDPData(yearRange = [2005, 2023], countries = []) {
+async function loadNormalizedGDPData(yearRange = [2005, 2022], countries = []) {
   try {
     console.time('⏱️ GDP data loading')
     const data = await d3.csv(getDataPath('gdp_vals.csv'))
@@ -113,11 +113,11 @@ async function loadNormalizedGDPData(yearRange = [2005, 2023], countries = []) {
 /**
  * Load and normalize Spending data from expense_clean_usd.csv
  * OPTIMIZED: Filters during parsing to reduce memory usage
- * @param {Array} yearRange - [minYear, maxYear] to filter (default [2005, 2023])
+ * @param {Array} yearRange - [minYear, maxYear] to filter (default [2005, 2022])
  * @param {Array} countries - Optional array of country names to filter
  * @returns {Promise<Array>} Array of {country, year, spending} in millions USD
  */
-async function loadNormalizedSpendingData(yearRange = [2005, 2023], countries = []) {
+async function loadNormalizedSpendingData(yearRange = [2005, 2022], countries = []) {
   try {
     console.time('⏱️ Spending data loading')
     const data = await d3.csv(getDataPath('expense_clean_usd.csv'))
@@ -201,7 +201,7 @@ async function loadNormalizedSpendingData(yearRange = [2005, 2023], countries = 
  * @param {Function} onProgress - Optional callback for progress updates
  * @returns {Promise<Object>} Normalized dataset with metadata
  */
-export async function normalizeComparisonData(countries = [], yearRange = [2005, 2023], onProgress = null) {
+export async function normalizeComparisonData(countries = [], yearRange = [2005, 2022], onProgress = null) {
   try {
     console.log('📥 Loading GDP and Spending data with filters:', { 
       countries: countries.length > 0 ? `${countries.length} countries` : 'all countries',

@@ -288,7 +288,7 @@ export function calculateCountrySpending(countryData, yearRange) {
   }
 }
 
-function getCountrySpendingForMap(spendingData, countryName, yearRange = [2015, 2023]) {
+function getCountrySpendingForMap(spendingData, countryName, yearRange = [2015, 2022]) {
   if (!spendingData?.countries || !countryName) return null
   
   // Use MapColorService to find country data (handles both code and name lookups)

@@ -181,7 +181,7 @@ class IndicatorsDataService {
       globalStats,
       metadata: {
         totalCountries: Object.keys(countries).length,
-        yearRange: yearsArray.length > 0 ? [Math.min(...yearsArray), Math.max(...yearsArray)] : [2005, 2023],
+        yearRange: yearsArray.length > 0 ? [Math.min(...yearsArray), Math.max(...yearsArray)] : [2005, 2022],
         totalRecords: totalValues.length,
         availableUnits: [...new Set(rawData.map(row => row.UNIT_MEASURE_LABEL))],
         availableSectors: [...new Set(rawData.map(row => row.COMP_BREAKDOWN_1_LABEL))]
@@ -260,7 +260,7 @@ class IndicatorsDataService {
   /**
    * Get comparative analysis between countries for a specific indicator
    */
-  async getComparativeAnalysis(indicatorName, countries, yearRange = [2015, 2023]) {
+  async getComparativeAnalysis(indicatorName, countries, yearRange = [2015, 2022]) {
     const data = await this.loadIndicatorMatrix(indicatorName)
     const insights = await this.loadGlobalInsights()
     

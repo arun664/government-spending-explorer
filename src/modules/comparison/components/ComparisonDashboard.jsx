@@ -16,14 +16,15 @@ import { normalizeComparisonData } from '../utils/normalizeComparisonData.js'
 import '../styles/ComparisonDashboard.css'
 
 function ComparisonDashboard({ onLoadingChange }) {
-  const [rawData, setRawData] = useState(null)
+  const [rawData, setRawData] = useState(null) // All loaded data
   const [metadata, setMetadata] = useState(null)
   const [loading, setLoading] = useState(true)
   const [loadingProgress, setLoadingProgress] = useState({ stage: '', message: '', percent: 0 })
   const [error, setError] = useState(null)
   const [visibility, setVisibility] = useState({ gdp: true, spending: true })
   const [highlightYear, setHighlightYear] = useState(null)
-  const [yearRange, setYearRange] = useState([2005, 2023]) // Full range 2005-2023
+  const [dataYearRange, setDataYearRange] = useState([2005, 2022]) // Actual data loaded range
+  const [displayYearRange, setDisplayYearRange] = useState([2005, 2022]) // Display filter for animation
   const [selectedYear, setSelectedYear] = useState(null) // Will be set from metadata
   const [selectedCountry, setSelectedCountry] = useState('World') // Default to World (all countries)
   const [isAnimating, setIsAnimating] = useState(false)
@@ -38,7 +39,7 @@ function ComparisonDashboard({ onLoadingChange }) {
   
   // Force reload to pick up normalization fix
   
-  // Load data with optimized normalization
+  // Load data once - only reload when country changes, not when display year range changes
   useEffect(() => {
     let isCancelled = false
     
@@ -55,9 +56,9 @@ function ComparisonDashboard({ onLoadingChange }) {
           }
         }
         
-        // Load with filters for optimization
+        // Load ALL data for the full range (2005-2022) - we'll filter client-side
         const selectedCountries = selectedCountry === 'World' ? [] : [selectedCountry]
-        const result = await normalizeComparisonData(selectedCountries, yearRange, onProgress)
+        const result = await normalizeComparisonData(selectedCountries, dataYearRange, onProgress)
         
         if (isCancelled) return
         
@@ -92,7 +93,7 @@ function ComparisonDashboard({ onLoadingChange }) {
     return () => {
       isCancelled = true
     }
-  }, [selectedCountry, yearRange, selectedYear])
+  }, [selectedCountry]) // Only reload when country changes, NOT when year range changes
   
   const handleLegendToggle = useCallback((newVisibility) => {
     setVisibility(newVisibility)
@@ -106,24 +107,30 @@ function ComparisonDashboard({ onLoadingChange }) {
     setSelectedYear(year)
   }, [])
   
-  // Animation controls
+  // Animation controls - incrementally updates display year range from 2005-2006, 2005-2007, etc.
   const startAnimation = useCallback(() => {
     if (isAnimating) return
     
     setIsAnimating(true)
-    let currentYear = yearRange[0]
-    setSelectedYear(currentYear)
+    let currentEndYear = 2006 // Start with 2005-2006
+    setDisplayYearRange([2005, currentEndYear])
+    setSelectedYear(currentEndYear)
     
     const interval = setInterval(() => {
-      currentYear++
-      if (currentYear > yearRange[1]) {
-        currentYear = yearRange[0]
+      currentEndYear++
+      if (currentEndYear > 2022) {
+        // Stop animation when reaching max year
+        clearInterval(interval)
+        setAnimationInterval(null)
+        setIsAnimating(false)
+        return
       }
-      setSelectedYear(currentYear)
-    }, 800) // Change year every 800ms
+      setDisplayYearRange([2005, currentEndYear])
+      setSelectedYear(currentEndYear)
+    }, 1000) // Change year every 1 second for smooth visualization
     
     setAnimationInterval(interval)
-  }, [isAnimating, yearRange])
+  }, [isAnimating])
   
   const stopAnimation = useCallback(() => {
     if (animationInterval) {
@@ -142,14 +149,13 @@ function ComparisonDashboard({ onLoadingChange }) {
     }
   }, [animationInterval])
   
-  // Memoize chart data to prevent recalculation on every render
+  // Memoize chart data and filter by display year range (for animation)
   const chartData = useMemo(() => {
     if (!rawData || rawData.length === 0) return []
     
-    // Data is already normalized from normalizeComparisonData
-    // Just return it directly
-    return rawData
-  }, [rawData])
+    // Filter data based on displayYearRange for smooth animation without reloading
+    return rawData.filter(d => d.year >= displayYearRange[0] && d.year <= displayYearRange[1])
+  }, [rawData, displayYearRange])
   
   // Get unique countries for dropdown
   const availableCountries = useMemo(() => {
@@ -165,6 +171,35 @@ function ComparisonDashboard({ onLoadingChange }) {
     const sum = ratios.reduce((acc, val) => acc + val, 0)
     return (sum / ratios.length).toFixed(1)
   }, [chartData])
+  
+  // Calculate GDP growth for selected year (year-over-year)
+  const gdpGrowth = useMemo(() => {
+    if (!chartData || chartData.length === 0 || !selectedYear) return { value: 0, isPositive: true }
+    
+    const currentYearData = chartData.filter(d => d.year === selectedYear)
+    const previousYearData = chartData.filter(d => d.year === selectedYear - 1)
+    
+    if (currentYearData.length === 0 || previousYearData.length === 0) return { value: 0, isPositive: true }
+    
+    const currentGDP = currentYearData.reduce((sum, d) => sum + d.gdp, 0) / currentYearData.length
+    const previousGDP = previousYearData.reduce((sum, d) => sum + d.gdp, 0) / previousYearData.length
+    
+    const growth = ((currentGDP - previousGDP) / previousGDP) * 100
+    return { value: Math.abs(growth).toFixed(1), isPositive: growth >= 0 }
+  }, [chartData, selectedYear])
+  
+  // Calculate data coverage for selected year
+  const dataCoverage = useMemo(() => {
+    if (!chartData || chartData.length === 0 || !selectedYear || !metadata) return 0
+    
+    const yearData = chartData.filter(d => d.year === selectedYear)
+    const totalCountries = metadata.countries.length
+    
+    if (totalCountries === 0) return 0
+    
+    const countriesWithData = new Set(yearData.map(d => d.country)).size
+    return ((countriesWithData / totalCountries) * 100).toFixed(0)
+  }, [chartData, selectedYear, metadata])
   
   if (loading) {
     return (
@@ -203,19 +238,23 @@ function ComparisonDashboard({ onLoadingChange }) {
             <input 
               type="number" 
               min="2005" 
-              max="2023" 
-              value={yearRange[0]}
-              onChange={(e) => setYearRange([parseInt(e.target.value), yearRange[1]])}
+              max="2022" 
+              value={displayYearRange[0]}
+              onChange={(e) => setDisplayYearRange([parseInt(e.target.value), displayYearRange[1]])}
               className="filter-input"
+              disabled={isAnimating}
+              style={{ opacity: isAnimating ? 0.6 : 1 }}
             />
             <span>-</span>
             <input 
               type="number" 
               min="2005" 
-              max="2023" 
-              value={yearRange[1]}
-              onChange={(e) => setYearRange([yearRange[0], parseInt(e.target.value)])}
+              max="2022" 
+              value={displayYearRange[1]}
+              onChange={(e) => setDisplayYearRange([displayYearRange[0], parseInt(e.target.value)])}
               className="filter-input"
+              disabled={isAnimating}
+              style={{ opacity: isAnimating ? 0.6 : 1 }}
             />
           </div>
           
@@ -236,9 +275,9 @@ function ComparisonDashboard({ onLoadingChange }) {
             <button 
               onClick={isAnimating ? stopAnimation : startAnimation}
               className="animation-button"
-              title={isAnimating ? "Stop animation" : "Animate through years"}
+              title={isAnimating ? "Stop year-by-year animation" : "Animate data from 2005 onwards, year by year"}
             >
-              {isAnimating ? '⏸️ Stop' : '▶️ Animate'}
+              {isAnimating ? '⏸️ Stop Animation' : '▶️ Play Timeline'}
             </button>
           </div>
           
@@ -313,12 +352,14 @@ function ComparisonDashboard({ onLoadingChange }) {
               
               <div className="metric-card highlight">
                 <div className="metric-label">GDP Growth</div>
-                <div className="metric-value trend-positive">+2.4%</div>
+                <div className={`metric-value ${gdpGrowth.isPositive ? 'trend-positive' : 'trend-negative'}`}>
+                  {gdpGrowth.isPositive ? '+' : '-'}{gdpGrowth.value}%
+                </div>
               </div>
               
               <div className="metric-card highlight-alt">
                 <div className="metric-label">Coverage</div>
-                <div className="metric-value">95%</div>
+                <div className="metric-value">{dataCoverage}%</div>
               </div>
             </>
           )}

@@ -338,7 +338,7 @@ const ComparisonEngine = () => {
               <input
                 type="number"
                 min={availableYears[0] || 2000}
-                max={availableYears[availableYears.length - 1] || 2023}
+                max={availableYears[availableYears.length - 1] || 2022}
                 value={yearRange[0]}
                 onChange={(e) => setYearRange([parseInt(e.target.value), yearRange[1]])}
                 className="year-input"
@@ -347,7 +347,7 @@ const ComparisonEngine = () => {
               <input
                 type="number"
                 min={availableYears[0] || 2000}
-                max={availableYears[availableYears.length - 1] || 2023}
+                max={availableYears[availableYears.length - 1] || 2022}
                 value={yearRange[1]}
                 onChange={(e) => setYearRange([yearRange[0], parseInt(e.target.value)])}
                 className="year-input"

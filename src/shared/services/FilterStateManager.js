@@ -59,14 +59,14 @@ export class FilterStateManager {
     if (module === 'gdp') {
       return {
         regions: filters.regions || [],
-        yearRange: filters.yearRange || [2005, 2023],
+        yearRange: filters.yearRange || [2005, 2022],
         gdpRange: filters.gdpRange || [-100, 100],
         countries: filters.countries || []
       }
     } else if (module === 'spending') {
       return {
         regions: filters.regions || [],
-        yearRange: filters.yearRange || [2005, 2023], // Last 2 decades
+        yearRange: filters.yearRange || [2005, 2022], // Last 2 decades
         valueRange: filters.valueRange || [0, 100000],
         sectors: filters.sectors || [],
         categories: filters.categories || ['overview']
@@ -185,7 +185,7 @@ export class FilterStateManager {
       this.currentFilters = {
         ...this.currentFilters,
         regions: defaults.regions,
-        yearRange: [2005, 2023],
+        yearRange: [2005, 2022],
         gdpRange: defaults.gdpRange,
         countries: defaults.countries || []
       }
@@ -193,7 +193,7 @@ export class FilterStateManager {
       this.currentFilters = {
         ...this.currentFilters,
         regions: defaults.regions,
-        yearRange: [2005, 2023], // Last 2 decades
+        yearRange: [2005, 2022], // Last 2 decades
         valueRange: defaults.valueRange,
         sectors: defaults.sectors,
         categories: defaults.categories
@@ -357,8 +357,8 @@ export class FilterStateManager {
       // Region selection - empty means all regions
       regions: [],
       
-      // Year range - default to full available range (1980-2023)
-      yearRange: [1980, 2023],
+      // Year range - default to full available range (1980-2022)
+      yearRange: [1980, 2022],
       
       // Value range in millions - default to full range
       valueRange: [0, 100000],
@@ -438,9 +438,9 @@ export class FilterStateManager {
         count++
       }
       
-      // Check year range (spending default: 2005-2023)
+      // Check year range (spending default: 2005-2022)
       if (this.currentFilters.yearRange && 
-          (this.currentFilters.yearRange[0] !== 2005 || this.currentFilters.yearRange[1] !== 2023)) {
+          (this.currentFilters.yearRange[0] !== 2005 || this.currentFilters.yearRange[1] !== 2022)) {
         count++
       }
       
@@ -450,9 +450,9 @@ export class FilterStateManager {
         count++
       }
     } else if (targetModule === 'gdp') {
-      // Check year range (GDP default: 2005-2023)
+      // Check year range (GDP default: 2005-2022)
       if (this.currentFilters.yearRange && 
-          (this.currentFilters.yearRange[0] !== 2005 || this.currentFilters.yearRange[1] !== 2023)) {
+          (this.currentFilters.yearRange[0] !== 2005 || this.currentFilters.yearRange[1] !== 2022)) {
         count++
       }
       

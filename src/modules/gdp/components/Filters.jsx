@@ -6,7 +6,7 @@ import '../styles/Filters.css'
 const Filters = ({ 
   onFilterChange, 
   minYear = 2005, 
-  maxYear = 2023, 
+  maxYear = 2022, 
   selectedCountries = [], 
   onRemoveCountry, 
   showLabels, 

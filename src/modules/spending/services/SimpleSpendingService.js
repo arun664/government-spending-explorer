@@ -108,7 +108,7 @@ export async function loadSpendingData(indicatorCode = 'GE') {
 /**
  * Get country spending for map visualization
  */
-export function getCountrySpendingValue(spendingData, countryName, yearRange = [2015, 2023]) {
+export function getCountrySpendingValue(spendingData, countryName, yearRange = [2015, 2022]) {
   if (!spendingData.countries || !countryName) return null
   
   // Try to find country data with flexible matching
@@ -324,7 +324,7 @@ export function createColorScale(minValue, maxValue, category = 'overview') {
  * @param {Array} yearRange - Year range for analysis
  * @returns {Object} Processed data with category dominance information
  */
-export async function loadCategorySpendingData(indicatorCodes = ['GE', 'GECE', 'GEG', 'GEI', 'GES', 'GEOM'], yearRange = [2015, 2023]) {
+export async function loadCategorySpendingData(indicatorCodes = ['GE', 'GECE', 'GEG', 'GEI', 'GES', 'GEOM'], yearRange = [2015, 2022]) {
   try {
     console.log(`Loading category spending data for indicators: ${indicatorCodes.join(', ')}`)
     

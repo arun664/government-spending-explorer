@@ -284,8 +284,8 @@ const SpendingFilters = ({
               <div 
                 className="slider-range" 
                 style={{
-                  left: `${((filters.yearRange[0] - 1980) / (2023 - 1980)) * 100}%`,
-                  width: `${((filters.yearRange[1] - filters.yearRange[0]) / (2023 - 1980)) * 100}%`,
+                  left: `${((filters.yearRange[0] - 1980) / (2022 - 1980)) * 100}%`,
+                  width: `${((filters.yearRange[1] - filters.yearRange[0]) / (2022 - 1980)) * 100}%`,
                   backgroundColor: spendingData?.category ? ColorSchemeService.getCategoryColor(spendingData.category) : '#667eea'
                 }}
               />
@@ -293,7 +293,7 @@ const SpendingFilters = ({
             <input
               type="range"
               min="1980"
-              max="2023"
+              max="2022"
               value={filters.yearRange[0]}
               onChange={(e) => handleYearRangeChange('start', e.target.value)}
               className="slider-input slider-min"
@@ -302,7 +302,7 @@ const SpendingFilters = ({
             <input
               type="range"
               min="1980"
-              max="2023"
+              max="2022"
               value={filters.yearRange[1]}
               onChange={(e) => handleYearRangeChange('end', e.target.value)}
               className="slider-input slider-max"
@@ -312,11 +312,11 @@ const SpendingFilters = ({
           
           {/* Year tick marks */}
           <div className="year-ticks">
-            {[1980, 1990, 2000, 2010, 2020, 2023].map(year => (
+            {[1980, 1990, 2000, 2010, 2022].map(year => (
               <div 
                 key={year} 
                 className="year-tick"
-                style={{ left: `${((year - 1980) / (2023 - 1980)) * 100}%` }}
+                style={{ left: `${((year - 1980) / (2022 - 1980)) * 100}%` }}
               >
                 <span className="tick-mark"></span>
                 <span className="tick-label">{year}</span>
@@ -336,13 +336,13 @@ const SpendingFilters = ({
                 id="start-year"
                 type="number"
                 min="2000"
-                max="2023"
+                max="2022"
                 value={filters.yearRange[0]}
                 onChange={(e) => handleYearRangeChange('start', e.target.value)}
                 onBlur={(e) => {
                   const val = parseInt(e.target.value)
                   if (val < 2000) handleYearRangeChange('start', '2000')
-                  if (val > 2023) handleYearRangeChange('start', '2023')
+                  if (val > 2022) handleYearRangeChange('start', '2022')
                 }}
               />
             </div>
@@ -353,13 +353,13 @@ const SpendingFilters = ({
                 id="end-year"
                 type="number"
                 min="2000"
-                max="2023"
+                max="2022"
                 value={filters.yearRange[1]}
                 onChange={(e) => handleYearRangeChange('end', e.target.value)}
                 onBlur={(e) => {
                   const val = parseInt(e.target.value)
                   if (val < 2000) handleYearRangeChange('end', '2000')
-                  if (val > 2023) handleYearRangeChange('end', '2023')
+                  if (val > 2022) handleYearRangeChange('end', '2022')
                 }}
               />
             </div>

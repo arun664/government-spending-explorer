@@ -609,7 +609,7 @@ export const findCountryByMapName = (mapName, spendingData) => {
 /**
  * Get spending value for a country by map name
  */
-export const getSpendingValueByMapName = (mapName, spendingData, yearRange = [2015, 2023]) => {
+export const getSpendingValueByMapName = (mapName, spendingData, yearRange = [2015, 2022]) => {
   const country = findCountryByMapName(mapName, spendingData)
   
   if (!country?.data) return null
@@ -649,7 +649,7 @@ const formatSpendingValue = (value) => {
 /**
  * Get country information for tooltip display
  */
-export const getCountryTooltipInfo = (mapName, spendingData, yearRange = [2015, 2023]) => {
+export const getCountryTooltipInfo = (mapName, spendingData, yearRange = [2015, 2022]) => {
   const country = findCountryByMapName(mapName, spendingData)
   const spendingValue = getSpendingValueByMapName(mapName, spendingData, yearRange)
   
