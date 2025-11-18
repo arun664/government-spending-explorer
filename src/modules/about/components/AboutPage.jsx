@@ -18,23 +18,23 @@ const AboutPage = () => {
           <div className="data-source-card">
             <h3>IMF Government Finance Statistics (GFSE Database)</h3>
             <ul>
-              <li><strong>48 Spending Indicators</strong> covering personnel, transfers, debt, operations, and social programs</li>
-              <li><strong>177 Countries</strong> with varying data availability</li>
-              <li><strong>Coverage:</strong> 1972-2023 (varies by country and indicator)</li>
-              <li><strong>Size:</strong> 54MB expense_clean.csv + 150MB individual indicator files</li>
-              <li><strong>Currency:</strong> Data displayed in each country's domestic currency (USD, EUR, INR, etc.)</li>
-              <li><strong>Link:</strong> <a href="https://data.imf.org/?sk=a0867067-d23c-4ebc-ad23-d3b015045405" target="_blank" rel="noopener noreferrer">IMF Government Finance Statistics</a></li>
+              <li><strong>Government Expenditure Data</strong> by functional classification across countries</li>
+              <li><strong>Categories:</strong> Education, Health, Defense, Social Protection, Economic Affairs, General Public Services, Public Order and Safety, Environmental Protection, Housing and Community Amenities, Recreation Culture and Religion</li>
+              <li><strong>Coverage:</strong> 2005-2022 (varies by country and category)</li>
+              <li><strong>Size:</strong> 14.27 MB (expense_clean_usd.csv)</li>
+              <li><strong>Currency:</strong> Converted to USD for cross-country comparison</li>
+              <li><strong>Link:</strong> <a href="https://data360.worldbank.org/en/dataset/IMF_GFSE" target="_blank" rel="noopener noreferrer">World Bank - IMF Government Finance Statistics</a></li>
             </ul>
           </div>
 
           <div className="data-source-card">
             <h3>World Bank GDP Statistics</h3>
             <ul>
-              <li><strong>GDP Growth Rates</strong> for global economic analysis</li>
-              <li><strong>177 Countries</strong> with comprehensive coverage</li>
-              <li><strong>Coverage:</strong> 2005-2023</li>
-              <li><strong>Size:</strong> 207KB gdp_clean.csv</li>
-              <li><strong>Link:</strong> <a href="https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG" target="_blank" rel="noopener noreferrer">World Bank GDP Growth Data</a></li>
+              <li><strong>GDP Values</strong> in current USD for economic analysis</li>
+              <li><strong>200+ Countries</strong> with comprehensive coverage</li>
+              <li><strong>Coverage:</strong> 1960-2022</li>
+              <li><strong>Size:</strong> 0.16 MB (gdp_vals.csv)</li>
+              <li><strong>Link:</strong> <a href="https://data.worldbank.org/indicator/NY.GDP.MKTP.CD" target="_blank" rel="noopener noreferrer">World Bank GDP Data</a></li>
             </ul>
           </div>
         </section>
@@ -44,29 +44,19 @@ const AboutPage = () => {
           <div className="warning-card">
             <h3>Planned Features</h3>
             
-            <h4>1. USD Currency Conversion</h4>
-            <p>
-              Convert all spending values to USD using historical exchange rates to enable:
-            </p>
-            <ul>
-              <li><strong>Accurate cross-country comparisons</strong> - Compare spending levels meaningfully</li>
-              <li><strong>Value range filtering</strong> - Filter countries by spending amount in USD</li>
-              <li><strong>Trend analysis</strong> - Track real spending changes adjusted for exchange rates</li>
-              <li><strong>Ranking and benchmarking</strong> - Identify top/bottom spenders globally</li>
-            </ul>
-
-            <h4>2. US-Specific Analysis</h4>
+            <h4>1. US-Specific Government Spending Analysis</h4>
             <p>
               Detailed US spending analysis with transaction-level insights from <a href="https://www.usaspending.gov/download_center/custom_award_data" target="_blank" rel="noopener noreferrer">USAspending.gov</a>:
             </p>
             <ul>
-              <li>Agency-level spending breakdown</li>
+              <li>Department and agency-level spending breakdown</li>
               <li>Contract and grant analysis</li>
               <li>Geographic distribution of federal spending</li>
               <li>Historical trends with detailed categorization</li>
+              <li>Transaction-level data exploration</li>
             </ul>
 
-            <h4>3. Advanced Analytics</h4>
+            <h4>2. Advanced Analytics</h4>
             <ul>
               <li>Predictive spending forecasts using machine learning</li>
               <li>Correlation analysis between spending and economic indicators</li>
@@ -74,12 +64,20 @@ const AboutPage = () => {
               <li>Regional spending comparisons and benchmarks</li>
             </ul>
 
-            <h4>4. Enhanced Visualizations</h4>
+            <h4>3. Enhanced Visualizations</h4>
             <ul>
-              <li>Time-series animations showing spending evolution</li>
               <li>Sankey diagrams for spending flow analysis</li>
               <li>Comparative bubble charts for multi-dimensional analysis</li>
               <li>Interactive treemaps for hierarchical spending breakdown</li>
+              <li>Additional economic indicators (inflation, unemployment)</li>
+            </ul>
+
+            <h4>4. Additional Features</h4>
+            <ul>
+              <li>Data export functionality (CSV, PDF)</li>
+              <li>Support for multiple languages</li>
+              <li>Mobile-optimized touch interactions</li>
+              <li>More granular spending subcategories</li>
             </ul>
           </div>
         </section>
@@ -87,15 +85,15 @@ const AboutPage = () => {
         <section className="about-section footer-section">
           <h2>🔗 Data Source Links</h2>
           <ul>
-            <li><a href="https://data.imf.org/?sk=a0867067-d23c-4ebc-ad23-d3b015045405" target="_blank" rel="noopener noreferrer">IMF Government Finance Statistics</a> - Primary data source for government spending indicators</li>
-            <li><a href="https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG" target="_blank" rel="noopener noreferrer">World Bank GDP Growth Data</a> - GDP growth rates and economic indicators</li>
+            <li><a href="https://data360.worldbank.org/en/dataset/IMF_GFSE" target="_blank" rel="noopener noreferrer">World Bank - IMF Government Finance Statistics</a> - Primary data source for government spending by category</li>
+            <li><a href="https://data.worldbank.org/indicator/NY.GDP.MKTP.CD" target="_blank" rel="noopener noreferrer">World Bank GDP Data</a> - GDP values in current USD</li>
             <li><a href="https://www.usaspending.gov/download_center/custom_award_data" target="_blank" rel="noopener noreferrer">USAspending.gov</a> - US federal spending data (planned for future integration)</li>
           </ul>
         </section>
 
         <footer className="about-footer">
-          <p>Dashboard Version 1.0 | Data Last Updated: 2023</p>
-          <p>Built with React, D3.js, and IMF Government Finance Statistics</p>
+          <p>Dashboard Version 1.0 | Data Coverage: 2005-2022</p>
+          <p>Built with React, D3.js, and World Bank Data</p>
         </footer>
       </div>
     </div>
