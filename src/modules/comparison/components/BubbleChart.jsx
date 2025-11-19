@@ -184,7 +184,7 @@ function BubbleChart({
         setTooltip({
           show: true,
           x: event.pageX,
-          y: event.pageY,
+          y: event.pageY - 120, // Position above cursor to avoid cutoff at bottom
           content: tooltipContent
         })
       })

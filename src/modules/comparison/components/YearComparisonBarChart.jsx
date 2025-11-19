@@ -80,18 +80,22 @@ function YearComparisonBarChart({
     // Get unique years for year selector
     const years = [...new Set(data.map(d => d.year))].sort()
     
-    // Aggregate by country across ALL years in the range (like GDP page does)
-    // Calculate average GDP/spending per country across the year range
+    // Always use all data in the year range - don't filter by selectedYear
+    // The bar chart shows totals across the entire year range
+    const processedData = data
+    
+    // Group by country
     const countryData = d3.rollup(
-      data,
+      processedData,
       v => {
-        const avgGDP = d3.mean(v, d => d.gdp)
-        
-
+        // Calculate average values across years (more meaningful for comparison)
+        const years = v.map(d => d.year).sort((a, b) => a - b)
         return {
-          gdp: avgGDP,
+          gdp: d3.mean(v, d => d.gdp),
           spending: d3.mean(v, d => d.spending),
-          dataPoints: v.length
+          dataPoints: v.length,
+          minYear: years[0],
+          maxYear: years[years.length - 1]
         }
       },
       d => d.country
@@ -103,7 +107,9 @@ function YearComparisonBarChart({
       countryCode: getCountryCode(country),
       gdp: values.gdp,
       spending: values.spending,
-      dataPoints: values.dataPoints
+      dataPoints: values.dataPoints,
+      minYear: values.minYear,
+      maxYear: values.maxYear
     }))
       .sort((a, b) => sortBy === 'gdp' ? b.gdp - a.gdp : b.spending - a.spending)
     
@@ -143,7 +149,7 @@ function YearComparisonBarChart({
       .attr('text-anchor', 'middle')
       .style('font-size', '11px')
       .style('fill', '#666')
-      .text('Value (USD)')
+      .text('Average Value (USD)')
     
     const barWidth = xScale.bandwidth() / 2
     
@@ -169,14 +175,14 @@ function YearComparisonBarChart({
             content: `
               <div style="font-weight: bold; margin-bottom: 6px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px;">${d.country} (${d.countryCode})</div>
               <div style="color: #3b82f6; margin: 4px 0;">
-                <div style="font-size: 10px; font-weight: 600;">Avg GDP</div>
+                <div style="font-size: 10px; font-weight: 600;">Average GDP (${d.minYear === d.maxYear ? d.minYear : `${d.minYear}-${d.maxYear}`})</div>
                 <div style="font-size: 12px; font-weight: 700;">${formatComparisonValueShort(d.gdp)}</div>
               </div>
               <div style="color: #666; margin: 4px 0; font-size: 10px;">
-                Avg Spending/GDP Ratio: ${ratio}%
+                Spending/GDP Ratio: ${ratio}%
               </div>
               <div style="color: #999; margin-top: 4px; font-size: 9px;">
-                Based on ${d.dataPoints} data points
+                ${d.dataPoints === 1 ? `Single year (${d.minYear})` : `Average of ${d.dataPoints} years (${d.minYear}-${d.maxYear})`}
               </div>
             `
           })
@@ -209,14 +215,14 @@ function YearComparisonBarChart({
             content: `
               <div style="font-weight: bold; margin-bottom: 6px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px;">${d.country} (${d.countryCode})</div>
               <div style="color: #ef4444; margin: 4px 0;">
-                <div style="font-size: 10px; font-weight: 600;">Avg Government Spending</div>
+                <div style="font-size: 10px; font-weight: 600;">Average Government Spending (${d.minYear === d.maxYear ? d.minYear : `${d.minYear}-${d.maxYear}`})</div>
                 <div style="font-size: 12px; font-weight: 700;">${formatComparisonValueShort(d.spending)}</div>
               </div>
               <div style="color: #666; margin: 4px 0; font-size: 10px;">
-                Avg Spending/GDP Ratio: ${ratio}%
+                Spending/GDP Ratio: ${ratio}%
               </div>
               <div style="color: #999; margin-top: 4px; font-size: 9px;">
-                Based on ${d.dataPoints} data points
+                ${d.dataPoints === 1 ? `Single year (${d.minYear})` : `Average of ${d.dataPoints} years (${d.minYear}-${d.maxYear})`}
               </div>
             `
           })

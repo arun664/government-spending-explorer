@@ -50,12 +50,13 @@ function TrendLineChart({
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`)
     
-    // Group data by year
+    // Group data by year - use sum for multiple countries, first value for single country
     const yearData = d3.group(data, d => d.year)
     const aggregatedData = Array.from(yearData, ([year, values]) => ({
       year,
-      gdp: d3.mean(values, d => d.gdp),
-      spending: d3.mean(values, d => d.spending)
+      // Sum values if multiple data points (multiple countries), otherwise use the single value
+      gdp: d3.sum(values, d => d.gdp),
+      spending: d3.sum(values, d => d.spending)
     })).sort((a, b) => a.year - b.year)
     
     // Get unique years for x-axis
