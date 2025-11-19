@@ -15,6 +15,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { CATEGORY_COLORS, INDICATOR_METADATA } from '../services/UnifiedDataService.js'
 import { formatWithBothCurrencies } from '../utils/currencyMapping.js'
+import { getCountryRegion } from '../../../shared/utils/RegionMapping.js'
 import '../styles/SpendingInsightsPanel.css'
 
 function SpendingInsightsPanel({ 
@@ -43,7 +44,66 @@ function SpendingInsightsPanel({
     }
   }, [selectedCountry])
   
-  // Calculate top and bottom countries by category
+  // Calculate dynamic global stats based on current indicator, year range, and region filters
+  const dynamicGlobalStats = useMemo(() => {
+    if (!spendingData || !spendingData.countries) return null
+    
+    // Check if regions filter is active
+    const hasRegionFilter = filters?.regions && filters.regions.length > 0
+    
+    // Filter countries by selected regions (or use all if no filter)
+    const filteredCountries = Object.entries(spendingData.countries).filter(([countryName]) => {
+      if (!hasRegionFilter) return true
+      const countryRegion = getCountryRegion(countryName)
+      // Case-insensitive comparison with trimmed values
+      return filters.regions.some(r => r.trim().toLowerCase() === countryRegion.trim().toLowerCase())
+    })
+    
+    if (filteredCountries.length === 0) return null
+    
+    // Recalculate stats for filtered countries within year range
+    // Use USD values for consistent comparison
+    const allUSDValues = []
+    let totalDataPoints = 0
+    
+    filteredCountries.forEach(([countryName, countryData]) => {
+      if (countryData.data) {
+        Object.entries(countryData.data).forEach(([year, value]) => {
+          const yearNum = parseInt(year)
+          // Filter by year range
+          if (yearNum >= yearRange[0] && yearNum <= yearRange[1]) {
+            // Handle both old format (number) and new format (object with local/usd)
+            let usdValue = null
+            if (typeof value === 'object' && value !== null) {
+              usdValue = value.usd
+            } else if (typeof value === 'number') {
+              // If it's just a number, assume it's already in USD (from old data format)
+              usdValue = value
+            }
+            
+            if (usdValue && usdValue > 0) {
+              allUSDValues.push(usdValue)
+              totalDataPoints++
+            }
+          }
+        })
+      }
+    })
+    
+    if (allUSDValues.length === 0) return null
+    
+    return {
+      totalCountries: filteredCountries.length,
+      totalDataPoints: totalDataPoints,
+      avgSpending: allUSDValues.reduce((sum, v) => sum + v, 0) / allUSDValues.length,
+      minSpending: Math.min(...allUSDValues),
+      maxSpending: Math.max(...allUSDValues),
+      isFiltered: hasRegionFilter,
+      filterRegions: hasRegionFilter ? filters.regions : []
+    }
+  }, [spendingData, filters?.regions, yearRange])
+  
+  // Calculate top and bottom countries by category (filtered by region if selected)
   const { topCountries, bottomCountries } = useMemo(() => {
     if (!unifiedData) return { topCountries: [], bottomCountries: [] }
     
@@ -54,6 +114,13 @@ function SpendingInsightsPanel({
     const countryTotals = {}
     
     Object.entries(unifiedData.countries).forEach(([countryName, countryData]) => {
+      // Filter by region if regions are selected
+      if (filters?.regions && filters.regions.length > 0) {
+        const countryRegion = getCountryRegion(countryName)
+        if (!filters.regions.includes(countryRegion)) {
+          return // Skip countries not in selected regions
+        }
+      }
       let totalLocal = 0
       let totalUSD = 0
       let dataPoints = 0
@@ -108,7 +175,7 @@ function SpendingInsightsPanel({
       topCountries: sorted.slice(0, 10),
       bottomCountries: sorted.slice(-10).reverse()
     }
-  }, [unifiedData, selectedCategory, yearRange])
+  }, [unifiedData, selectedCategory, yearRange, filters?.regions])
   
   // Calculate detailed indicator breakdown for selected country (all 48 indicators)
   const selectedCountryIndicators = useMemo(() => {
@@ -272,23 +339,30 @@ function SpendingInsightsPanel({
                       {INDICATOR_METADATA[selectedIndicator].category}
                     </span>
                   </div>
-                  {spendingData.globalStats && (
+                  {dynamicGlobalStats && (
                     <div className="indicator-display-stats">
+                      {dynamicGlobalStats?.isFiltered && (
+                        <div className="indicator-stat-row" style={{ marginBottom: '8px', padding: '6px', backgroundColor: '#f0f4ff', borderRadius: '4px', border: '1px solid #667eea' }}>
+                          <span style={{ fontSize: '0.85em', color: '#667eea', fontWeight: '600' }}>
+                            📍 Filtered by: {dynamicGlobalStats.filterRegions.join(', ')}
+                          </span>
+                        </div>
+                      )}
                       <div className="indicator-stat-row">
                         <span>Countries:</span>
-                        <span>{spendingData.globalStats.totalCountries}</span>
+                        <span>{dynamicGlobalStats.totalCountries}</span>
                       </div>
                       <div className="indicator-stat-row">
                         <span>Average:</span>
                         <span>
-                          {spendingData.globalStats.avgSpending >= 1e12 
-                            ? `$${(spendingData.globalStats.avgSpending / 1e12).toFixed(2)}T`
-                            : `$${(spendingData.globalStats.avgSpending / 1e9).toFixed(2)}B`}
+                          {dynamicGlobalStats.avgSpending >= 1e12 
+                            ? `$${(dynamicGlobalStats.avgSpending / 1e12).toFixed(2)}T USD`
+                            : `$${(dynamicGlobalStats.avgSpending / 1e9).toFixed(2)}B USD`}
                         </span>
                       </div>
                       <div className="indicator-stat-row">
                         <span>Data Points:</span>
-                        <span>{spendingData.globalStats.totalDataPoints}</span>
+                        <span>{dynamicGlobalStats.totalDataPoints}</span>
                       </div>
                     </div>
                   )}
@@ -312,7 +386,7 @@ function SpendingInsightsPanel({
                     {topCountries.length > 0 ? (
                       topCountries.map((country, index) => (
                         <div 
-                          key={country.code}
+                          key={`top-${country.code}-${index}`}
                           className={`country-item ${selectedCountry?.code === country.code ? 'selected' : ''}`}
                           onClick={() => onCountrySelect && onCountrySelect(country)}
                         >
@@ -356,7 +430,7 @@ function SpendingInsightsPanel({
                     {bottomCountries.length > 0 ? (
                       bottomCountries.map((country, index) => (
                         <div 
-                          key={country.code}
+                          key={`bottom-${country.code}-${index}`}
                           className={`country-item ${selectedCountry?.code === country.code ? 'selected' : ''}`}
                           onClick={() => onCountrySelect && onCountrySelect(country)}
                         >

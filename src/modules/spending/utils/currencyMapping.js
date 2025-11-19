@@ -173,16 +173,8 @@ export function getCurrencyWithFallback(countryCode, countryName = null) {
   if (currency === 'Local' && countryName) {
     const inferred = inferCurrencyFromName(countryName)
     if (inferred) {
-      console.log(`✓ Currency mapping: ${countryName} (${countryCode}) → ${inferred} (inferred from name)`)
       return inferred
     }
-  }
-  
-  // Log warning if using fallback
-  if (currency === 'Local') {
-    console.warn(`⚠️ No currency mapping found for ${countryCode} / ${countryName}, using 'Local' as fallback`)
-  } else {
-    console.log(`✓ Currency mapping: ${countryName || countryCode} (${countryCode}) → ${currency}`)
   }
   
   return currency

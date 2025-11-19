@@ -86,6 +86,12 @@ export class FilterStateManager {
     const defaultFilters = this.getDefaultFilters()
     let count = 0
     
+    // Module-specific default year ranges
+    const moduleYearDefaults = {
+      'spending': [2005, 2022],
+      'gdp': [2005, 2022]
+    }
+    
     // Don't count categories as an active filter (it's always set)
     const filtersToCheck = ['regions', 'sectors', 'countries']
     
@@ -93,17 +99,25 @@ export class FilterStateManager {
       const current = currentFilters[key]
       const defaultVal = defaultFilters[key]
       
-      // Check if filter is active (different from default)
-      if (Array.isArray(current) && current.length > 0) {
-        count++
+      // Check if filter is active (different from default - empty array)
+      if (Array.isArray(current) && Array.isArray(defaultVal)) {
+        // Only count if current has values AND is different from default
+        if (current.length > 0 && current.length !== defaultVal.length) {
+          count++
+        }
       }
     })
     
-    // Check year range (only if different from default)
-    if (currentFilters.yearRange && 
-        (currentFilters.yearRange[0] !== defaultFilters.yearRange[0] || 
-         currentFilters.yearRange[1] !== defaultFilters.yearRange[1])) {
-      count++
+    // Check year range (only if different from module-specific or global default)
+    if (currentFilters.yearRange) {
+      const defaultYearRange = module && moduleYearDefaults[module] 
+        ? moduleYearDefaults[module] 
+        : defaultFilters.yearRange
+      
+      if (currentFilters.yearRange[0] !== defaultYearRange[0] || 
+          currentFilters.yearRange[1] !== defaultYearRange[1]) {
+        count++
+      }
     }
     
     return count

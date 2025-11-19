@@ -26,6 +26,7 @@ const COUNTRY_REGION_MAP = {
   'Congo, Rep.': 'Africa',
   'Cote d\'Ivoire': 'Africa',
   'Djibouti': 'Africa',
+  'Egypt': 'Africa',
   'Egypt, Arab Rep.': 'Africa',
   'Equatorial Guinea': 'Africa',
   'Eritrea': 'Africa',
@@ -202,6 +203,7 @@ const COUNTRY_REGION_MAP = {
   'Trinidad and Tobago': 'North America',
   'Turks and Caicos Islands': 'North America',
   'United States': 'North America',
+  'United States of America': 'North America',
   'Virgin Islands (U.S.)': 'North America',
 
   // South America
