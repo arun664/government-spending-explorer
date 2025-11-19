@@ -232,15 +232,26 @@ const SpendingWorldMap = ({
                       : 'N/A'}
                   </span>
                 </div>
-                <div className="tooltip-row note">
-                  <span className="label" style={{ fontSize: '0.85em', fontStyle: 'italic', color: '#666' }}>
-                    USD values from expense_clean_usd.csv
-                  </span>
-                </div>
+                {tooltip.data.spendingUSD !== null && tooltip.data.spendingUSD > 0 && (
+                  <div className="tooltip-row note">
+                    <span className="label" style={{ fontSize: '0.85em', color: '#666' }}>
+                      USD: {formatSpendingValue(tooltip.data.spendingUSD)}
+                    </span>
+                  </div>
+                )}
+                {tooltip.data.spendingUSD === 0 && (
+                  <div className="tooltip-row note">
+                    <span className="label" style={{ fontSize: '0.85em', color: '#f59e0b', fontStyle: 'italic' }}>
+                      ⚠️ No data for selected year range
+                    </span>
+                  </div>
+                )}
               </>
             ) : (
               <div className="tooltip-row">
-                <span className="no-data">No data available</span>
+                <span className="no-data" style={{ color: '#999', fontStyle: 'italic' }}>
+                  No data available for this indicator
+                </span>
               </div>
             )}
           </div>

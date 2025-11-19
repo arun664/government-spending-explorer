@@ -42,17 +42,33 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
   // Create countries group
   const countriesGroup = g.append('g').attr('class', 'countries-group')
   
-  // Add pattern for zero-value countries
+  // Add pattern for zero-value countries (diagonal stripes)
   const defs = svg.append('defs')
+  
+  // Background for the pattern
   defs.append('pattern')
     .attr('id', 'zero-value-pattern')
     .attr('patternUnits', 'userSpaceOnUse')
-    .attr('width', 4)
-    .attr('height', 4)
-    .append('path')
-    .attr('d', 'M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2')
-    .attr('stroke', '#d0d0d0')
-    .attr('stroke-width', 1)
+    .attr('width', 8)
+    .attr('height', 8)
+    .selectAll('g')
+    .data([null])
+    .enter()
+    .append('g')
+    .call(g => {
+      // Light background
+      g.append('rect')
+        .attr('width', 8)
+        .attr('height', 8)
+        .attr('fill', '#f5f5f5')
+      
+      // Diagonal stripes
+      g.append('path')
+        .attr('d', 'M-1,1 l2,-2 M0,8 l8,-8 M7,9 l2,-2')
+        .attr('stroke', '#999')
+        .attr('stroke-width', 1.5)
+        .attr('opacity', 0.4)
+    })
 
   // Setup zoom
   const zoom = d3.zoom()
@@ -111,8 +127,8 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
         // CRITICAL FIX: Only color if value is greater than 0
         if (spendingValue !== null && !isNaN(spendingValue) && spendingValue > 0 && colorScale && typeof colorScale === 'function') {
           finalColor = colorScale(spendingValue)
-        } else if (spendingValue === 0) {
-          // Countries with 0 spending get a striped pattern
+        } else if (spendingValue === 0 || (spendingValue === null && countryData && countryData.data)) {
+          // Countries with 0 spending or no data in range get a striped pattern
           return 'url(#zero-value-pattern)'
         }
         
@@ -142,6 +158,13 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
       if (callbacks.selectedCountry && countryName === callbacks.selectedCountry.name) {
         return '#ff6b00'
       }
+      
+      // Check if country has pattern fill (0 spending)
+      const spendingValue = getCountrySpendingForMap(spendingData, countryName, filters.yearRange)
+      if (spendingValue === 0 || (spendingValue === null && MapColorService.findCountryData(countryName, spendingData)?.data)) {
+        return '#666' // Darker border for pattern-filled countries
+      }
+      
       return '#333' // Dark border for all countries to make them visible
     })
     .attr('stroke-width', d => {

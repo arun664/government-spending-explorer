@@ -154,6 +154,7 @@ async function loadNormalizedSpendingData(yearRange = [2005, 2022], countries = 
       
       if (!countryName || isNaN(year) || isNaN(valueUSD)) return
       
+
       // Apply year filter (optimization: filter early)
       if (year < minYear || year > maxYear) return
       
@@ -242,6 +243,7 @@ export async function normalizeComparisonData(countries = [], yearRange = [2005,
     const [minYear, maxYear] = yearRange
     
     // Iterate through GDP data and match with spending
+    // IMPORTANT: Include ALL GDP data points, even if spending is missing (set to 0)
     gdpData.forEach(gdpPoint => {
       // Apply year filter
       if (gdpPoint.year < minYear || gdpPoint.year > maxYear) return
@@ -250,36 +252,45 @@ export async function normalizeComparisonData(countries = [], yearRange = [2005,
       if (countries.length > 0 && !countries.includes(gdpPoint.country)) return
       
       const key = `${gdpPoint.country}-${gdpPoint.year}`
-      const spending = spendingMap.get(key)
+      const spending = spendingMap.get(key) || 0  // Default to 0 if no spending data
       
-      if (spending !== undefined) {
-        // Calculate spending-to-GDP ratio
-        const ratio = gdpPoint.gdp > 0 ? (spending / gdpPoint.gdp) * 100 : 0
-        
-        const mergedPoint = {
-          country: gdpPoint.country,
-          countryCode: gdpPoint.countryCode,
-          year: gdpPoint.year,
-          gdp: gdpPoint.gdp,        // millions USD
-          spending: spending,        // millions USD
-          ratio: ratio               // spending as % of GDP
-        }
-        
-        mergedData.push(mergedPoint)
-        
-        // Log USA 2022 merge for verification
-        if (gdpPoint.country === 'United States' && gdpPoint.year === 2022) {
-          console.log('🔍 Merged Data (USA 2022):', {
-            gdp: `${gdpPoint.gdp.toFixed(0)} millions = ${(gdpPoint.gdp / 1_000_000).toFixed(2)}T`,
-            spending: `${spending.toFixed(0)} millions = ${(spending / 1_000_000).toFixed(2)}T`,
-            ratio: `${ratio.toFixed(2)}%`,
-            calculation: `(${spending.toFixed(0)} / ${gdpPoint.gdp.toFixed(0)}) * 100 = ${ratio.toFixed(2)}%`
+      // Calculate spending-to-GDP ratio
+      const ratio = gdpPoint.gdp > 0 && spending > 0 ? (spending / gdpPoint.gdp) * 100 : 0
+      
+      const mergedPoint = {
+        country: gdpPoint.country,
+        countryCode: gdpPoint.countryCode,
+        year: gdpPoint.year,
+        gdp: gdpPoint.gdp,        // millions USD
+        spending: spending,        // millions USD (0 if no data)
+        ratio: ratio               // spending as % of GDP (0 if no spending data)
+      }
+      
+      mergedData.push(mergedPoint)
+      
+      // Log USA 2022 merge for verification
+      if (gdpPoint.country === 'United States' && gdpPoint.year === 2022) {
+        console.log('🔍 Merged Data (USA 2022):', {
+          gdp: `${gdpPoint.gdp.toFixed(0)} millions = ${(gdpPoint.gdp / 1_000_000).toFixed(2)}T`,
+          spending: `${spending.toFixed(0)} millions = ${(spending / 1_000_000).toFixed(2)}T`,
+          ratio: `${ratio.toFixed(2)}%`,
+          calculation: spending > 0 ? `(${spending.toFixed(0)} / ${gdpPoint.gdp.toFixed(0)}) * 100 = ${ratio.toFixed(2)}%` : 'No spending data'
+        })
+      }
+      
+      // Log China data points for debugging
+      if (gdpPoint.country === 'China') {
+        if (gdpPoint.year === 2005 || gdpPoint.year === 2022) {
+          console.log(`🔍 China ${gdpPoint.year}:`, {
+            gdp: `${(gdpPoint.gdp / 1_000_000).toFixed(2)}T`,
+            spending: spending > 0 ? `${(spending / 1_000_000).toFixed(2)}T` : 'No data',
+            hasSpending: spending > 0
           })
         }
-        
-        countriesSet.add(gdpPoint.country)
-        yearsSet.add(gdpPoint.year)
       }
+      
+      countriesSet.add(gdpPoint.country)
+      yearsSet.add(gdpPoint.year)
     })
     
     // Calculate value ranges

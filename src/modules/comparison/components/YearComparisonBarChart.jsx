@@ -84,11 +84,16 @@ function YearComparisonBarChart({
     // Calculate average GDP/spending per country across the year range
     const countryData = d3.rollup(
       data,
-      v => ({
-        gdp: d3.mean(v, d => d.gdp),
-        spending: d3.mean(v, d => d.spending),
-        dataPoints: v.length
-      }),
+      v => {
+        const avgGDP = d3.mean(v, d => d.gdp)
+        
+
+        return {
+          gdp: avgGDP,
+          spending: d3.mean(v, d => d.spending),
+          dataPoints: v.length
+        }
+      },
       d => d.country
     )
     
@@ -102,32 +107,7 @@ function YearComparisonBarChart({
     }))
       .sort((a, b) => sortBy === 'gdp' ? b.gdp - a.gdp : b.spending - a.spending)
     
-    // Debug: Log top 10 countries to verify ranking and check for China
-    if (sortBy === 'gdp' && showTopBottom === 'top') {
-      console.log('📊 Comparison Page - Top 10 by GDP:', sortedData.slice(0, 10).map((d, i) => ({
-        rank: i + 1,
-        country: d.country,
-        avgGDP: `${(d.gdp / 1_000_000).toFixed(2)}T`,
-        rawGDP: d.gdp,
-        dataPoints: d.dataPoints
-      })))
-      
-      // Check if China exists in the data at all
-      const chinaData = sortedData.find(d => d.country.toLowerCase().includes('china'))
-      if (chinaData) {
-        const chinaRank = sortedData.indexOf(chinaData) + 1
-        console.log('🔍 China found at rank:', chinaRank, {
-          country: chinaData.country,
-          avgGDP: `${(chinaData.gdp / 1_000_000).toFixed(2)}T`,
-          rawGDP: chinaData.gdp,
-          dataPoints: chinaData.dataPoints
-        })
-      } else {
-        console.warn('⚠️ China NOT found in comparison data!')
-        console.log('All countries in dataset:', sortedData.map(d => d.country).slice(0, 20))
-      }
-    }
-    
+
     // Get top 15 or bottom 15 based on toggle
     const aggregatedData = showTopBottom === 'top' 
       ? sortedData.slice(0, 15)

@@ -205,9 +205,13 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
         d.year >= filters.yearRange[0] && d.year <= filters.yearRange[1]
       )
       
+
+      
       // Calculate average GDP for the year range (in billions USD)
       if (dataInRange.length > 0) {
         const avgGDP = dataInRange.reduce((sum, d) => sum + (d.gdp / 1e9), 0) / dataInRange.length
+        
+
         return {
           ...country,
           avgGDP: avgGDP,
@@ -288,14 +292,7 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
       const validCountries = filtered.filter(c => c.avgGDP !== null && !isNaN(c.avgGDP))
       const sortedByGDP = [...validCountries].sort((a, b) => b.avgGDP - a.avgGDP)
       
-      // Debug: Log top 5 to verify consistency
-      console.log('📊 GDP Page - Top 5 by avgGDP:', sortedByGDP.slice(0, 5).map((c, i) => ({
-        rank: i + 1,
-        country: c.name,
-        avgGDP: `${c.avgGDP.toFixed(2)}B`,
-        dataPoints: c.dataPointsInRange,
-        yearRange: `${filters.yearRange[0]}-${filters.yearRange[1]}`
-      })))
+
       const top10 = sortedByGDP.slice(0, 10)
       const bottom10 = sortedByGDP.slice(-10).reverse()
       
@@ -372,10 +369,10 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
       const minYear = Math.min(...allYearValues)
       const maxYear = Math.max(...allYearValues)
       setAllYears({ min: minYear, max: maxYear })
-      setFilters(prev => ({
-        ...prev,
-        yearRange: [minYear, maxYear]
-      }))
+      
+      // Keep the reliable data range (2005-2022) instead of using all available years
+      // This ensures consistency with the comparison page
+      // DO NOT overwrite yearRange - keep the initial [2005, 2022] range
 
       // Calculate extent for color scale from filtered data (GDP values in billions)
       const gdpValues = Object.values(processedGDP)
