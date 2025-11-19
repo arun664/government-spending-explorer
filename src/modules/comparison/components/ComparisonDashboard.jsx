@@ -301,7 +301,7 @@ function ComparisonDashboard({ onLoadingChange }) {
     return ((countriesWithData / totalCountries) * 100).toFixed(0)
   }, [chartData, selectedYear, metadata])
   
-  // Calculate top 5 spending categories for selected country or world (aggregate)
+  // Calculate top 5 spending categories for selected country or world (average)
   const topSpendingCategories = useMemo(() => {
     if (!spendingData || !selectedCountry || !displayYearRange) {
       return []
@@ -328,65 +328,57 @@ function ComparisonDashboard({ onLoadingChange }) {
         // Initialize category if not exists
         if (!categoryData[category]) {
           categoryData[category] = {
-            localTotal: 0,
             usdTotal: 0,
+            usdCount: 0,
             subcategories: {}
           }
         }
         
-        // Sum values across the year range
+        // Sum values across the year range for averaging
         Object.entries(indicatorData).forEach(([year, valueObj]) => {
           const yearNum = parseInt(year)
           if (yearNum >= displayYearRange[0] && yearNum <= displayYearRange[1]) {
             // Handle both old format (number) and new format (object with local/usd)
-            const localValue = typeof valueObj === 'object' ? valueObj.local : valueObj
-            const usdValue = typeof valueObj === 'object' ? valueObj.usd : null
+            const usdValue = typeof valueObj === 'object' ? valueObj.usd : valueObj
             
-            if (!isNaN(localValue) && localValue > 0) {
+            if (usdValue && !isNaN(usdValue) && usdValue > 0) {
               // Initialize subcategory if not exists
               if (!categoryData[category].subcategories[indicatorCode]) {
                 categoryData[category].subcategories[indicatorCode] = {
                   code: indicatorCode,
                   name: metadata.name,
-                  localTotal: 0,
-                  usdTotal: 0
+                  usdTotal: 0,
+                  usdCount: 0
                 }
               }
               
-              categoryData[category].subcategories[indicatorCode].localTotal += localValue
-              categoryData[category].localTotal += localValue
-              
-              if (usdValue && !isNaN(usdValue)) {
-                categoryData[category].subcategories[indicatorCode].usdTotal += usdValue
-                categoryData[category].usdTotal += usdValue
-              }
+              categoryData[category].subcategories[indicatorCode].usdTotal += usdValue
+              categoryData[category].subcategories[indicatorCode].usdCount++
+              categoryData[category].usdTotal += usdValue
+              categoryData[category].usdCount++
             }
           }
         })
       })
     })
     
-    // Convert to array and sort by USD equivalent for fair comparison
+    // Convert to array, calculate averages, and sort by USD average
     const categories = Object.entries(categoryData)
       .map(([category, data]) => ({
         name: category.charAt(0).toUpperCase() + category.slice(1),
         categoryKey: category,
-        localTotal: data.localTotal,
-        usdTotal: data.usdTotal,
+        usdAverage: data.usdCount > 0 ? data.usdTotal / data.usdCount : 0,
         color: CATEGORY_COLORS[category] || '#9ca3af',
-        // Sort subcategories by USD (fallback to local if USD not available)
-        subcategories: Object.values(data.subcategories).sort((a, b) => {
-          const aValue = a.usdTotal > 0 ? a.usdTotal : a.localTotal
-          const bValue = b.usdTotal > 0 ? b.usdTotal : b.localTotal
-          return bValue - aValue
-        })
+        // Sort subcategories by USD average
+        subcategories: Object.values(data.subcategories)
+          .map(sub => ({
+            ...sub,
+            usdAverage: sub.usdCount > 0 ? sub.usdTotal / sub.usdCount : 0
+          }))
+          .sort((a, b) => b.usdAverage - a.usdAverage)
       }))
-      // Sort categories by USD (fallback to local if USD not available)
-      .sort((a, b) => {
-        const aValue = a.usdTotal > 0 ? a.usdTotal : a.localTotal
-        const bValue = b.usdTotal > 0 ? b.usdTotal : b.localTotal
-        return bValue - aValue
-      })
+      .filter(cat => cat.usdAverage > 0) // Only include categories with data
+      .sort((a, b) => b.usdAverage - a.usdAverage)
       .slice(0, 5)
     
     return categories
@@ -589,13 +581,14 @@ function ComparisonDashboard({ onLoadingChange }) {
             
             <div className="spending-categories-grid">
               {topSpendingCategories.map((cat, index) => {
-                // For World, use USD; for specific country, use proper currency mapping
-                const countryCode = selectedCountry === 'World' 
-                  ? 'USD' 
-                  : (spendingData?.countries[selectedCountry]?.code || getCurrencyWithFallback('', selectedCountry))
-                const formatted = selectedCountry === 'World'
-                  ? formatWithBothCurrencies(cat.usdTotal || cat.localTotal, cat.usdTotal, 'USD', 'World')
-                  : formatWithBothCurrencies(cat.localTotal, cat.usdTotal, countryCode, selectedCountry)
+                // Format USD average value
+                const formatUSD = (value) => {
+                  if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`
+                  if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`
+                  if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`
+                  if (value >= 1e3) return `$${(value / 1e3).toFixed(2)}K`
+                  return `$${value.toFixed(2)}`
+                }
                 
                 return (
                   <div key={cat.categoryKey} className="category-card">
@@ -605,26 +598,18 @@ function ComparisonDashboard({ onLoadingChange }) {
                         <span className="category-dot" style={{ backgroundColor: cat.color }}></span>
                         <span className="category-name">{cat.name}</span>
                       </div>
-                      <div className="category-total" title={formatted}>
-                        {formatted}
+                      <div className="category-total">
+                        {formatUSD(cat.usdAverage)} <span style={{ fontSize: '10px', color: '#999' }}>(Avg)</span>
                       </div>
                     </div>
                     
                     <div className="subcategories-list">
                       {cat.subcategories.map(sub => {
-                        // Use the same countryCode as parent category
-                        const subCountryCode = selectedCountry === 'World' 
-                          ? 'USD' 
-                          : (spendingData?.countries[selectedCountry]?.code || getCurrencyWithFallback('', selectedCountry))
-                        const subFormatted = selectedCountry === 'World'
-                          ? formatWithBothCurrencies(sub.usdTotal || sub.localTotal, sub.usdTotal, 'USD', 'World')
-                          : formatWithBothCurrencies(sub.localTotal, sub.usdTotal, subCountryCode, selectedCountry)
-                        
                         return (
                           <div key={sub.code} className="subcategory-item">
                             <span className="subcategory-name">{sub.name}</span>
-                            <span className="subcategory-value" title={subFormatted}>
-                              {subFormatted}
+                            <span className="subcategory-value">
+                              {formatUSD(sub.usdAverage)} <span style={{ fontSize: '9px', color: '#999' }}>(Avg)</span>
                             </span>
                           </div>
                         )
