@@ -307,6 +307,17 @@ function ComparisonDashboard({ onLoadingChange }) {
       return []
     }
     
+    // Map of main indicators for each category (these represent the category total)
+    const categoryMainIndicators = {
+      overview: 'GE',
+      personnel: 'GECE',
+      transfers: 'GEG',
+      debt: 'GEI',
+      operations: 'GEOM',
+      other: 'GEO',
+      social: 'GES'
+    }
+    
     // Aggregate spending by category over the selected year range
     const categoryData = {}
     
@@ -328,11 +339,14 @@ function ComparisonDashboard({ onLoadingChange }) {
         // Initialize category if not exists
         if (!categoryData[category]) {
           categoryData[category] = {
-            usdTotal: 0,
-            usdCount: 0,
+            mainIndicatorTotal: 0,
+            mainIndicatorCount: 0,
             subcategories: {}
           }
         }
+        
+        // Check if this is the main indicator for the category
+        const isMainIndicator = categoryMainIndicators[category] === indicatorCode
         
         // Sum values across the year range for averaging
         Object.entries(indicatorData).forEach(([year, valueObj]) => {
@@ -342,20 +356,24 @@ function ComparisonDashboard({ onLoadingChange }) {
             const usdValue = typeof valueObj === 'object' ? valueObj.usd : valueObj
             
             if (usdValue && !isNaN(usdValue) && usdValue > 0) {
-              // Initialize subcategory if not exists
-              if (!categoryData[category].subcategories[indicatorCode]) {
-                categoryData[category].subcategories[indicatorCode] = {
-                  code: indicatorCode,
-                  name: metadata.name,
-                  usdTotal: 0,
-                  usdCount: 0
+              if (isMainIndicator) {
+                // This is the main category total indicator
+                categoryData[category].mainIndicatorTotal += usdValue
+                categoryData[category].mainIndicatorCount++
+              } else {
+                // This is a subcategory breakdown
+                if (!categoryData[category].subcategories[indicatorCode]) {
+                  categoryData[category].subcategories[indicatorCode] = {
+                    code: indicatorCode,
+                    name: metadata.name,
+                    usdTotal: 0,
+                    usdCount: 0
+                  }
                 }
+                
+                categoryData[category].subcategories[indicatorCode].usdTotal += usdValue
+                categoryData[category].subcategories[indicatorCode].usdCount++
               }
-              
-              categoryData[category].subcategories[indicatorCode].usdTotal += usdValue
-              categoryData[category].subcategories[indicatorCode].usdCount++
-              categoryData[category].usdTotal += usdValue
-              categoryData[category].usdCount++
             }
           }
         })
@@ -367,7 +385,7 @@ function ComparisonDashboard({ onLoadingChange }) {
       .map(([category, data]) => ({
         name: category.charAt(0).toUpperCase() + category.slice(1),
         categoryKey: category,
-        usdAverage: data.usdCount > 0 ? data.usdTotal / data.usdCount : 0,
+        usdAverage: data.mainIndicatorCount > 0 ? data.mainIndicatorTotal / data.mainIndicatorCount : 0,
         color: CATEGORY_COLORS[category] || '#9ca3af',
         // Sort subcategories by USD average
         subcategories: Object.values(data.subcategories)
@@ -375,11 +393,12 @@ function ComparisonDashboard({ onLoadingChange }) {
             ...sub,
             usdAverage: sub.usdCount > 0 ? sub.usdTotal / sub.usdCount : 0
           }))
+          .filter(sub => sub.usdAverage > 0) // Only show subcategories with data
           .sort((a, b) => b.usdAverage - a.usdAverage)
       }))
       .filter(cat => cat.usdAverage > 0) // Only include categories with data
       .sort((a, b) => b.usdAverage - a.usdAverage)
-      .slice(0, 5)
+      // Show all categories (not just top 5)
     
     return categories
   }, [spendingData, selectedCountry, displayYearRange])
