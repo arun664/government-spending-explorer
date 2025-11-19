@@ -3,10 +3,13 @@
   display: flex;
   flex-direction: column;
   background: white;
-  overflow-y: auto;
+  overflow: hidden; /* Changed from auto to hidden */
 }
 
 .filters-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -14,8 +17,13 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border-bottom: 1px solid #e0e0e0;
-  order: -10;
   flex-shrink: 0;
+}
+
+.filters-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .filters-header h3 {
@@ -126,12 +134,6 @@
   border-bottom: 1px solid #f0f0f0;
 }
 
-.selected-country-info h4 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  color: #2c3e50;
-}
-
 .country-card {
   background: #f8f9ff;
   padding: 16px;
@@ -139,11 +141,27 @@
   border-left: 4px solid #667eea;
 }
 
-.country-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #667eea;
+.country-header {
   margin-bottom: 12px;
+}
+
+.country-header h4 {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.country-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #667eea;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .country-stats {

@@ -77,6 +77,8 @@
   flex: 1;
   overflow: auto;
   max-height: calc(100vh - 92px); /* Viewport minus header and filter bar */
+  width: 100%; /* Full width by default */
+  transition: width 0.3s ease;
 }
 
 .comparison-dashboard .grid-item {
@@ -201,6 +203,171 @@
 
 .comparison-dashboard .metric-card.highlight-alt .metric-value {
   color: white;
+}
+
+/* Categories Tab Button in Filter Bar */
+.comparison-dashboard .categories-tab-button {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  background: white;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.comparison-dashboard .categories-tab-button:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.comparison-dashboard .categories-tab-button.active {
+  background: #3b82f6;
+  color: white;
+}
+
+/* Dashboard Content with Categories Panel */
+.comparison-dashboard .dashboard-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.comparison-dashboard .dashboard-content.with-categories .dashboard-grid {
+  width: 50%; /* Left half for charts */
+}
+
+/* Spending Categories Panel - Right Sidebar */
+.comparison-dashboard .spending-categories-panel {
+  width: 50%;
+  background: white;
+  border-left: 2px solid #e5e7eb;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.comparison-dashboard .spending-categories-content {
+  padding: 16px;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.comparison-dashboard .spending-categories-section.collapsed .spending-categories-content {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.comparison-dashboard .spending-categories-header {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.comparison-dashboard .spending-disclaimer {
+  font-size: 11px;
+  color: #000000;
+  font-style: italic;
+}
+
+.comparison-dashboard .spending-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.comparison-dashboard .category-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comparison-dashboard .category-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.comparison-dashboard .category-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.comparison-dashboard .category-rank {
+  font-weight: 700;
+  color: #6b7280;
+  min-width: 18px;
+}
+
+.comparison-dashboard .category-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.comparison-dashboard .category-name {
+  font-weight: 700;
+  color: #374151;
+}
+
+.comparison-dashboard .category-total {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  padding-left: 24px;
+}
+
+.comparison-dashboard .subcategories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.comparison-dashboard .subcategory-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.comparison-dashboard .subcategory-item:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.comparison-dashboard .subcategory-name {
+  flex: 1;
+  font-size: 12px;
+  color: #374151;
+  font-weight: 500;
+}
+
+.comparison-dashboard .subcategory-value {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* Compact Filter Bar - One line, minimal height */

@@ -137,9 +137,8 @@ const SpendingFilters = ({
         </div>
       </div>
 
-
-
-      <FilterStatusIndicator module="spending" />
+      <div className="filters-content">
+        <FilterStatusIndicator module="spending" />
 
       {!selectedCountry && availableCountries.length > 0 && (
         <div className="filter-group country-search-group">
@@ -161,53 +160,15 @@ const SpendingFilters = ({
         </div>
       )}
 
-      {spendingData.name && (
-        <div className="current-indicator">
-          <h4>Current Indicator</h4>
-          <div 
-            className="indicator-card"
-            style={{ borderLeftColor: getCategoryColor(spendingData) }}
-          >
-            <div className="indicator-name">{spendingData.name}</div>
-            <div className="indicator-code">
-              <span className="code-label">Code:</span>
-              <span className="code-value">{spendingData.indicator || spendingData.code}</span>
-            </div>
-            <div className="indicator-category">
-              <span 
-                className="category-badge"
-                style={{ backgroundColor: getCategoryColor(spendingData) }}
-              >
-                {spendingData.category}
-              </span>
-            </div>
-            {spendingData.globalStats && (
-              <div className="global-stats">
-                <div className="stat-row">
-                  <span>Countries with data:</span>
-                  <span>{spendingData.globalStats.totalCountries}</span>
-                </div>
-                <div className="stat-row">
-                  <span>Data points:</span>
-                  <span>{spendingData.globalStats.totalDataPoints || 'N/A'}</span>
-                </div>
-                <div className="stat-row note">
-                  <span className="note-icon">ℹ️</span>
-                  <span className="note-text">Values shown in local currency</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {selectedCountry && spendingData.countries && (
         <div className="selected-country-info" key={`${selectedCountry.name}-${filters.yearRange[0]}-${filters.yearRange[1]}`}>
-          <h4>Selected Country</h4>
           <div className="country-card">
-            <div className="country-name">
-              {selectedCountry.name}
-              <span className="currency-badge">{getCurrencyCode(selectedCountry.name)}</span>
+            <div className="country-header">
+              <h4>Selected Country</h4>
+              <div className="country-name">
+                {selectedCountry.name}
+                <span className="currency-badge">{getCurrencyCode(selectedCountry.name)}</span>
+              </div>
             </div>
             
             {(() => {
@@ -239,19 +200,19 @@ const SpendingFilters = ({
               
               return (
                 <div className="country-stats">
-                  <div className="stat-item highlight">
+                  <div className="stat-item highlight" title="Values in domestic currency. USD conversion requires exchange rate data.">
                     <span className="stat-label">Latest Value ({stats.latestYear})</span>
                     <span className="stat-value">
                       {formatSpendingValue(stats.latest)} <span className="currency-label">{currencyCode}</span>
                     </span>
                   </div>
-                  <div className="stat-item">
+                  <div className="stat-item" title="Average spending over selected year range">
                     <span className="stat-label">Average</span>
                     <span className="stat-value">
                       {formatSpendingValue(stats.average)} <span className="currency-label">{currencyCode}</span>
                     </span>
                   </div>
-                  <div className="stat-item">
+                  <div className="stat-item" title="Minimum and maximum values in selected year range">
                     <span className="stat-label">Range</span>
                     <span className="stat-value">
                       {formatSpendingValue(stats.min)} - {formatSpendingValue(stats.max)} <span className="currency-label">{currencyCode}</span>
@@ -408,10 +369,7 @@ const SpendingFilters = ({
 
         </>
       )}
-
-
-
-
+      </div>
     </div>
   )
 }

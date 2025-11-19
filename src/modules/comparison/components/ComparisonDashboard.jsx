@@ -13,6 +13,8 @@ import TrendLineChart from './TrendLineChart.jsx'
 import YearComparisonBarChart from './YearComparisonBarChart.jsx'
 import BubbleChart from './BubbleChart.jsx'
 import { normalizeComparisonData } from '../utils/normalizeComparisonData.js'
+import { loadUnifiedData, INDICATOR_METADATA, CATEGORY_COLORS } from '../../spending/services/UnifiedDataService.js'
+import { formatWithBothCurrencies, getCurrencyWithFallback } from '../../spending/utils/currencyMapping.js'
 import '../styles/ComparisonDashboard.css'
 
 function ComparisonDashboard({ onLoadingChange }) {
@@ -29,6 +31,8 @@ function ComparisonDashboard({ onLoadingChange }) {
   const [selectedCountry, setSelectedCountry] = useState('World') // Default to World (all countries)
   const [isAnimating, setIsAnimating] = useState(false)
   const [animationInterval, setAnimationInterval] = useState(null)
+  const [spendingData, setSpendingData] = useState(null) // Unified spending data for categories
+  const [showCategoriesPanel, setShowCategoriesPanel] = useState(false) // Track if categories panel is visible
   
   // Notify parent of loading state changes
   useEffect(() => {
@@ -36,6 +40,19 @@ function ComparisonDashboard({ onLoadingChange }) {
       onLoadingChange(loading)
     }
   }, [loading, onLoadingChange])
+  
+  // Load spending data for category analysis
+  useEffect(() => {
+    async function loadSpendingData() {
+      try {
+        const data = await loadUnifiedData()
+        setSpendingData(data)
+      } catch (error) {
+        console.error('Failed to load spending data:', error)
+      }
+    }
+    loadSpendingData()
+  }, [])
   
   // Force reload to pick up normalization fix
   
@@ -111,6 +128,23 @@ function ComparisonDashboard({ onLoadingChange }) {
   const startAnimation = useCallback(() => {
     if (isAnimating) return
     
+    // Determine max year based on available data for selected country
+    let maxYear = 2022 // Default max
+    if (rawData && rawData.length > 0) {
+      if (selectedCountry === 'World') {
+        // For World, use all available data
+        const years = rawData.map(d => d.year)
+        maxYear = Math.max(...years)
+      } else {
+        // For specific country, use that country's data range
+        const countryData = rawData.filter(d => d.country === selectedCountry)
+        if (countryData.length > 0) {
+          const years = countryData.map(d => d.year)
+          maxYear = Math.max(...years)
+        }
+      }
+    }
+    
     setIsAnimating(true)
     let currentEndYear = 2006 // Start with 2005-2006
     setDisplayYearRange([2005, currentEndYear])
@@ -118,8 +152,8 @@ function ComparisonDashboard({ onLoadingChange }) {
     
     const interval = setInterval(() => {
       currentEndYear++
-      if (currentEndYear > 2022) {
-        // Stop animation when reaching max year
+      if (currentEndYear > maxYear) {
+        // Stop animation when reaching max year with data
         clearInterval(interval)
         setAnimationInterval(null)
         setIsAnimating(false)
@@ -130,7 +164,7 @@ function ComparisonDashboard({ onLoadingChange }) {
     }, 1000) // Change year every 1 second for smooth visualization
     
     setAnimationInterval(interval)
-  }, [isAnimating])
+  }, [isAnimating, rawData, selectedCountry])
   
   const stopAnimation = useCallback(() => {
     if (animationInterval) {
@@ -148,6 +182,44 @@ function ComparisonDashboard({ onLoadingChange }) {
       }
     }
   }, [animationInterval])
+  
+  // Auto-adjust year range based on available data for selected country
+  useEffect(() => {
+    if (!rawData || rawData.length === 0 || selectedCountry === 'World') return
+    
+    // Get data for selected country
+    const countryData = rawData.filter(d => d.country === selectedCountry)
+    
+    if (countryData.length === 0) {
+      // No data for this country, show message
+      console.warn(`No data available for ${selectedCountry}`)
+      return
+    }
+    
+    // Find actual year range with data
+    const years = countryData.map(d => d.year).sort((a, b) => a - b)
+    const minYear = years[0]
+    const maxYear = years[years.length - 1]
+    
+    // Auto-adjust display year range if current range has no data
+    const currentData = countryData.filter(d => 
+      d.year >= displayYearRange[0] && d.year <= displayYearRange[1]
+    )
+    
+    if (currentData.length === 0) {
+      // No data in current range, adjust to available range
+      console.log(`Auto-adjusting year range for ${selectedCountry}: ${minYear}-${maxYear}`)
+      setDisplayYearRange([minYear, maxYear])
+      setSelectedYear(maxYear)
+    } else if (displayYearRange[1] > maxYear) {
+      // Current max year exceeds available data, adjust
+      console.log(`Adjusting max year for ${selectedCountry} from ${displayYearRange[1]} to ${maxYear}`)
+      setDisplayYearRange([displayYearRange[0], maxYear])
+      if (selectedYear > maxYear) {
+        setSelectedYear(maxYear)
+      }
+    }
+  }, [selectedCountry, rawData])
   
   // Ensure selectedYear stays within displayYearRange when user manually changes range
   useEffect(() => {
@@ -173,6 +245,23 @@ function ComparisonDashboard({ onLoadingChange }) {
     if (!metadata || !metadata.countries) return []
     return ['World', ...metadata.countries.sort()]
   }, [metadata])
+  
+  // Calculate available year range for selected country
+  const countryYearRange = useMemo(() => {
+    if (!rawData || rawData.length === 0 || selectedCountry === 'World') {
+      return null
+    }
+    
+    const countryData = rawData.filter(d => d.country === selectedCountry)
+    if (countryData.length === 0) return null
+    
+    const years = countryData.map(d => d.year).sort((a, b) => a - b)
+    return {
+      min: years[0],
+      max: years[years.length - 1],
+      count: years.length
+    }
+  }, [rawData, selectedCountry])
   
   // Calculate average spending/GDP ratio
   const avgRatio = useMemo(() => {
@@ -211,6 +300,97 @@ function ComparisonDashboard({ onLoadingChange }) {
     const countriesWithData = new Set(yearData.map(d => d.country)).size
     return ((countriesWithData / totalCountries) * 100).toFixed(0)
   }, [chartData, selectedYear, metadata])
+  
+  // Calculate top 5 spending categories for selected country or world (aggregate)
+  const topSpendingCategories = useMemo(() => {
+    if (!spendingData || !selectedCountry || !displayYearRange) {
+      return []
+    }
+    
+    // Aggregate spending by category over the selected year range
+    const categoryData = {}
+    
+    // Determine which countries to aggregate
+    const countriesToAggregate = selectedCountry === 'World' 
+      ? Object.keys(spendingData.countries)
+      : [selectedCountry]
+    
+    countriesToAggregate.forEach(countryName => {
+      const countryData = spendingData.countries[countryName]
+      if (!countryData) return
+      
+      Object.entries(INDICATOR_METADATA).forEach(([indicatorCode, metadata]) => {
+        const category = metadata.category
+        const indicatorData = countryData.indicators[indicatorCode]
+        
+        if (!indicatorData) return
+        
+        // Initialize category if not exists
+        if (!categoryData[category]) {
+          categoryData[category] = {
+            localTotal: 0,
+            usdTotal: 0,
+            subcategories: {}
+          }
+        }
+        
+        // Sum values across the year range
+        Object.entries(indicatorData).forEach(([year, valueObj]) => {
+          const yearNum = parseInt(year)
+          if (yearNum >= displayYearRange[0] && yearNum <= displayYearRange[1]) {
+            // Handle both old format (number) and new format (object with local/usd)
+            const localValue = typeof valueObj === 'object' ? valueObj.local : valueObj
+            const usdValue = typeof valueObj === 'object' ? valueObj.usd : null
+            
+            if (!isNaN(localValue) && localValue > 0) {
+              // Initialize subcategory if not exists
+              if (!categoryData[category].subcategories[indicatorCode]) {
+                categoryData[category].subcategories[indicatorCode] = {
+                  code: indicatorCode,
+                  name: metadata.name,
+                  localTotal: 0,
+                  usdTotal: 0
+                }
+              }
+              
+              categoryData[category].subcategories[indicatorCode].localTotal += localValue
+              categoryData[category].localTotal += localValue
+              
+              if (usdValue && !isNaN(usdValue)) {
+                categoryData[category].subcategories[indicatorCode].usdTotal += usdValue
+                categoryData[category].usdTotal += usdValue
+              }
+            }
+          }
+        })
+      })
+    })
+    
+    // Convert to array and sort by USD equivalent for fair comparison
+    const categories = Object.entries(categoryData)
+      .map(([category, data]) => ({
+        name: category.charAt(0).toUpperCase() + category.slice(1),
+        categoryKey: category,
+        localTotal: data.localTotal,
+        usdTotal: data.usdTotal,
+        color: CATEGORY_COLORS[category] || '#9ca3af',
+        // Sort subcategories by USD (fallback to local if USD not available)
+        subcategories: Object.values(data.subcategories).sort((a, b) => {
+          const aValue = a.usdTotal > 0 ? a.usdTotal : a.localTotal
+          const bValue = b.usdTotal > 0 ? b.usdTotal : b.localTotal
+          return bValue - aValue
+        })
+      }))
+      // Sort categories by USD (fallback to local if USD not available)
+      .sort((a, b) => {
+        const aValue = a.usdTotal > 0 ? a.usdTotal : a.localTotal
+        const bValue = b.usdTotal > 0 ? b.usdTotal : b.localTotal
+        return bValue - aValue
+      })
+      .slice(0, 5)
+    
+    return categories
+  }, [spendingData, selectedCountry, displayYearRange])
   
   if (loading) {
     return (
@@ -280,6 +460,15 @@ function ComparisonDashboard({ onLoadingChange }) {
                 <option key={country} value={country}>{country}</option>
               ))}
             </select>
+            {countryYearRange && (
+              <div className="data-availability-hint" style={{
+                fontSize: '10px',
+                color: '#666',
+                marginTop: '2px'
+              }}>
+                Data: {countryYearRange.min}-{countryYearRange.max} ({countryYearRange.count} years)
+              </div>
+            )}
           </div>
           
           <div className="filter-item">
@@ -298,11 +487,23 @@ function ComparisonDashboard({ onLoadingChange }) {
             onToggle={handleLegendToggle}
             initialState={visibility}
           />
+          
+          <div className="filter-divider"></div>
+          
+          <button 
+            className={`categories-tab-button ${showCategoriesPanel ? 'active' : ''}`}
+            onClick={() => setShowCategoriesPanel(!showCategoriesPanel)}
+            title="Show/Hide Spending Categories"
+          >
+            Spending Categories
+          </button>
         </div>
       </div>
       
-      {/* 4-Grid Layout: 3 Charts + 1 Analytics Cards */}
-      <div className="dashboard-grid">
+      {/* Main Content Area with optional Categories Panel */}
+      <div className={`dashboard-content ${showCategoriesPanel ? 'with-categories' : ''}`}>
+        {/* 4-Grid Layout: 3 Charts + 1 Analytics Cards */}
+        <div className="dashboard-grid">
         {/* Line Chart */}
         <div className="grid-item">
           <TrendLineChart 
@@ -323,7 +524,7 @@ function ComparisonDashboard({ onLoadingChange }) {
             onYearChange={handleYearChange}
           />
           <div className="chart-description">
-            {selectedCountry === 'World' ? 'Top 15 countries by GDP' : `${selectedCountry} - Year-over-year comparison`}
+            {selectedCountry === 'World' ? 'Top 15 countries (sortable by GDP or Spending)' : `${selectedCountry} - Year-over-year comparison`}
           </div>
         </div>
         
@@ -375,6 +576,67 @@ function ComparisonDashboard({ onLoadingChange }) {
             </>
           )}
         </div>
+      </div>
+        
+        {/* Spending Categories Panel - Right Sidebar */}
+        {showCategoriesPanel && topSpendingCategories.length > 0 && (
+          <div className="spending-categories-panel">
+          
+          <div className="spending-categories-content">
+            <div className="spending-categories-header">
+              <div className="spending-disclaimer">Correlation with growth is assumed based on total spending</div>
+            </div>
+            
+            <div className="spending-categories-grid">
+              {topSpendingCategories.map((cat, index) => {
+                // For World, use USD; for specific country, use proper currency mapping
+                const countryCode = selectedCountry === 'World' 
+                  ? 'USD' 
+                  : (spendingData?.countries[selectedCountry]?.code || getCurrencyWithFallback('', selectedCountry))
+                const formatted = selectedCountry === 'World'
+                  ? formatWithBothCurrencies(cat.usdTotal || cat.localTotal, cat.usdTotal, 'USD', 'World')
+                  : formatWithBothCurrencies(cat.localTotal, cat.usdTotal, countryCode, selectedCountry)
+                
+                return (
+                  <div key={cat.categoryKey} className="category-card">
+                    <div className="category-header">
+                      <div className="category-title">
+                        <span className="category-rank">{index + 1}.</span>
+                        <span className="category-dot" style={{ backgroundColor: cat.color }}></span>
+                        <span className="category-name">{cat.name}</span>
+                      </div>
+                      <div className="category-total" title={formatted}>
+                        {formatted}
+                      </div>
+                    </div>
+                    
+                    <div className="subcategories-list">
+                      {cat.subcategories.map(sub => {
+                        // Use the same countryCode as parent category
+                        const subCountryCode = selectedCountry === 'World' 
+                          ? 'USD' 
+                          : (spendingData?.countries[selectedCountry]?.code || getCurrencyWithFallback('', selectedCountry))
+                        const subFormatted = selectedCountry === 'World'
+                          ? formatWithBothCurrencies(sub.usdTotal || sub.localTotal, sub.usdTotal, 'USD', 'World')
+                          : formatWithBothCurrencies(sub.localTotal, sub.usdTotal, subCountryCode, selectedCountry)
+                        
+                        return (
+                          <div key={sub.code} className="subcategory-item">
+                            <span className="subcategory-name">{sub.name}</span>
+                            <span className="subcategory-value" title={subFormatted}>
+                              {subFormatted}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+        )}
       </div>
     </div>
   )

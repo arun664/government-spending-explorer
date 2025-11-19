@@ -6,7 +6,7 @@ import {
   handleResetZoom as mapResetZoom,
   zoomToCountry
 } from '../services/SpendingMapService.js'
-import { getCurrencyCode } from '../../../shared/utils/CurrencyMapping.js'
+import { formatWithBothCurrencies } from '../utils/currencyMapping.js'
 import { formatSpendingValue } from '../utils/formatUtils.js'
 import '../styles/SpendingWorldMap.css'
 
@@ -223,8 +223,18 @@ const SpendingWorldMap = ({
                   <span className="label">Avg Value:</span>
                   <span className="value">
                     {tooltip.data.spending !== null 
-                      ? `${formatSpendingValue(tooltip.data.spending)} ${getCurrencyCode(tooltip.data.name)}`
+                      ? formatWithBothCurrencies(
+                          tooltip.data.spending, 
+                          tooltip.data.spendingUSD, 
+                          tooltip.data.code, 
+                          tooltip.data.name
+                        )
                       : 'N/A'}
+                  </span>
+                </div>
+                <div className="tooltip-row note">
+                  <span className="label" style={{ fontSize: '0.85em', fontStyle: 'italic', color: '#666' }}>
+                    USD values from expense_clean_usd.csv
                   </span>
                 </div>
               </>

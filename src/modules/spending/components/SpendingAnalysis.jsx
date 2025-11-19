@@ -12,6 +12,7 @@ import { filterStateManager } from '../../../shared/services/FilterStateManager.
 
 import SpendingFilters from './SpendingFilters.jsx'
 import SpendingWorldMap from './SpendingWorldMap.jsx'
+import SpendingInsightsPanel from './SpendingInsightsPanel.jsx'
 import '../styles/SpendingAnalysis.css'
 
 /**
@@ -121,7 +122,12 @@ const SpendingAnalysis = ({ onLoadingChange }) => {
       })
       setColorScale(() => scale)
       
-      console.log('✅ Color scale created for category:', initialData.category)
+      console.log('✅ Color scale created for category:', initialData.category, {
+        colorMode: 'category',
+        categoryColor: ColorSchemeService.getCategoryColor(initialData.category),
+        minValue: initialData.globalStats?.minSpending,
+        maxValue: initialData.globalStats?.maxSpending
+      })
 
     } catch (err) {
       console.error('❌ Error loading initial data:', err)
@@ -183,7 +189,8 @@ const SpendingAnalysis = ({ onLoadingChange }) => {
       setColorScale(() => scale)
       
       console.log(`✅ Color scale created for category: ${data.category}`, {
-        color: ColorSchemeService.getCategoryColor(data.category),
+        colorMode: 'category',
+        categoryColor: ColorSchemeService.getCategoryColor(data.category),
         minValue: data.globalStats?.minSpending,
         maxValue: data.globalStats?.maxSpending
       })
@@ -353,7 +360,42 @@ const SpendingAnalysis = ({ onLoadingChange }) => {
 
   const handleCountrySelect = useCallback((country) => {
     setSelectedCountry(country)
-  }, [])
+    
+    // Auto-adjust year range to match country's available data
+    if (country && unifiedData?.countries[country.name]) {
+      const countryData = unifiedData.countries[country.name]
+      const allYears = new Set()
+      
+      // Collect all years with data across all indicators
+      Object.values(countryData.indicators).forEach(indicatorData => {
+        Object.keys(indicatorData).forEach(year => {
+          const yearNum = parseInt(year)
+          if (!isNaN(yearNum)) {
+            allYears.add(yearNum)
+          }
+        })
+      })
+      
+      if (allYears.size > 0) {
+        const years = Array.from(allYears).sort((a, b) => a - b)
+        const minYear = years[0]
+        const maxYear = years[years.length - 1]
+        
+        console.log(`📅 Auto-adjusting year range for ${country.name}: ${minYear}-${maxYear}`)
+        
+        setFilters(prev => ({
+          ...prev,
+          yearRange: [minYear, maxYear]
+        }))
+      }
+    } else if (!country) {
+      // Reset to full range when deselecting country
+      setFilters(prev => ({
+        ...prev,
+        yearRange: [1980, 2022]
+      }))
+    }
+  }, [unifiedData])
 
   // Get available countries for search
   const availableCountries = useMemo(() => {
@@ -389,7 +431,6 @@ const SpendingAnalysis = ({ onLoadingChange }) => {
         <div className="loading-overlay">
           <div className="loading-spinner">
             <div className="spinner"></div>
-            <p>Loading spending data...</p>
           </div>
         </div>
       )}
@@ -400,13 +441,6 @@ const SpendingAnalysis = ({ onLoadingChange }) => {
           <div className="sidebar-header">
             <div className="header-content">
               <h3>Spending Indicators</h3>
-              <button 
-                className="stats-toggle-btn"
-                onClick={() => setShowStatsPopup(!showStatsPopup)}
-                title="Show/Hide Global Statistics"
-              >
-                📊
-              </button>
             </div>
             <p>48 IMF Indicators (all categories)</p>
             
@@ -520,6 +554,20 @@ const SpendingAnalysis = ({ onLoadingChange }) => {
               )
             })}
           </div>
+          
+          {/* Filters Section - Below Categories */}
+          <div className="sidebar-filters">
+            <SpendingFilters
+              onFilterChange={handleFilterChange}
+              selectedCountry={selectedCountry}
+              spendingData={spendingData}
+              categories={Object.keys(CATEGORY_COLORS)}
+              indicators={INDICATOR_METADATA}
+              matchingCountries={filterStateManager.getFilterCount()}
+              onCountrySelect={handleCountrySelect}
+              availableCountries={availableCountries}
+            />
+          </div>
         </div>
 
         {/* Center - Map */}
@@ -534,21 +582,20 @@ const SpendingAnalysis = ({ onLoadingChange }) => {
           />
         </div>
 
-        {/* Right Sidebar - Filters and Country Info */}
-        <div className="filters-sidebar">
-          <SpendingFilters
-            onFilterChange={handleFilterChange}
-            selectedCountry={selectedCountry}
-            spendingData={spendingData}
-            categories={Object.keys(CATEGORY_COLORS)}
-            indicators={INDICATOR_METADATA}
-            matchingCountries={filterStateManager.getFilterCount()}
-            onCountrySelect={handleCountrySelect}
-            availableCountries={availableCountries}
-          />
-        </div>
-      </div>
+        {/* Insights Panel - Right Side (Similar to GDP) */}
+        <SpendingInsightsPanel
+          unifiedData={unifiedData}
+          selectedCategory={selectedCategory}
+          selectedCountry={selectedCountry}
+          yearRange={filters.yearRange}
+          onCountrySelect={handleCountrySelect}
+          spendingData={spendingData}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          selectedIndicator={selectedIndicator}
+        />
 
+      </div>
 
     </div>
   )

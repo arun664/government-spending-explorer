@@ -41,6 +41,18 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
 
   // Create countries group
   const countriesGroup = g.append('g').attr('class', 'countries-group')
+  
+  // Add pattern for zero-value countries
+  const defs = svg.append('defs')
+  defs.append('pattern')
+    .attr('id', 'zero-value-pattern')
+    .attr('patternUnits', 'userSpaceOnUse')
+    .attr('width', 4)
+    .attr('height', 4)
+    .append('path')
+    .attr('d', 'M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2')
+    .attr('stroke', '#d0d0d0')
+    .attr('stroke-width', 1)
 
   // Setup zoom
   const zoom = d3.zoom()
@@ -96,8 +108,12 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
         const spendingValue = getCountrySpendingForMap(spendingData, countryName, filters.yearRange)
         
         let finalColor = '#e8e8e8'
-        if (spendingValue !== null && !isNaN(spendingValue) && colorScale && typeof colorScale === 'function') {
+        // CRITICAL FIX: Only color if value is greater than 0
+        if (spendingValue !== null && !isNaN(spendingValue) && spendingValue > 0 && colorScale && typeof colorScale === 'function') {
           finalColor = colorScale(spendingValue)
+        } else if (spendingValue === 0) {
+          // Countries with 0 spending get a striped pattern
+          return 'url(#zero-value-pattern)'
         }
         
         return finalColor
@@ -151,14 +167,16 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
       
       // Show tooltip
       if (callbacks.onCountryHover) {
-        const spendingValue = getCountrySpendingForMap(spendingData, countryName, filters.yearRange)
+        const spendingValues = getCountrySpendingWithUSDForMap(spendingData, countryName, filters.yearRange)
         
         callbacks.onCountryHover({
           name: countryName,
-          spending: spendingValue,
+          code: getCountryCodeFromMapName(countryName),
+          spending: spendingValues.local,
+          spendingUSD: spendingValues.usd,
           category: spendingData.category,
           indicatorName: spendingData.name,
-          hasData: spendingValue !== null,
+          hasData: spendingValues.local !== null,
           x: event.pageX,
           y: event.pageY
         })
@@ -168,14 +186,16 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
       // Update tooltip position
       if (callbacks.onCountryHover) {
         const countryName = getCountryNameFromFeature(d3.select(this).datum())
-        const spendingValue = getCountrySpendingForMap(spendingData, countryName, filters.yearRange)
+        const spendingValues = getCountrySpendingWithUSDForMap(spendingData, countryName, filters.yearRange)
         
         callbacks.onCountryHover({
           name: countryName,
-          spending: spendingValue,
+          code: getCountryCodeFromMapName(countryName),
+          spending: spendingValues.local,
+          spendingUSD: spendingValues.usd,
           category: spendingData.category,
           indicatorName: spendingData.name,
-          hasData: spendingValue !== null,
+          hasData: spendingValues.local !== null,
           x: event.pageX,
           y: event.pageY
         })
@@ -295,8 +315,61 @@ function getCountrySpendingForMap(spendingData, countryName, yearRange = [2015, 
   const countryData = MapColorService.findCountryData(countryName, spendingData)
   if (!countryData) return null
   
-  const stats = calculateCountrySpending(countryData, yearRange)
-  return stats ? stats.average : null
+  // CRITICAL FIX: Use USD values for heatmap to ensure consistent comparison across countries
+  const spendingValues = getCountrySpendingWithUSDForMap(spendingData, countryName, yearRange)
+  
+  // Prefer USD values for heatmap, fallback to local if USD not available
+  return spendingValues.usd !== null ? spendingValues.usd : spendingValues.local
+}
+
+/**
+ * Get country spending with both local and USD values for map tooltips
+ * Returns both local currency and USD equivalent values
+ */
+function getCountrySpendingWithUSDForMap(spendingData, countryName, yearRange = [2015, 2022]) {
+  if (!spendingData?.countries || !countryName) {
+    return { local: null, usd: null }
+  }
+  
+  // Use MapColorService to find country data (handles both code and name lookups)
+  const countryData = MapColorService.findCountryData(countryName, spendingData)
+  if (!countryData) {
+    return { local: null, usd: null }
+  }
+  
+  // Calculate average for both local and USD values
+  const localValues = []
+  const usdValues = []
+  
+  if (countryData.data) {
+    Object.entries(countryData.data).forEach(([year, value]) => {
+      const y = parseInt(year)
+      if (y >= yearRange[0] && y <= yearRange[1]) {
+        // Handle both old format (number) and new format ({local, usd})
+        if (typeof value === 'object' && value !== null) {
+          if (!isNaN(value.local) && value.local !== null) {
+            localValues.push(value.local)
+          }
+          if (!isNaN(value.usd) && value.usd !== null) {
+            usdValues.push(value.usd)
+          }
+        } else if (!isNaN(value) && value !== null) {
+          // Old format - just a number
+          localValues.push(value)
+        }
+      }
+    })
+  }
+  
+  const localAvg = localValues.length > 0 
+    ? localValues.reduce((sum, v) => sum + v, 0) / localValues.length 
+    : null
+  
+  const usdAvg = usdValues.length > 0 
+    ? usdValues.reduce((sum, v) => sum + v, 0) / usdValues.length 
+    : null
+  
+  return { local: localAvg, usd: usdAvg }
 }
 
 function getCountryNameFromFeature(feature) {

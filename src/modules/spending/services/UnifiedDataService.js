@@ -84,7 +84,10 @@ export const CATEGORY_DESCRIPTIONS = {
  *       code: string,
  *       indicators: {
  *         [indicatorCode]: {
- *           [year]: value
+ *           [year]: {
+ *             local: value,
+ *             usd: value
+ *           }
  *         }
  *       }
  *     }
@@ -139,16 +142,13 @@ export function preloadUnifiedData() {
 
 /**
  * Load and process all 48 indicators into unified structure
- * @param {Object} options - Loading options
- * @param {boolean} options.useUSD - If true, load USD-converted data for world comparisons
+ * Now loads BOTH local and USD data simultaneously
  * @returns {Promise<Object>} Unified data structure
  */
-export async function loadUnifiedData(options = {}) {
-  const { useUSD = false } = options
-  
-  // Return cached data if available and currency matches
-  if (unifiedData && unifiedData.currency === (useUSD ? 'USD' : 'LOCAL')) {
-    console.log(`✅ Using cached unified data (${unifiedData.currency})`)
+export async function loadUnifiedData() {
+  // Return cached data if available
+  if (unifiedData && unifiedData.hasBothCurrencies) {
+    console.log(`✅ Using cached unified data with both currencies`)
     return unifiedData
   }
 
@@ -163,7 +163,7 @@ export async function loadUnifiedData(options = {}) {
   loadingStatus.loadedIndicators = 0
   loadingStatus.errors = []
 
-  loadingPromise = processAllIndicators(useUSD)
+  loadingPromise = processAllIndicators()
   unifiedData = await loadingPromise
   loadingPromise = null
   
@@ -247,18 +247,19 @@ const CATEGORY_TO_CODE = {
 
 /**
  * Load data from unified expense_clean.csv file
- * @param {boolean} useUSD - If true, load USD data from expense_clean_usd.csv
+ * Now loads BOTH local and USD data simultaneously
  */
-async function loadFromUnifiedFile(useUSD = false) {
+async function loadFromUnifiedFile() {
   try {
-    const fileName = useUSD ? 'expense_clean_usd.csv' : 'expense_clean.csv'
-    const currency = useUSD ? 'USD' : 'LOCAL'
-    
-    console.log(`📊 Attempting to load from ${fileName} (${currency})...`)
+    console.log(`📊 Loading both local and USD data...`)
     const { getDataPath } = await import('../../../utils/pathUtils.js')
-    const csvData = await d3.csv(getDataPath(fileName))
     
-    console.log(`✓ Loaded expense_clean.csv with ${csvData.length} rows`)
+    // Load both local and USD data
+    const localData = await d3.csv(getDataPath('expense_clean.csv'))
+    const usdData = await d3.csv(getDataPath('expense_clean_usd.csv'))
+    
+    console.log(`✓ Loaded expense_clean.csv with ${localData.length} rows`)
+    console.log(`✓ Loaded expense_clean_usd.csv with ${usdData.length} rows`)
     
     const data = {
       countries: {},
@@ -268,22 +269,42 @@ async function loadFromUnifiedFile(useUSD = false) {
       lastUpdated: new Date().toISOString()
     }
 
-    // Group by indicator code
-    const indicatorGroups = {}
-    
-    csvData.forEach(row => {
+    // Create lookup map for USD values
+    const usdLookup = {}
+    usdData.forEach(row => {
       const country = row['Country Name']
       const category = row['Expense Category']
       const year = parseInt(row['Year'])
-      const value = parseFloat(row['Value'])
+      const usdValue = parseFloat(row['Value_USD'])
       
-      if (!country || !category || isNaN(year) || isNaN(value)) return
+      if (!country || !category || isNaN(year) || isNaN(usdValue)) return
+      
+      const key = `${country}|${category}|${year}`
+      usdLookup[key] = usdValue
+    })
+    
+    console.log(`✓ Created USD lookup with ${Object.keys(usdLookup).length} entries`)
+    
+    // Group by indicator code with both local and USD values
+    const indicatorGroups = {}
+    
+    localData.forEach(row => {
+      const country = row['Country Name']
+      const category = row['Expense Category']
+      const year = parseInt(row['Year'])
+      const localValue = parseFloat(row['Value'])
+      
+      if (!country || !category || isNaN(year) || isNaN(localValue)) return
       
       // Map category to indicator code
       const indicatorCode = CATEGORY_TO_CODE[category]
       if (!indicatorCode) {
         return // Skip unmapped categories
       }
+      
+      // Get USD value from lookup
+      const key = `${country}|${category}|${year}`
+      const usdValue = usdLookup[key] || null
       
       // Initialize structures
       if (!indicatorGroups[indicatorCode]) {
@@ -293,7 +314,8 @@ async function loadFromUnifiedFile(useUSD = false) {
       indicatorGroups[indicatorCode].push({
         country,
         year,
-        value
+        localValue,
+        usdValue
       })
       
       data.years.add(year)
@@ -315,22 +337,26 @@ async function loadFromUnifiedFile(useUSD = false) {
       // Aggregate by country-year (handle multiple categories mapping to same code)
       const countryYearData = {}
       
-      rows.forEach(({ country, year, value }) => {
+      rows.forEach(({ country, year, localValue, usdValue }) => {
         const key = `${country}-${year}`
         
         if (!countryYearData[key]) {
           countryYearData[key] = {
             country,
             year,
-            values: []
+            localValues: [],
+            usdValues: []
           }
         }
         
-        countryYearData[key].values.push(value)
+        countryYearData[key].localValues.push(localValue)
+        if (usdValue !== null && !isNaN(usdValue)) {
+          countryYearData[key].usdValues.push(usdValue)
+        }
       })
 
       // Process aggregated data
-      Object.values(countryYearData).forEach(({ country, year, values }) => {
+      Object.values(countryYearData).forEach(({ country, year, localValues, usdValues }) => {
         // Initialize country in unified data
         if (!data.countries[country]) {
           data.countries[country] = {
@@ -346,15 +372,21 @@ async function loadFromUnifiedFile(useUSD = false) {
         }
 
         // Average multiple values if they exist
-        const aggregatedValue = values.reduce((sum, v) => sum + v, 0) / values.length
+        const aggregatedLocal = localValues.reduce((sum, v) => sum + v, 0) / localValues.length
+        const aggregatedUSD = usdValues.length > 0 
+          ? usdValues.reduce((sum, v) => sum + v, 0) / usdValues.length 
+          : null
 
-        // Store in unified structure
-        data.countries[country].indicators[indicatorCode][year] = aggregatedValue
+        // Store BOTH local and USD values in unified structure
+        data.countries[country].indicators[indicatorCode][year] = {
+          local: aggregatedLocal,
+          usd: aggregatedUSD
+        }
         
-        // Track for indicator stats
+        // Track for indicator stats (use local values for stats)
         indicatorData.countries.add(country)
         indicatorData.years.add(year)
-        indicatorData.values.push(aggregatedValue)
+        indicatorData.values.push(aggregatedLocal)
       })
 
       // Calculate global statistics for indicator
@@ -379,36 +411,37 @@ async function loadFromUnifiedFile(useUSD = false) {
     // Convert years set to sorted array
     data.years = Array.from(data.years).sort()
     
-    // Mark currency type
-    data.currency = currency
+    // Mark that we have both currencies
+    data.hasBothCurrencies = true
 
-    console.log(`✅ Loaded from unified file (${currency}):`, {
+    console.log(`✅ Loaded from unified files with both local and USD data:`, {
       countries: Object.keys(data.countries).length,
       indicators: Object.keys(data.indicators).length,
       years: data.years.length,
       yearRange: [data.years[0], data.years[data.years.length - 1]],
-      currency: currency
+      hasBothCurrencies: true
     })
 
     return data
   } catch (error) {
-    console.warn('⚠️ Failed to load from unified file:', error.message)
+    console.warn('⚠️ Failed to load from unified files:', error.message)
+    console.error(error)
     return null
   }
 }
 
 /**
  * Process all indicator CSV files into unified structure
- * @param {boolean} useUSD - If true, load USD data for world comparisons
+ * Now loads both local and USD data
  */
-async function processAllIndicators(useUSD = false) {
+async function processAllIndicators() {
   const startTime = Date.now()
   
-  // Try loading from unified file first
-  const unifiedFileData = await loadFromUnifiedFile(useUSD)
+  // Try loading from unified files first (both local and USD)
+  const unifiedFileData = await loadFromUnifiedFile()
   if (unifiedFileData) {
     const loadTime = ((Date.now() - startTime) / 1000).toFixed(2)
-    console.log(`✅ Successfully loaded from unified file in ${loadTime}s`)
+    console.log(`✅ Successfully loaded from unified files in ${loadTime}s`)
     loadingStatus.loadedIndicators = Object.keys(unifiedFileData.indicators).length
     loadingStatus.progress = 100
     return unifiedFileData
@@ -523,8 +556,11 @@ async function processAllIndicators(useUSD = false) {
         aggregatedValue = values.reduce((sum, val) => sum + val, 0)
       }
 
-      // Store in unified structure
-      data.countries[country].indicators[indicatorCode][year] = aggregatedValue
+      // Store in unified structure (fallback only has local values, no USD)
+      data.countries[country].indicators[indicatorCode][year] = {
+        local: aggregatedValue,
+        usd: null
+      }
       
       // Track for indicator stats
       indicatorData.countries.add(country)
@@ -555,28 +591,18 @@ async function processAllIndicators(useUSD = false) {
   // Convert years set to sorted array
   data.years = Array.from(data.years).sort()
   
-  // Mark currency type (fallback always uses local currency from individual files)
-  data.currency = 'LOCAL'
+  // Mark that fallback only has local currency
+  data.hasBothCurrencies = false
 
-  console.log('Unified data processing complete (LOCAL currency):', {
+  console.log('Unified data processing complete (fallback - local currency only):', {
     countries: Object.keys(data.countries).length,
     indicators: Object.keys(data.indicators).length,
     years: data.years.length,
     yearRange: [data.years[0], data.years[data.years.length - 1]],
-    currency: 'LOCAL'
+    hasBothCurrencies: false
   })
 
   return data
-}
-
-/**
- * Determine if USD conversion should be used based on context
- * @param {Array} countries - List of countries being compared
- * @returns {boolean} True if USD should be used
- */
-export function shouldUseUSD(countries = []) {
-  // Use USD for world/multi-country comparisons (more than 1 country)
-  return countries && countries.length > 1
 }
 
 /**
@@ -584,14 +610,11 @@ export function shouldUseUSD(countries = []) {
  * @param {indicatorCode} string - Indicator code
  * @param {yearRange} Array - Optional year range [start, end]
  * @param {options} Object - Additional options
- * @param {options.useUSD} boolean - Force USD conversion for world comparisons
  */
 export function getIndicatorData(indicatorCode, yearRange = null, options = {}) {
   if (!unifiedData || !unifiedData.indicators[indicatorCode]) {
     return null
   }
-  
-  const { useUSD = false } = options
 
   const indicator = unifiedData.indicators[indicatorCode]
   const countries = {}
@@ -600,16 +623,23 @@ export function getIndicatorData(indicatorCode, yearRange = null, options = {}) 
   const startYear = yearRange ? yearRange[0] : Math.min(...indicator.years)
   const endYear = yearRange ? yearRange[1] : Math.max(...indicator.years)
 
-  // Process country data
+  // Process country data - now includes both local and USD values
   Object.entries(unifiedData.countries).forEach(([countryName, countryData]) => {
     if (countryData.indicators[indicatorCode]) {
       const yearData = {}
       let hasData = false
 
-      Object.entries(countryData.indicators[indicatorCode]).forEach(([year, value]) => {
+      Object.entries(countryData.indicators[indicatorCode]).forEach(([year, valueObj]) => {
         const y = parseInt(year)
-        if (y >= startYear && y <= endYear && !isNaN(value)) {
-          yearData[year] = value
+        // Handle both old format (number) and new format (object with local/usd)
+        const localValue = typeof valueObj === 'object' ? valueObj.local : valueObj
+        const usdValue = typeof valueObj === 'object' ? valueObj.usd : null
+        
+        if (y >= startYear && y <= endYear && !isNaN(localValue)) {
+          yearData[year] = {
+            local: localValue,
+            usd: usdValue
+          }
           hasData = true
         }
       })
@@ -624,9 +654,9 @@ export function getIndicatorData(indicatorCode, yearRange = null, options = {}) 
     }
   })
 
-  // Calculate filtered statistics
+  // Calculate filtered statistics (using local values)
   const allValues = Object.values(countries)
-    .flatMap(country => Object.values(country.data))
+    .flatMap(country => Object.values(country.data).map(v => v.local))
     .filter(value => !isNaN(value))
 
   const globalStats = allValues.length > 0 ? {
@@ -644,7 +674,7 @@ export function getIndicatorData(indicatorCode, yearRange = null, options = {}) 
     category: indicator.metadata.category,
     icon: indicator.metadata.icon,
     unit: indicator.metadata.unit,
-    currency: unifiedData.currency || 'LOCAL',
+    hasBothCurrencies: unifiedData.hasBothCurrencies || false,
     countries,
     years: indicator.years.filter(y => y >= startYear && y <= endYear),
     globalStats
@@ -660,6 +690,7 @@ export function getMultiIndicatorData(indicatorCodes, yearRange = null) {
 
 /**
  * Get country data across all indicators
+ * Returns data with both local and USD values
  */
 export function getCountryData(countryName, indicatorCodes = null) {
   if (!unifiedData || !unifiedData.countries[countryName]) {
@@ -672,6 +703,7 @@ export function getCountryData(countryName, indicatorCodes = null) {
   const result = {
     name: countryName,
     code: countryData.code,
+    hasBothCurrencies: unifiedData.hasBothCurrencies || false,
     indicators: {}
   }
 

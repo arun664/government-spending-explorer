@@ -55,23 +55,38 @@
 
 /* Map Container - consolidated definition */
 
-/* Main Content Layout */
+/* Main Content Layout - Adjusted for insights panel */
 .main-content {
   display: flex;
   flex: 1;
-  overflow: hidden; /* Changed from visible to hidden for consistent layout */
-  min-height: 0; /* Allow flex child to shrink */
+  overflow: hidden;
+  min-height: 0;
+  margin-right: 360px; /* Make room for insights panel */
 }
 
 /* Left Sidebar - Categories */
 .categories-sidebar {
-  width: 360px;
+  width: 300px; /* Reduced from 360px to make more room for map */
   background: white;
   border-right: 1px solid #e0e0e0;
   display: flex;
   flex-direction: column;
-  overflow-y: auto; /* Enable vertical scrolling */
+  overflow: hidden; /* Changed from overflow-y: auto to prevent double scrollbars */
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+}
+
+.sidebar-filters {
+  padding: 15px;
+  border-top: 2px solid #e0e0e0;
+  background: #f8f9fa;
+  /* Removed margin-top: auto to allow natural flow */
+  position: relative;
+  z-index: 10; /* Ensure filters are above other content */
+  flex: 1; /* Take remaining space */
+  overflow-y: auto; /* Allow filters to scroll if needed */
+  min-height: 0; /* Allow flex shrinking */
+  order: 2; /* Ensure filters appear after indicators */
 }
 
 .sidebar-header {
@@ -823,6 +838,8 @@
   gap: 8px;
   padding: 16px 20px;
   border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0; /* Prevent shrinking */
+  order: 0; /* Ensure category filters appear first */
 }
 
 .category-filter {
@@ -847,8 +864,43 @@
 }
 
 /* Indicator Groups */
+.indicators-list {
+  flex: 0 1 auto; /* Allow shrinking, don't take all space */
+  overflow-y: auto; /* Allow scrolling */
+  padding: 0;
+  min-height: 0; /* Allow flex shrinking */
+  max-height: 40%; /* Limit to 40% of sidebar height */
+  order: 1; /* Ensure indicators appear before filters */
+}
+
 .indicator-group {
   border-bottom: 1px solid #f0f0f0;
+  position: relative;
+  z-index: 1; /* Lower z-index than filters */
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #f8f9ff;
+  border-bottom: 1px solid #e8ecff;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.group-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #667eea;
+}
+
+.indicators-in-group {
+  display: flex;
+  flex-direction: column;
+  background: white;
 }
 
 .group-header {

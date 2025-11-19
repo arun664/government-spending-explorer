@@ -480,128 +480,139 @@
   font-weight: 700;
 }
 
-/* Accordion Styles */
-.accordion {
-  margin-top: 15px;
-  border: 1px solid #e0e0e0;
+/* GDP Accordion Styles - Unique class names to avoid conflicts */
+.gdp-accordion {
+  margin-top: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   overflow: hidden;
+  background: white;
 }
 
-.accordion-header {
+.gdp-accordion-header {
   width: 100%;
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
-  padding: 12px 15px;
+  padding: 14px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: #2d3748;
-  transition: all 0.2s;
-}
-
-.accordion-header:hover {
-  background: #e8e8ff;
-}
-
-.accordion-header.active {
-  background: #667eea;
   color: white;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.accordion-icon {
-  font-size: 18px;
+.gdp-accordion-header:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.gdp-accordion-header.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gdp-accordion-icon {
+  font-size: 20px;
   font-weight: 700;
+  transition: transform 0.2s ease;
 }
 
-.accordion-content {
+.gdp-accordion-content {
   padding: 0;
-  animation: slideDown 0.3s ease-out;
+  background: white;
+  max-height: 600px;
+  overflow-y: auto;
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    max-height: 0;
-  }
-  to {
-    opacity: 1;
-    max-height: 500px;
-  }
-}
-
-/* Table Styles */
-.performers-table {
+/* GDP Table Styles */
+.gdp-performers-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 13px;
+  background: white;
 }
 
-.performers-table thead {
-  background: #f8f9fa;
+.gdp-performers-table thead {
+  background: #f9fafb;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
-.performers-table th {
-  padding: 10px 12px;
+.gdp-performers-table th {
+  padding: 14px 16px;
   text-align: left;
   font-weight: 600;
-  color: #666;
+  color: #6b7280;
   text-transform: uppercase;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.5px;
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 2px solid #e5e7eb;
 }
 
-.performers-table th:first-child {
-  width: 40px;
+.gdp-performers-table th:first-child {
+  width: 60px;
   text-align: center;
+  padding-left: 20px;
 }
 
-.performers-table th:last-child {
-  width: 100px;
+.gdp-performers-table th:nth-child(2) {
+  text-align: left;
+  padding-left: 16px;
+}
+
+.gdp-performers-table th:last-child {
+  width: 120px;
   text-align: right;
+  padding-right: 20px;
 }
 
-.performers-table tbody tr {
-  border-bottom: 1px solid #f0f0f0;
-  transition: background 0.2s;
+.gdp-performers-table tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+  transition: all 0.15s ease;
 }
 
-.performers-table tbody tr:hover {
-  background: #f8f9fa;
+.gdp-performers-table tbody tr:hover {
+  background: #f9fafb;
 }
 
-.performers-table tbody tr:last-child {
+.gdp-performers-table tbody tr:last-child {
   border-bottom: none;
 }
 
-.performers-table td {
-  padding: 10px 12px;
+.gdp-performers-table td {
+  padding: 14px 16px;
+  vertical-align: middle;
 }
 
-.performers-table .rank {
+.gdp-performers-table .gdp-rank {
   text-align: center;
   font-weight: 700;
   color: #667eea;
-  font-size: 13px;
+  font-size: 14px;
+  padding-left: 20px;
 }
 
-.performers-table .country-name {
+.gdp-performers-table .gdp-country-name {
   font-weight: 500;
-  color: #2d3748;
+  color: #1f2937;
+  font-size: 13px;
+  padding-left: 16px;
 }
 
-.performers-table .growth-value {
+.gdp-performers-table .gdp-value {
   text-align: right;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 14px;
+  padding-right: 20px;
 }
 
-.performers-table .growth-value.positive {
-  color: #28a745;
+.gdp-performers-table .gdp-value.positive {
+  color: #10b981;
 }
 
 .performers-table .growth-value.negative {

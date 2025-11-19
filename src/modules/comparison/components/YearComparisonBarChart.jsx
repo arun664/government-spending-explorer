@@ -46,6 +46,8 @@ function YearComparisonBarChart({
 }) {
   const svgRef = useRef(null)
   const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, content: '' })
+  const [sortBy, setSortBy] = useState('gdp') // 'gdp' or 'spending'
+  const [showTopBottom, setShowTopBottom] = useState('top') // 'top' or 'bottom'
   
   useEffect(() => {
     if (!data || data.length === 0 || !svgRef.current) {
@@ -78,27 +80,58 @@ function YearComparisonBarChart({
     // Get unique years for year selector
     const years = [...new Set(data.map(d => d.year))].sort()
     
-    // Filter data for selected year
-    const yearData = data.filter(d => d.year === selectedYear)
-    
-    // Aggregate by country (top 10 by GDP)
+    // Aggregate by country across ALL years in the range (like GDP page does)
+    // Calculate average GDP/spending per country across the year range
     const countryData = d3.rollup(
-      yearData,
+      data,
       v => ({
         gdp: d3.mean(v, d => d.gdp),
-        spending: d3.mean(v, d => d.spending)
+        spending: d3.mean(v, d => d.spending),
+        dataPoints: v.length
       }),
       d => d.country
     )
     
-    const aggregatedData = Array.from(countryData, ([country, values]) => ({
+    // Sort all countries first
+    const sortedData = Array.from(countryData, ([country, values]) => ({
       country,
       countryCode: getCountryCode(country),
       gdp: values.gdp,
-      spending: values.spending
+      spending: values.spending,
+      dataPoints: values.dataPoints
     }))
-      .sort((a, b) => b.gdp - a.gdp)
-      .slice(0, 15) // Show top 15 countries
+      .sort((a, b) => sortBy === 'gdp' ? b.gdp - a.gdp : b.spending - a.spending)
+    
+    // Debug: Log top 10 countries to verify ranking and check for China
+    if (sortBy === 'gdp' && showTopBottom === 'top') {
+      console.log('📊 Comparison Page - Top 10 by GDP:', sortedData.slice(0, 10).map((d, i) => ({
+        rank: i + 1,
+        country: d.country,
+        avgGDP: `${(d.gdp / 1_000_000).toFixed(2)}T`,
+        rawGDP: d.gdp,
+        dataPoints: d.dataPoints
+      })))
+      
+      // Check if China exists in the data at all
+      const chinaData = sortedData.find(d => d.country.toLowerCase().includes('china'))
+      if (chinaData) {
+        const chinaRank = sortedData.indexOf(chinaData) + 1
+        console.log('🔍 China found at rank:', chinaRank, {
+          country: chinaData.country,
+          avgGDP: `${(chinaData.gdp / 1_000_000).toFixed(2)}T`,
+          rawGDP: chinaData.gdp,
+          dataPoints: chinaData.dataPoints
+        })
+      } else {
+        console.warn('⚠️ China NOT found in comparison data!')
+        console.log('All countries in dataset:', sortedData.map(d => d.country).slice(0, 20))
+      }
+    }
+    
+    // Get top 15 or bottom 15 based on toggle
+    const aggregatedData = showTopBottom === 'top' 
+      ? sortedData.slice(0, 15)
+      : sortedData.slice(-15).reverse() // Bottom 15, reversed to show lowest first
     
     // Scales
     const xScale = d3.scaleBand()
@@ -156,11 +189,14 @@ function YearComparisonBarChart({
             content: `
               <div style="font-weight: bold; margin-bottom: 6px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px;">${d.country} (${d.countryCode})</div>
               <div style="color: #3b82f6; margin: 4px 0;">
-                <div style="font-size: 10px; font-weight: 600;">GDP</div>
+                <div style="font-size: 10px; font-weight: 600;">Avg GDP</div>
                 <div style="font-size: 12px; font-weight: 700;">${formatComparisonValueShort(d.gdp)}</div>
               </div>
               <div style="color: #666; margin: 4px 0; font-size: 10px;">
-                Spending/GDP Ratio: ${ratio}%
+                Avg Spending/GDP Ratio: ${ratio}%
+              </div>
+              <div style="color: #999; margin-top: 4px; font-size: 9px;">
+                Based on ${d.dataPoints} data points
               </div>
             `
           })
@@ -193,11 +229,14 @@ function YearComparisonBarChart({
             content: `
               <div style="font-weight: bold; margin-bottom: 6px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px;">${d.country} (${d.countryCode})</div>
               <div style="color: #ef4444; margin: 4px 0;">
-                <div style="font-size: 10px; font-weight: 600;">Government Spending</div>
+                <div style="font-size: 10px; font-weight: 600;">Avg Government Spending</div>
                 <div style="font-size: 12px; font-weight: 700;">${formatComparisonValueShort(d.spending)}</div>
               </div>
               <div style="color: #666; margin: 4px 0; font-size: 10px;">
-                Spending/GDP Ratio: ${ratio}%
+                Avg Spending/GDP Ratio: ${ratio}%
+              </div>
+              <div style="color: #999; margin-top: 4px; font-size: 9px;">
+                Based on ${d.dataPoints} data points
               </div>
             `
           })
@@ -210,10 +249,71 @@ function YearComparisonBarChart({
     
     // Year selector removed - now controlled by universal filter in sub-header
     
-  }, [data, visibility, selectedYear, onYearChange])
+  }, [data, visibility, selectedYear, onYearChange, sortBy, showTopBottom])
   
   return (
     <div className="year-comparison-bar-chart" style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+      {/* Sort Order Controls */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '8px 12px', 
+        background: '#f9fafb',
+        borderBottom: '1px solid #e5e7eb',
+        fontSize: '11px'
+      }}>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+            <input 
+              type="radio" 
+              name="sortOrder" 
+              value="gdp"
+              checked={sortBy === 'gdp'}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{ cursor: 'pointer' }}
+            />
+            <span>Order by GDP</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+            <input 
+              type="radio" 
+              name="sortOrder" 
+              value="spending"
+              checked={sortBy === 'spending'}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{ cursor: 'pointer' }}
+            />
+            <span>Order by Spending</span>
+          </label>
+        </div>
+        
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+            <input 
+              type="radio" 
+              name="topBottom" 
+              value="top"
+              checked={showTopBottom === 'top'}
+              onChange={(e) => setShowTopBottom(e.target.value)}
+              style={{ cursor: 'pointer' }}
+            />
+            <span>🏆 Top 15</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+            <input 
+              type="radio" 
+              name="topBottom" 
+              value="bottom"
+              checked={showTopBottom === 'bottom'}
+              onChange={(e) => setShowTopBottom(e.target.value)}
+              style={{ cursor: 'pointer' }}
+            />
+            <span>📉 Bottom 15</span>
+          </label>
+        </div>
+      </div>
+      
       {data && data.length > 0 ? (
         <svg ref={svgRef} style={{ flex: 1, minHeight: 0 }}></svg>
       ) : (

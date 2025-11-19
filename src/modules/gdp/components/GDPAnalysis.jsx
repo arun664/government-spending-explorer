@@ -25,10 +25,10 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [showLabels, setShowLabels] = useState(false) // Toggle for labels
-  const [allYears, setAllYears] = useState({ min: 1960, max: 2024 })
+  const [allYears, setAllYears] = useState({ min: 2005, max: 2022 }) // Locked to reliable data range
   const [filters, setFilters] = useState({
     regions: [],
-    yearRange: [1960, 2024],
+    yearRange: [2005, 2022], // Locked to reliable data range
     gdpRange: [0, 30000], // In billions USD
     countries: [] // Selected countries from search
   })
@@ -62,23 +62,9 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
   }, [filteredCountries, selectedCountry])
 
   useEffect(() => {
-    // Update label visibility when toggle changes
-    if (svgRef.current && gRef.current) {
-      const currentZoom = zoomRef.current ? d3.zoomTransform(svgRef.current).k : 1
-      const g = d3.select(gRef.current)
-      
-      if (!showLabels) {
-        g.selectAll('.country-label').style('opacity', 0)
-      } else {
-        // Re-apply zoom-based visibility
-        const svg = d3.select(svgRef.current)
-        const event = d3.zoomTransform(svg.node())
-        if (event) {
-          g.selectAll('.country-label').each(function(d) {
-            // Will be updated by the zoom handler
-          })
-        }
-      }
+    // Redraw map when label toggle changes to immediately apply visibility
+    if (filteredCountries.length > 0) {
+      drawMap()
     }
   }, [showLabels])
 
@@ -236,11 +222,14 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
       }
     })
     
+    // IMPORTANT: Keep ALL countries for the map, but mark which ones have data in range
+    // This prevents countries from disappearing when filters change
     const filtered = filteredWithAverage.filter(country => {
-      // Check if country has valid data in the year range
-      if (country.avgGDP === null || isNaN(country.avgGDP)) return false
+      // Only completely exclude countries with NO data at all
+      const hasAnyData = country.data && country.data.length > 0
+      if (!hasAnyData) return false
       
-      // When region is selected, apply region filter first and ignore GDP range
+      // When region is selected, apply region filter
       if (filters.regions.length > 0) {
         const countryRegion = getRegion(country.code);
         if (!filters.regions.includes(countryRegion)) return false
@@ -252,21 +241,21 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
         return true
       }
       
-      // If no regions selected, apply country filter (from search)
+      // If specific countries selected (from search), only show those
       if (filters.countries.length > 0) {
         if (!filters.countries.some(c => c.code === country.code)) return false
+        return true
       }
       
-      // Apply GDP range filter (only when no regions selected)
-      if (country.avgGDP < filters.gdpRange[0] || country.avgGDP > filters.gdpRange[1]) return false
-      
+      // For global view: Keep ALL countries but they'll be colored based on avgGDP
+      // Countries with avgGDP === null will show as gray on the map
       return true
     })
     
-    // Recalculate color scale extent based on filtered average values
+    // Recalculate color scale extent based on countries with valid data in range
     const avgGDPValues = filtered
+      .filter(c => c.avgGDP !== null && !isNaN(c.avgGDP))
       .map(c => c.avgGDP)
-      .filter(g => g !== null && !isNaN(g))
     
     if (avgGDPValues.length > 0) {
       const dataExtent = d3.extent(avgGDPValues)
@@ -295,8 +284,18 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
       const maxCountry = filtered.find(c => c.avgGDP === maxGDP)
       const minCountry = filtered.find(c => c.avgGDP === minGDP)
       
-      // Get top 10 and bottom 10 performers
-      const sortedByGDP = [...filtered].sort((a, b) => b.avgGDP - a.avgGDP)
+      // Get top 10 and bottom 10 performers - only include countries with valid avgGDP
+      const validCountries = filtered.filter(c => c.avgGDP !== null && !isNaN(c.avgGDP))
+      const sortedByGDP = [...validCountries].sort((a, b) => b.avgGDP - a.avgGDP)
+      
+      // Debug: Log top 5 to verify consistency
+      console.log('📊 GDP Page - Top 5 by avgGDP:', sortedByGDP.slice(0, 5).map((c, i) => ({
+        rank: i + 1,
+        country: c.name,
+        avgGDP: `${c.avgGDP.toFixed(2)}B`,
+        dataPoints: c.dataPointsInRange,
+        yearRange: `${filters.yearRange[0]}-${filters.yearRange[1]}`
+      })))
       const top10 = sortedByGDP.slice(0, 10)
       const bottom10 = sortedByGDP.slice(-10).reverse()
       
@@ -1045,17 +1044,17 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
               </div>
 
               {/* Top 10 Performers Accordion */}
-              <div className="accordion">
+              <div className="gdp-accordion">
                 <button 
-                  className={`accordion-header ${showTopPerformers ? 'active' : ''}`}
+                  className={`gdp-accordion-header ${showTopPerformers ? 'active' : ''}`}
                   onClick={() => setShowTopPerformers(!showTopPerformers)}
                 >
                   <span>🏆 Top 10 by GDP</span>
-                  <span className="accordion-icon">{showTopPerformers ? '−' : '+'}</span>
+                  <span className="gdp-accordion-icon">{showTopPerformers ? '−' : '+'}</span>
                 </button>
                 {showTopPerformers && (
-                  <div className="accordion-content">
-                    <table className="performers-table">
+                  <div className="gdp-accordion-content">
+                    <table className="gdp-performers-table">
                       <thead>
                         <tr>
                           <th>#</th>
@@ -1066,9 +1065,9 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
                       <tbody>
                         {globalStats.top10.map((country, index) => (
                           <tr key={country.code}>
-                            <td className="rank">{index + 1}</td>
-                            <td className="country-name">{country.name}</td>
-                            <td className="growth-value positive">
+                            <td className="gdp-rank">{index + 1}</td>
+                            <td className="gdp-country-name">{country.name}</td>
+                            <td className="gdp-value positive">
                               {country.avgGDP >= 1000 
                                 ? `$${(country.avgGDP / 1000).toFixed(1)}T`
                                 : `$${country.avgGDP.toFixed(1)}B`}
@@ -1082,17 +1081,17 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
               </div>
 
               {/* Bottom 10 Performers Accordion */}
-              <div className="accordion">
+              <div className="gdp-accordion">
                 <button 
-                  className={`accordion-header ${showBottomPerformers ? 'active' : ''}`}
+                  className={`gdp-accordion-header ${showBottomPerformers ? 'active' : ''}`}
                   onClick={() => setShowBottomPerformers(!showBottomPerformers)}
                 >
                   <span>📉 Bottom 10 by GDP</span>
-                  <span className="accordion-icon">{showBottomPerformers ? '−' : '+'}</span>
+                  <span className="gdp-accordion-icon">{showBottomPerformers ? '−' : '+'}</span>
                 </button>
                 {showBottomPerformers && (
-                  <div className="accordion-content">
-                    <table className="performers-table">
+                  <div className="gdp-accordion-content">
+                    <table className="gdp-performers-table">
                       <thead>
                         <tr>
                           <th>#</th>
@@ -1103,9 +1102,9 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
                       <tbody>
                         {globalStats.bottom10.map((country, index) => (
                           <tr key={country.code}>
-                            <td className="rank">{index + 1}</td>
-                            <td className="country-name">{country.name}</td>
-                            <td className="growth-value negative">
+                            <td className="gdp-rank">{index + 1}</td>
+                            <td className="gdp-country-name">{country.name}</td>
+                            <td className="gdp-value negative">
                               {country.avgGDP >= 1000 
                                 ? `$${(country.avgGDP / 1000).toFixed(1)}T`
                                 : `$${country.avgGDP.toFixed(1)}B`}
