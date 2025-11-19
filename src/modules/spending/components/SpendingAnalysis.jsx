@@ -456,7 +456,7 @@ const SpendingAnalysis = ({ onLoadingChange }) => {
             <div className="header-content">
               <h3>Spending Indicators</h3>
             </div>
-            <p>48 IMF Indicators (all categories)</p>
+            <p>30 IMF Indicators (7 categories)</p>
             
             {/* Stats Popup */}
             {showStatsPopup && spendingData.globalStats && (
@@ -497,20 +497,30 @@ const SpendingAnalysis = ({ onLoadingChange }) => {
           </div>
 
           <div className="category-filters">
-            {Object.entries(CATEGORY_COLORS).map(([category, color]) => (
-              <button
-                key={category}
-                className={`category-filter ${selectedCategory === category ? 'active' : ''}`}
-                style={{ 
-                  backgroundColor: selectedCategory === category ? color : 'transparent',
-                  borderColor: color,
-                  color: selectedCategory === category ? 'white' : color
-                }}
-                onClick={() => handleCategoryFilter(category)}
-              >
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </button>
-            ))}
+            {Object.entries(CATEGORY_COLORS).map(([category, color]) => {
+              // Count indicators in this category
+              const indicatorCount = Object.values(INDICATOR_METADATA).filter(
+                meta => meta.category === category
+              ).length
+              
+              return (
+                <button
+                  key={category}
+                  className={`category-filter ${selectedCategory === category ? 'active' : ''}`}
+                  style={{ 
+                    backgroundColor: selectedCategory === category ? color : 'transparent',
+                    borderColor: color,
+                    color: selectedCategory === category ? 'white' : color
+                  }}
+                  onClick={() => handleCategoryFilter(category)}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                    <span>{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                    <span style={{ fontSize: '10px', opacity: 0.8 }}>({indicatorCount})</span>
+                  </div>
+                </button>
+              )
+            })}
           </div>
 
           <div className="indicators-list">
@@ -547,10 +557,9 @@ const SpendingAnalysis = ({ onLoadingChange }) => {
                           style={{ cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}
                         >
                           <div className="indicator-info">
-                            <span className="indicator-icon">{metadata.icon}</span>
                             <div className="indicator-text">
                               <span className="indicator-name">{metadata.name}</span>
-                              <span className="indicator-desc">{metadata.unit}</span>
+                              <span className="indicator-code" style={{ fontSize: '10px', color: '#999', marginTop: '2px' }}>{code}</span>
                             </div>
                           </div>
                           <div className="indicator-category">

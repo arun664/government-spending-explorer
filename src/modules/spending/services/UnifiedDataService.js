@@ -2,12 +2,12 @@ import * as d3 from 'd3'
 
 /**
  * Unified Data Service for Government Spending Analysis
- * Pre-processes all 48 indicators into a single, optimized data structure
+ * Pre-processes all 30 indicators into a single, optimized data structure
  */
 
-// All 48 indicators with their metadata
+// All 30 indicators with their metadata (7 categories)
 // Note: All values are in domestic currency (actual values from IMF data)
-// All 48 indicators now have data from the updated expense_clean.csv
+// All 30 indicators now have data from the updated expense_clean.csv
 export const INDICATOR_METADATA = {
   // Overview
   'GE': { name: 'Total Government Expense', category: 'overview', icon: '💰' },

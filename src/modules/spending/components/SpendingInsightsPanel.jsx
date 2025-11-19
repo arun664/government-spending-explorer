@@ -329,7 +329,10 @@ function SpendingInsightsPanel({
                 <div className="indicator-display-card">
                   <div className="indicator-display-name">
                     <span className="indicator-display-icon">{INDICATOR_METADATA[selectedIndicator].icon}</span>
-                    {INDICATOR_METADATA[selectedIndicator].name}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span>{INDICATOR_METADATA[selectedIndicator].name}</span>
+                      <span style={{ fontSize: '11px', color: '#999', fontWeight: '500' }}>Code: {selectedIndicator}</span>
+                    </div>
                   </div>
                   <div className="indicator-display-category">
                     <span 
