@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { formatSpendingValue, getCategoryColor } from '../utils/formatUtils.js'
 import { ColorSchemeService } from '../../../shared/services/ColorSchemeService.js'
 import { filterStateManager } from '../../../shared/services/FilterStateManager.js'
@@ -24,6 +24,29 @@ const SpendingFilters = ({
   const searchInputRef = useRef(null)
 
   const regions = ['Africa', 'Asia', 'Europe', 'North America', 'Oceania', 'South America']
+  
+  // Calculate available year range based on selected country's data
+  const availableYearRange = useMemo(() => {
+    if (!selectedCountry || !spendingData.countries) {
+      return [1980, 2022] // Default full range
+    }
+    
+    const countryData = MapColorService.findCountryData(selectedCountry.name, spendingData)
+    if (!countryData || !countryData.data) {
+      return [1980, 2022]
+    }
+    
+    const years = Object.keys(countryData.data)
+      .map(y => parseInt(y))
+      .filter(y => !isNaN(y) && countryData.data[y] > 0)
+      .sort((a, b) => a - b)
+    
+    if (years.length === 0) {
+      return [1980, 2022]
+    }
+    
+    return [years[0], years[years.length - 1]]
+  }, [selectedCountry, spendingData])
 
   useEffect(() => {
     const unsubscribe = filterStateManager.subscribe((newFilters) => {
@@ -160,82 +183,7 @@ const SpendingFilters = ({
         </div>
       )}
 
-      {selectedCountry && spendingData.countries && (
-        <div className="selected-country-info" key={`${selectedCountry.name}-${filters.yearRange[0]}-${filters.yearRange[1]}`}>
-          <div className="country-card">
-            <div className="country-header">
-              <h4>Selected Country</h4>
-              <div className="country-name">
-                {selectedCountry.name}
-                <span className="currency-badge">{getCurrencyCode(selectedCountry.name)}</span>
-              </div>
-            </div>
-            
-            {(() => {
-              // Find country data using MapColorService (same as tooltip)
-              const countryData = MapColorService.findCountryData(selectedCountry.name, spendingData)
-              
-              if (!countryData || !countryData.data) {
-                return (
-                  <div className="no-data-message">
-                    <span className="info-icon">ℹ️</span>
-                    <span>No data available for this indicator</span>
-                  </div>
-                )
-              }
-              
-              // Use the SAME calculation function as the tooltip
-              const stats = calculateCountrySpending(countryData, filters.yearRange)
-              
-              if (!stats) {
-                return (
-                  <div className="no-data-message">
-                    <span className="info-icon">ℹ️</span>
-                    <span>No data available for selected year range</span>
-                  </div>
-                )
-              }
-              
-              const currencyCode = getCurrencyCode(selectedCountry.name)
-              
-              return (
-                <div className="country-stats">
-                  <div className="stat-item highlight" title="Values in domestic currency. USD conversion requires exchange rate data.">
-                    <span className="stat-label">Latest Value ({stats.latestYear})</span>
-                    <span className="stat-value">
-                      {formatSpendingValue(stats.latest)} <span className="currency-label">{currencyCode}</span>
-                    </span>
-                  </div>
-                  <div className="stat-item" title="Average spending over selected year range">
-                    <span className="stat-label">Average</span>
-                    <span className="stat-value">
-                      {formatSpendingValue(stats.average)} <span className="currency-label">{currencyCode}</span>
-                    </span>
-                  </div>
-                  <div className="stat-item" title="Minimum and maximum values in selected year range">
-                    <span className="stat-label">Range</span>
-                    <span className="stat-value">
-                      {formatSpendingValue(stats.min)} - {formatSpendingValue(stats.max)} <span className="currency-label">{currencyCode}</span>
-                    </span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Data Points</span>
-                    <span className="stat-value">
-                      {stats.dataPoints} years
-                    </span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Year Range</span>
-                    <span className="stat-value">
-                      {stats.years[0]} - {stats.years[stats.years.length - 1]}
-                    </span>
-                  </div>
-                </div>
-              )
-            })()}
-          </div>
-        </div>
-      )}
+
 
       <div className="filter-group year-range-group">
         <label className="filter-label" id="year-range-label">YEAR RANGE:</label>
@@ -245,16 +193,16 @@ const SpendingFilters = ({
               <div 
                 className="slider-range" 
                 style={{
-                  left: `${((filters.yearRange[0] - 1980) / (2022 - 1980)) * 100}%`,
-                  width: `${((filters.yearRange[1] - filters.yearRange[0]) / (2022 - 1980)) * 100}%`,
+                  left: `${((filters.yearRange[0] - availableYearRange[0]) / (availableYearRange[1] - availableYearRange[0])) * 100}%`,
+                  width: `${((filters.yearRange[1] - filters.yearRange[0]) / (availableYearRange[1] - availableYearRange[0])) * 100}%`,
                   backgroundColor: spendingData?.category ? ColorSchemeService.getCategoryColor(spendingData.category) : '#667eea'
                 }}
               />
             </div>
             <input
               type="range"
-              min="1980"
-              max="2022"
+              min={availableYearRange[0]}
+              max={availableYearRange[1]}
               value={filters.yearRange[0]}
               onChange={(e) => handleYearRangeChange('start', e.target.value)}
               className="slider-input slider-min"
@@ -262,8 +210,8 @@ const SpendingFilters = ({
             />
             <input
               type="range"
-              min="1980"
-              max="2022"
+              min={availableYearRange[0]}
+              max={availableYearRange[1]}
               value={filters.yearRange[1]}
               onChange={(e) => handleYearRangeChange('end', e.target.value)}
               className="slider-input slider-max"
@@ -273,16 +221,25 @@ const SpendingFilters = ({
           
           {/* Year tick marks */}
           <div className="year-ticks">
-            {[1980, 1990, 2000, 2010, 2022].map(year => (
-              <div 
-                key={year} 
-                className="year-tick"
-                style={{ left: `${((year - 1980) / (2022 - 1980)) * 100}%` }}
-              >
-                <span className="tick-mark"></span>
-                <span className="tick-label">{year}</span>
-              </div>
-            ))}
+            {(() => {
+              const range = availableYearRange[1] - availableYearRange[0]
+              const tickYears = range <= 10 
+                ? [availableYearRange[0], availableYearRange[1]]
+                : range <= 20
+                ? [availableYearRange[0], Math.floor((availableYearRange[0] + availableYearRange[1]) / 2), availableYearRange[1]]
+                : [availableYearRange[0], Math.floor(availableYearRange[0] + range * 0.25), Math.floor(availableYearRange[0] + range * 0.5), Math.floor(availableYearRange[0] + range * 0.75), availableYearRange[1]]
+              
+              return tickYears.map(year => (
+                <div 
+                  key={year} 
+                  className="year-tick"
+                  style={{ left: `${((year - availableYearRange[0]) / (availableYearRange[1] - availableYearRange[0])) * 100}%` }}
+                >
+                  <span className="tick-mark"></span>
+                  <span className="tick-label">{year}</span>
+                </div>
+              ))
+            })()}
           </div>
           
           <div className="year-display">
@@ -296,14 +253,14 @@ const SpendingFilters = ({
               <input
                 id="start-year"
                 type="number"
-                min="2000"
-                max="2022"
+                min={availableYearRange[0]}
+                max={availableYearRange[1]}
                 value={filters.yearRange[0]}
                 onChange={(e) => handleYearRangeChange('start', e.target.value)}
                 onBlur={(e) => {
                   const val = parseInt(e.target.value)
-                  if (val < 2000) handleYearRangeChange('start', '2000')
-                  if (val > 2022) handleYearRangeChange('start', '2022')
+                  if (val < availableYearRange[0]) handleYearRangeChange('start', availableYearRange[0].toString())
+                  if (val > availableYearRange[1]) handleYearRangeChange('start', availableYearRange[1].toString())
                 }}
               />
             </div>
@@ -313,14 +270,14 @@ const SpendingFilters = ({
               <input
                 id="end-year"
                 type="number"
-                min="2000"
-                max="2022"
+                min={availableYearRange[0]}
+                max={availableYearRange[1]}
                 value={filters.yearRange[1]}
                 onChange={(e) => handleYearRangeChange('end', e.target.value)}
                 onBlur={(e) => {
                   const val = parseInt(e.target.value)
-                  if (val < 2000) handleYearRangeChange('end', '2000')
-                  if (val > 2022) handleYearRangeChange('end', '2022')
+                  if (val < availableYearRange[0]) handleYearRangeChange('end', availableYearRange[0].toString())
+                  if (val > availableYearRange[1]) handleYearRangeChange('end', availableYearRange[1].toString())
                 }}
               />
             </div>

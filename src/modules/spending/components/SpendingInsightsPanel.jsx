@@ -349,6 +349,10 @@ function SpendingInsightsPanel({
                         </div>
                       )}
                       <div className="indicator-stat-row">
+                        <span>Year Range:</span>
+                        <span style={{ fontWeight: '600', color: '#667eea' }}>{yearRange[0]} - {yearRange[1]}</span>
+                      </div>
+                      <div className="indicator-stat-row">
                         <span>Countries:</span>
                         <span>{dynamicGlobalStats.totalCountries}</span>
                       </div>
@@ -475,6 +479,93 @@ function SpendingInsightsPanel({
                 ×
               </button>
             </div>
+            
+            {/* Country Data Availability Info */}
+            {unifiedData?.countries[selectedCountry.name] && (() => {
+              const countryData = unifiedData.countries[selectedCountry.name]
+              const currentIndicatorData = countryData.indicators[selectedIndicator]
+              
+              if (!currentIndicatorData) {
+                return (
+                  <div className="country-data-info" style={{ 
+                    padding: '12px', 
+                    marginBottom: '16px', 
+                    backgroundColor: '#fff3cd', 
+                    border: '1px solid #ffc107', 
+                    borderRadius: '6px' 
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '18px' }}>ℹ️</span>
+                      <span style={{ fontSize: '13px', color: '#856404' }}>
+                        No data available for the current indicator
+                      </span>
+                    </div>
+                  </div>
+                )
+              }
+              
+              // Get available years for current indicator
+              const availableYears = Object.keys(currentIndicatorData)
+                .map(y => parseInt(y))
+                .filter(y => {
+                  const value = currentIndicatorData[y]
+                  const hasValue = typeof value === 'object' 
+                    ? (value?.local > 0 || value?.usd > 0)
+                    : (value > 0)
+                  return !isNaN(y) && hasValue
+                })
+                .sort((a, b) => a - b)
+              
+              if (availableYears.length === 0) {
+                return (
+                  <div className="country-data-info" style={{ 
+                    padding: '12px', 
+                    marginBottom: '16px', 
+                    backgroundColor: '#fff3cd', 
+                    border: '1px solid #ffc107', 
+                    borderRadius: '6px' 
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '18px' }}>ℹ️</span>
+                      <span style={{ fontSize: '13px', color: '#856404' }}>
+                        No data points available for the current indicator
+                      </span>
+                    </div>
+                  </div>
+                )
+              }
+              
+              const minYear = availableYears[0]
+              const maxYear = availableYears[availableYears.length - 1]
+              const isFiltered = yearRange[0] !== minYear || yearRange[1] !== maxYear
+              
+              return (
+                <div className="country-data-info" style={{ 
+                  padding: '12px', 
+                  marginBottom: '16px', 
+                  backgroundColor: '#e8f4f8', 
+                  border: '1px solid #4facfe', 
+                  borderRadius: '6px' 
+                }}>
+                  <div style={{ fontSize: '12px', color: '#0c5460', marginBottom: '8px', fontWeight: '600' }}>
+                    📅 Data Availability
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#0c5460' }}>
+                    <div style={{ marginBottom: '4px' }}>
+                      <strong>Available Years:</strong> {minYear} - {maxYear} ({availableYears.length} years)
+                    </div>
+                    <div>
+                      <strong>Current Filter:</strong> {yearRange[0]} - {yearRange[1]}
+                      {isFiltered && (
+                        <span style={{ marginLeft: '8px', fontSize: '11px', color: '#667eea', fontWeight: '600' }}>
+                          (Filtered)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
             
             {/* All 48 Indicators - Sorted by Spending */}
             {selectedCountryIndicators && (

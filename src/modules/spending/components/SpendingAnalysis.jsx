@@ -361,41 +361,55 @@ const SpendingAnalysis = ({ onLoadingChange }) => {
   const handleCountrySelect = useCallback((country) => {
     setSelectedCountry(country)
     
-    // Auto-adjust year range to match country's available data
+    // Auto-adjust year range to match country's available data for the current indicator
     if (country && unifiedData?.countries[country.name]) {
       const countryData = unifiedData.countries[country.name]
       const allYears = new Set()
       
-      // Collect all years with data across all indicators
-      Object.values(countryData.indicators).forEach(indicatorData => {
-        Object.keys(indicatorData).forEach(year => {
+      // Collect years with data for the current indicator
+      const currentIndicatorData = countryData.indicators[selectedIndicator]
+      if (currentIndicatorData) {
+        Object.keys(currentIndicatorData).forEach(year => {
           const yearNum = parseInt(year)
-          if (!isNaN(yearNum)) {
+          const value = currentIndicatorData[year]
+          // Only include years with actual data (not null/undefined/0)
+          const hasValue = typeof value === 'object' 
+            ? (value?.local > 0 || value?.usd > 0)
+            : (value > 0)
+          
+          if (!isNaN(yearNum) && hasValue) {
             allYears.add(yearNum)
           }
         })
-      })
+      }
       
       if (allYears.size > 0) {
         const years = Array.from(allYears).sort((a, b) => a - b)
         const minYear = years[0]
         const maxYear = years[years.length - 1]
         
-        console.log(`📅 Auto-adjusting year range for ${country.name}: ${minYear}-${maxYear}`)
+        console.log(`📅 Auto-adjusting year range for ${country.name} (${selectedIndicator}): ${minYear}-${maxYear}`)
         
+        // Update both local state and FilterStateManager
+        const newYearRange = [minYear, maxYear]
         setFilters(prev => ({
           ...prev,
-          yearRange: [minYear, maxYear]
+          yearRange: newYearRange
         }))
+        filterStateManager.updateFilters({ yearRange: newYearRange }, true)
       }
     } else if (!country) {
-      // Reset to full range when deselecting country
+      // Reset to default range when deselecting country
+      const defaultRange = [2005, 2022]
+      console.log(`📅 Resetting year range to default: ${defaultRange[0]}-${defaultRange[1]}`)
+      
       setFilters(prev => ({
         ...prev,
-        yearRange: [1980, 2022]
+        yearRange: defaultRange
       }))
+      filterStateManager.updateFilters({ yearRange: defaultRange }, true)
     }
-  }, [unifiedData])
+  }, [unifiedData, selectedIndicator])
 
   // Get available countries for search
   const availableCountries = useMemo(() => {
