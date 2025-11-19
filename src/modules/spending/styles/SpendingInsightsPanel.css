@@ -3,6 +3,9 @@
   right: 0;
   top: 0;
   bottom: 0;
+  width: 360px;
+  max-width: 360px;
+  min-width: 360px;
   z-index: 1000;
   background: white;
   border-left: 1px solid #e0e0e0;
@@ -105,6 +108,10 @@
 .global-insights-content,
 .country-insights-content {
   padding-bottom: 20px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .insights-header {
@@ -138,6 +145,10 @@
   padding: 20px;
   border-bottom: 1px solid #f0f0f0;
   background: white; /* Keep white background */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .section-header {
@@ -195,11 +206,14 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .country-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   padding: 10px;
   background: white; /* Change from #f8f9fa to white */
@@ -209,6 +223,10 @@
   transition: all 0.2s;
   position: relative;
   overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-height: 48px;
 }
 
 .country-item:hover {
@@ -234,27 +252,36 @@
   font-weight: 700;
   font-size: 13px;
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .country-info {
   flex: 1;
   min-width: 0;
   z-index: 1;
+  max-width: 100%;
+  overflow: hidden;
+  word-wrap: break-word;
 }
 
 .country-name {
   font-weight: 600;
   font-size: 13px;
   color: #2d3748;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.3;
+  max-width: 100%;
 }
 
 .country-value {
   font-size: 12px;
   color: #667eea;
   font-weight: 700;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.3;
+  max-width: 100%;
 }
 
 .country-bar {
@@ -368,6 +395,10 @@
 
 .accordion-content {
   animation: slideDown 0.3s ease-out;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 @keyframes slideDown {

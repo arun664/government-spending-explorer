@@ -61,7 +61,7 @@
   flex: 1;
   overflow: hidden;
   min-height: 0;
-  margin-right: 360px; /* Make room for insights panel */
+  position: relative;
 }
 
 /* Left Sidebar - Categories */
@@ -416,6 +416,7 @@
   flex-direction: column;
   min-height: 0; /* Allow flex child to shrink properly */
   transition: all 0.3s ease; /* Smooth transitions during resize */
+  margin-right: 360px; /* Make room for insights panel */
 }
 
 .map-container svg {
