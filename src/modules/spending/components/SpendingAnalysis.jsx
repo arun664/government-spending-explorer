@@ -215,8 +215,14 @@ const SpendingAnalysis = ({ onLoadingChange }) => {
       setExpandedGroups(prev => new Set([...prev, category]))
     }
     
-    // Don't reload data - just update the filter and let the map re-render
-    // The category selection will be handled by the indicator selection
+    // Auto-select the first indicator in this category to update the map and insights
+    const categoryIndicators = Object.entries(INDICATOR_METADATA)
+      .filter(([code, meta]) => meta.category === category)
+    
+    if (categoryIndicators.length > 0) {
+      const firstIndicatorCode = categoryIndicators[0][0]
+      handleIndicatorSelect(firstIndicatorCode)
+    }
   }
 
 
