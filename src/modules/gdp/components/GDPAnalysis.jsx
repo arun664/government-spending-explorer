@@ -366,13 +366,14 @@ const GDPAnalysis = ({ compareMode = false, showGDPView = true, onLoadingChange 
 
       // Get min and max years from data
       const allYearValues = gdpDataResult.gdp.map(d => d.year)
-      const minYear = Math.min(...allYearValues)
-      const maxYear = Math.max(...allYearValues)
-      setAllYears({ min: minYear, max: maxYear })
+      const dataMinYear = Math.min(...allYearValues)
+      const dataMaxYear = Math.max(...allYearValues)
       
-      // Keep the reliable data range (2005-2022) instead of using all available years
-      // This ensures consistency with the comparison page
-      // DO NOT overwrite yearRange - keep the initial [2005, 2022] range
+      // Use reliable data range (2005-2022) for consistency across the application
+      // This ensures consistency with the comparison page and spending page
+      setAllYears({ min: 2005, max: 2022 })
+      
+      // DO NOT use full data range (1960-2022) to avoid inconsistency in UI
 
       // Calculate extent for color scale from filtered data (GDP values in billions)
       const gdpValues = Object.values(processedGDP)
