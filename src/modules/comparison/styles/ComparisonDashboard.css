@@ -566,3 +566,80 @@
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
+
+/* Missing Countries Tooltip Scrollbar */
+.comparison-dashboard div[style*="maxHeight: '400px'"] {
+  scrollbar-width: thin;
+  scrollbar-color: #ef4444 #fee;
+}
+
+.comparison-dashboard div[style*="maxHeight: '400px'"]::-webkit-scrollbar {
+  width: 6px;
+}
+
+.comparison-dashboard div[style*="maxHeight: '400px'"]::-webkit-scrollbar-track {
+  background: #fee;
+  border-radius: 3px;
+}
+
+.comparison-dashboard div[style*="maxHeight: '400px'"]::-webkit-scrollbar-thumb {
+  background: #ef4444;
+  border-radius: 3px;
+}
+
+.comparison-dashboard div[style*="maxHeight: '400px'"]::-webkit-scrollbar-thumb:hover {
+  background: #dc2626;
+}
+
+/* Missing Countries Modal */
+.comparison-dashboard .missing-countries-modal-overlay {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.comparison-dashboard .missing-countries-modal-content {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Modal scrollbar styling */
+.comparison-dashboard div[style*="maxHeight: '80vh'"] {
+  scrollbar-width: thin;
+  scrollbar-color: #ef4444 #fee;
+}
+
+.comparison-dashboard div[style*="maxHeight: '80vh'"]::-webkit-scrollbar {
+  width: 8px;
+}
+
+.comparison-dashboard div[style*="maxHeight: '80vh'"]::-webkit-scrollbar-track {
+  background: #fee;
+  border-radius: 4px;
+}
+
+.comparison-dashboard div[style*="maxHeight: '80vh'"]::-webkit-scrollbar-thumb {
+  background: #ef4444;
+  border-radius: 4px;
+}
+
+.comparison-dashboard div[style*="maxHeight: '80vh'"]::-webkit-scrollbar-thumb:hover {
+  background: #dc2626;
+}

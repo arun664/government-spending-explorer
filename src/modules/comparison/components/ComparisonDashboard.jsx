@@ -17,6 +17,17 @@ import { loadUnifiedData, INDICATOR_METADATA, CATEGORY_COLORS } from '../../spen
 import { formatWithBothCurrencies, getCurrencyWithFallback } from '../../spending/utils/currencyMapping.js'
 import '../styles/ComparisonDashboard.css'
 
+// Category descriptions for info modals
+const CATEGORY_DESCRIPTIONS = {
+  overview: 'Total government expenditure across all categories, representing the complete fiscal spending of the government.',
+  personnel: 'Compensation paid to government employees including salaries, wages, and employer social contributions.',
+  transfers: 'Financial assistance provided to other entities including grants to foreign governments, international organizations, and subsidies to enterprises.',
+  debt: 'Interest payments on government debt and consumption of fixed capital (depreciation of government assets).',
+  operations: 'Expenditure on goods and services used in government operations, excluding compensation of employees.',
+  other: 'Miscellaneous government expenses including property expenses and other transfers not classified elsewhere.',
+  social: 'Government spending on social protection including cash benefits, in-kind benefits, social assistance, and social security programs.'
+}
+
 function ComparisonDashboard({ onLoadingChange }) {
   const [rawData, setRawData] = useState(null) // All loaded data
   const [metadata, setMetadata] = useState(null)
@@ -33,6 +44,9 @@ function ComparisonDashboard({ onLoadingChange }) {
   const [animationInterval, setAnimationInterval] = useState(null)
   const [spendingData, setSpendingData] = useState(null) // Unified spending data for categories
   const [showCategoriesPanel, setShowCategoriesPanel] = useState(false) // Track if categories panel is visible
+  const [showMissingCountries, setShowMissingCountries] = useState(false)
+  const [dataDiscrepancyTab, setDataDiscrepancyTab] = useState('all') // 'all', 'gdp', 'spending'
+  const [categoryInfoModal, setCategoryInfoModal] = useState(null) // Category key for info modal
   
   // Notify parent of loading state changes
   useEffect(() => {
@@ -301,6 +315,157 @@ function ComparisonDashboard({ onLoadingChange }) {
     return ((countriesWithData / totalCountries) * 100).toFixed(0)
   }, [chartData, selectedYear, metadata])
   
+  // Calculate countries with and without data (separate GDP and Spending)
+  const countriesDataInfo = useMemo(() => {
+    if (!metadata || !chartData || chartData.length === 0) {
+      return { 
+        withData: 0, 
+        withoutData: 0, 
+        missingGDP: [], 
+        missingSpending: [], 
+        missingBoth: [],
+        total: 214 
+      }
+    }
+    
+    // Track countries with GDP and Spending separately, with year ranges
+    const countryGDPYears = {}
+    const countrySpendingYears = {}
+    
+    chartData.forEach(d => {
+      if (d.gdp && d.gdp > 0) {
+        if (!countryGDPYears[d.country]) countryGDPYears[d.country] = []
+        countryGDPYears[d.country].push(d.year)
+      }
+      if (d.spending && d.spending > 0) {
+        if (!countrySpendingYears[d.country]) countrySpendingYears[d.country] = []
+        countrySpendingYears[d.country].push(d.year)
+      }
+    })
+    
+    // Get countries with COMPLETE data in the selected year range
+    const countriesWithCompleteGDP = new Set()
+    const countriesWithCompleteSpending = new Set()
+    const countriesWithPartialGDP = new Set()
+    const countriesWithPartialSpending = new Set()
+    
+    Object.entries(countryGDPYears).forEach(([country, years]) => {
+      const yearsInRange = years.filter(y => y >= displayYearRange[0] && y <= displayYearRange[1])
+      if (yearsInRange.length > 0) {
+        const maxYear = Math.max(...years)
+        // Check if data extends to at least 2019 (recent data threshold)
+        if (maxYear >= 2019) {
+          countriesWithCompleteGDP.add(country)
+        } else {
+          countriesWithPartialGDP.add(country)
+        }
+      }
+    })
+    
+    Object.entries(countrySpendingYears).forEach(([country, years]) => {
+      const yearsInRange = years.filter(y => y >= displayYearRange[0] && y <= displayYearRange[1])
+      if (yearsInRange.length > 0) {
+        const maxYear = Math.max(...years)
+        // Check if data extends to at least 2019 (recent data threshold)
+        if (maxYear >= 2019) {
+          countriesWithCompleteSpending.add(country)
+        } else {
+          countriesWithPartialSpending.add(country)
+        }
+      }
+    })
+    
+    // Countries with both complete GDP and Spending
+    const countriesWithBoth = new Set(
+      [...countriesWithCompleteGDP].filter(c => countriesWithCompleteSpending.has(c))
+    )
+    
+    // Find countries without complete data and calculate their year ranges
+    const allCountries = metadata.countries || []
+    const missingGDP = []
+    const missingSpending = []
+    const missingBoth = []
+    
+    allCountries.forEach(country => {
+      const hasCompleteGDP = countriesWithCompleteGDP.has(country)
+      const hasCompleteSpending = countriesWithCompleteSpending.has(country)
+      const hasPartialGDP = countriesWithPartialGDP.has(country)
+      const hasPartialSpending = countriesWithPartialSpending.has(country)
+      const hasAnyGDP = hasCompleteGDP || hasPartialGDP
+      const hasAnySpending = hasCompleteSpending || hasPartialSpending
+      
+      // Calculate year range for this country
+      const gdpYears = countryGDPYears[country] || []
+      const spendingYears = countrySpendingYears[country] || []
+      const allYears = [...new Set([...gdpYears, ...spendingYears])].sort((a, b) => a - b)
+      
+      const yearRange = allYears.length > 0 
+        ? `${Math.min(...allYears)}-${Math.max(...allYears)}`
+        : 'No data'
+      
+      // Flag countries with no data OR incomplete/outdated data
+      if (!hasAnyGDP && !hasAnySpending) {
+        missingBoth.push({ name: country, yearRange })
+      } else if (!hasCompleteGDP) {
+        // Missing or incomplete GDP data
+        const spendingRange = spendingYears.length > 0
+          ? `${Math.min(...spendingYears)}-${Math.max(...spendingYears)}`
+          : 'No data'
+        const gdpStatus = hasPartialGDP 
+          ? `Outdated (${Math.min(...gdpYears)}-${Math.max(...gdpYears)})`
+          : 'No data'
+        missingGDP.push({ name: country, yearRange: spendingRange, gdpStatus })
+      } else if (!hasCompleteSpending) {
+        // Missing or incomplete spending data
+        const gdpRange = gdpYears.length > 0
+          ? `${Math.min(...gdpYears)}-${Math.max(...gdpYears)}`
+          : 'No data'
+        const spendingStatus = hasPartialSpending
+          ? `Outdated (${Math.min(...spendingYears)}-${Math.max(...spendingYears)})`
+          : 'No data'
+        missingSpending.push({ name: country, yearRange: gdpRange, spendingStatus })
+      }
+    })
+    
+    // Create a comprehensive list of ALL countries with their data status
+    const allCountriesData = allCountries.map(country => {
+      const gdpYears = countryGDPYears[country] || []
+      const spendingYears = countrySpendingYears[country] || []
+      
+      const gdpRange = gdpYears.length > 0
+        ? `${Math.min(...gdpYears)}-${Math.max(...gdpYears)}`
+        : 'No data'
+      
+      const spendingRange = spendingYears.length > 0
+        ? `${Math.min(...spendingYears)}-${Math.max(...spendingYears)}`
+        : 'No data'
+      
+      const hasCompleteGDP = countriesWithCompleteGDP.has(country)
+      const hasCompleteSpending = countriesWithCompleteSpending.has(country)
+      
+      return {
+        name: country,
+        gdpRange,
+        spendingRange,
+        gdpStatus: hasCompleteGDP ? 'Complete' : (gdpYears.length > 0 ? 'Outdated' : 'Missing'),
+        spendingStatus: hasCompleteSpending ? 'Complete' : (spendingYears.length > 0 ? 'Outdated' : 'Missing'),
+        hasIssue: !hasCompleteGDP || !hasCompleteSpending
+      }
+    }).sort((a, b) => a.name.localeCompare(b.name))
+    
+    const totalMissing = missingGDP.length + missingSpending.length + missingBoth.length
+    
+    return {
+      withData: countriesWithBoth.size,
+      withoutData: totalMissing,
+      missingGDP: missingGDP.sort((a, b) => a.name.localeCompare(b.name)),
+      missingSpending: missingSpending.sort((a, b) => a.name.localeCompare(b.name)),
+      missingBoth: missingBoth.sort((a, b) => a.name.localeCompare(b.name)),
+      allCountriesData,
+      total: 214 // Total countries in the world
+    }
+  }, [metadata, chartData, displayYearRange])
+  
   // Calculate top 5 spending categories for selected country or world (average)
   const topSpendingCategories = useMemo(() => {
     if (!spendingData || !selectedCountry || !displayYearRange) {
@@ -398,9 +563,15 @@ function ComparisonDashboard({ onLoadingChange }) {
       }))
       .filter(cat => cat.usdAverage > 0) // Only include categories with data
       .sort((a, b) => b.usdAverage - a.usdAverage)
-      // Show all categories (not just top 5)
     
-    return categories
+    // Calculate percentage of overview (total expense)
+    const overviewTotal = categories.find(c => c.categoryKey === 'overview')?.usdAverage || 0
+    const categoriesWithPercentage = categories.map(cat => ({
+      ...cat,
+      percentageOfOverview: overviewTotal > 0 ? (cat.usdAverage / overviewTotal) * 100 : 0
+    }))
+    
+    return categoriesWithPercentage
   }, [spendingData, selectedCountry, displayYearRange])
   
   if (loading) {
@@ -555,7 +726,23 @@ function ComparisonDashboard({ onLoadingChange }) {
             <>
               <div className="metric-card">
                 <div className="metric-label">Countries</div>
-                <div className="metric-value">{metadata.countries.length}</div>
+                <div className="metric-value" style={{ fontSize: '20px' }}>
+                  {metadata.countries.length}
+                </div>
+                <div 
+                  onClick={() => setShowMissingCountries(true)}
+                  style={{
+                    marginTop: '6px',
+                    fontSize: '9px',
+                    color: '#667eea',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    fontWeight: '500'
+                  }}
+                  title="View data availability for all countries"
+                >
+                  data discrepancy
+                </div>
               </div>
               
               <div className="metric-card">
@@ -609,19 +796,47 @@ function ComparisonDashboard({ onLoadingChange }) {
                   return `$${value.toFixed(2)}`
                 }
                 
+                // Check if this category has only one subcategory (or none)
+                const isSingleCategory = cat.subcategories.length <= 1
+                
                 return (
-                  <div key={cat.categoryKey} className="category-card">
+                  <div 
+                    key={cat.categoryKey} 
+                    className="category-card"
+                    style={isSingleCategory ? { 
+                      gridColumn: 'span 1',
+                      minHeight: 'auto'
+                    } : {}}
+                  >
                     <div className="category-header">
                       <div className="category-title">
                         <span className="category-rank">{index + 1}.</span>
                         <span className="category-dot" style={{ backgroundColor: cat.color }}></span>
-                        <span className="category-name">{cat.name}</span>
+                        <span 
+                          className="category-name" 
+                          onClick={() => setCategoryInfoModal(cat.categoryKey)}
+                          style={{ 
+                            cursor: 'pointer', 
+                            textDecoration: 'underline dotted',
+                            textUnderlineOffset: '3px'
+                          }}
+                          title="Click for more information"
+                        >
+                          {cat.name}
+                        </span>
                       </div>
                       <div className="category-total">
-                        {formatUSD(cat.usdAverage)} <span style={{ fontSize: '10px', color: '#999' }}>(Avg)</span>
+                        <div>{formatUSD(cat.usdAverage)}</div>
+                        <div style={{ fontSize: '10px', color: '#999', marginTop: '2px' }}>
+                          {cat.categoryKey !== 'overview' && (
+                            <span style={{ color: cat.color, fontWeight: '600' }}>
+                              {cat.percentageOfOverview.toFixed(1)}%
+                            </span>
+                          )}
+                          {cat.categoryKey !== 'overview' && ' of total'}
+                        </div>
                       </div>
-                    </div>
-                    
+                    </div>                    
                     <div className="subcategories-list">
                       {cat.subcategories.map(sub => {
                         return (
@@ -642,8 +857,426 @@ function ComparisonDashboard({ onLoadingChange }) {
         </div>
         )}
       </div>
-    </div>
-  )
+      
+      {/* Data Discrepancy Modal */}
+      {showMissingCountries && countriesDataInfo.allCountriesData && (
+        <>
+          {/* Modal Overlay */}
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.6)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onClick={() => setShowMissingCountries(false)}
+          />
+          
+          {/* Modal Content */}
+          <div
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: 'white',
+              border: '2px solid #667eea',
+              borderRadius: '12px',
+              padding: '0',
+              fontSize: '12px',
+              zIndex: 10000,
+              maxWidth: '900px',
+              width: '95%',
+              maxHeight: '85vh',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header with Close Button */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              padding: '20px',
+              borderBottom: '2px solid #e0e4ff',
+              background: '#f8f9ff'
+            }}>
+              <div>
+                <div style={{ fontWeight: '600', color: '#667eea', fontSize: '18px', marginBottom: '4px' }}>
+                  Data Availability Report
+                </div>
+                <div style={{ fontSize: '11px', color: '#666' }}>
+                  Showing data coverage for {metadata.countries.length} countries ({displayYearRange[0]}-{displayYearRange[1]})
+                </div>
+              </div>
+              <button
+                onClick={() => setShowMissingCountries(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#999',
+                  padding: '0',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#fee'
+                  e.currentTarget.style.color = '#ef4444'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = '#999'
+                }}
+                title="Close"
+              >
+                ×
+              </button>
+            </div>
+            
+            {/* Filter Tabs */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '8px', 
+              padding: '12px 20px',
+              borderBottom: '1px solid #e0e4ff',
+              background: 'white'
+            }}>
+              <button
+                onClick={() => setDataDiscrepancyTab('all')}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  background: dataDiscrepancyTab === 'all' ? '#667eea' : '#f0f4ff',
+                  color: dataDiscrepancyTab === 'all' ? 'white' : '#667eea',
+                  transition: 'all 0.2s'
+                }}
+              >
+                All Countries ({countriesDataInfo.allCountriesData.length})
+              </button>
+              <button
+                onClick={() => setDataDiscrepancyTab('issues')}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  background: dataDiscrepancyTab === 'issues' ? '#ef4444' : '#fee',
+                  color: dataDiscrepancyTab === 'issues' ? 'white' : '#ef4444',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Issues Only ({countriesDataInfo.allCountriesData.filter(c => c.hasIssue).length})
+              </button>
+            </div>
+            
+            {/* Table Content */}
+            <div style={{ 
+              flex: 1, 
+              overflowY: 'auto',
+              padding: '0 20px 20px 20px'
+            }}>
+              <table style={{ 
+                width: '100%', 
+                borderCollapse: 'collapse',
+                fontSize: '11px'
+              }}>
+                <thead style={{ 
+                  position: 'sticky', 
+                  top: 0, 
+                  background: '#f8f9ff',
+                  zIndex: 10,
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                }}>
+                  <tr>
+                    <th style={{ 
+                      padding: '16px 8px', 
+                      textAlign: 'left', 
+                      borderBottom: '2px solid #667eea',
+                      fontWeight: '600',
+                      color: '#667eea',
+                      background: '#f8f9ff',
+                      cursor: 'pointer',
+                      userSelect: 'none'
+                    }}
+                    onClick={() => {
+                      const sorted = [...countriesDataInfo.allCountriesData].sort((a, b) => 
+                        a.name.localeCompare(b.name)
+                      )
+                      // Toggle sort direction if already sorted
+                      countriesDataInfo.allCountriesData = sorted
+                    }}
+                    title="Click to sort">
+                      Country ↕
+                    </th>
+                    <th style={{ 
+                      padding: '16px 8px', 
+                      textAlign: 'center', 
+                      borderBottom: '2px solid #667eea',
+                      fontWeight: '600',
+                      color: '#667eea',
+                      background: '#f8f9ff',
+                      cursor: 'pointer',
+                      userSelect: 'none'
+                    }}
+                    title="Click to sort">
+                      GDP Data ↕
+                    </th>
+                    <th style={{ 
+                      padding: '16px 8px', 
+                      textAlign: 'center', 
+                      borderBottom: '2px solid #667eea',
+                      fontWeight: '600',
+                      color: '#667eea',
+                      background: '#f8f9ff',
+                      cursor: 'pointer',
+                      userSelect: 'none'
+                    }}
+                    title="Click to sort">
+                      Spending Data ↕
+                    </th>
+                    <th style={{ 
+                      padding: '16px 8px', 
+                      textAlign: 'center', 
+                      borderBottom: '2px solid #667eea',
+                      fontWeight: '600',
+                      color: '#667eea',
+                      background: '#f8f9ff',
+                      cursor: 'pointer',
+                      userSelect: 'none'
+                    }}
+                    title="Click to sort">
+                      Status ↕
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {countriesDataInfo.allCountriesData
+                    .filter(c => dataDiscrepancyTab === 'all' || c.hasIssue)
+                    .map((country, idx) => (
+                    <tr key={idx} style={{ 
+                      background: idx % 2 === 0 ? 'white' : '#f8f9ff',
+                      borderBottom: '1px solid #e0e4ff'
+                    }}>
+                      <td style={{ padding: '10px 8px', fontWeight: '500' }}>
+                        {country.name}
+                      </td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                          <span style={{
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            background: country.gdpStatus === 'Complete' ? '#d1fae5' : (country.gdpStatus === 'Outdated' ? '#fef3c7' : '#fee'),
+                            color: country.gdpStatus === 'Complete' ? '#065f46' : (country.gdpStatus === 'Outdated' ? '#92400e' : '#991b1b')
+                          }}>
+                            {country.gdpStatus}
+                          </span>
+                          <span style={{ fontSize: '9px', color: '#666', fontFamily: 'monospace' }}>
+                            {country.gdpRange}
+                          </span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                          <span style={{
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            background: country.spendingStatus === 'Complete' ? '#d1fae5' : (country.spendingStatus === 'Outdated' ? '#fef3c7' : '#fee'),
+                            color: country.spendingStatus === 'Complete' ? '#065f46' : (country.spendingStatus === 'Outdated' ? '#92400e' : '#991b1b')
+                          }}>
+                            {country.spendingStatus}
+                          </span>
+                          <span style={{ fontSize: '9px', color: '#666', fontFamily: 'monospace' }}>
+                            {country.spendingRange}
+                          </span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+                        {country.hasIssue ? (
+                          <span style={{ fontSize: '16px' }}>⚠️</span>
+                        ) : (
+                          <span style={{ fontSize: '16px' }}>✅</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          
+          {/* Legend */}
+          <div style={{ 
+            padding: '16px 20px',
+            borderTop: '2px solid #e0e4ff',
+            background: '#f8f9ff',
+            display: 'flex',
+            gap: '20px',
+            fontSize: '10px',
+            justifyContent: 'center',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ padding: '4px 8px', borderRadius: '4px', background: '#d1fae5', color: '#065f46', fontWeight: '600' }}>Complete</span>
+              <span style={{ color: '#666' }}>Data up to 2019+</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ padding: '4px 8px', borderRadius: '4px', background: '#fef3c7', color: '#92400e', fontWeight: '600' }}>Outdated</span>
+              <span style={{ color: '#666' }}>Data ends before 2019</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ padding: '4px 8px', borderRadius: '4px', background: '#fee', color: '#991b1b', fontWeight: '600' }}>Missing</span>
+              <span style={{ color: '#666' }}>No data available</span>
+            </div>
+          </div>
+        </div>
+      </>
+    )}
+    
+    {/* Category Info Modal */}
+    {categoryInfoModal && (
+      <>
+        {/* Modal Overlay */}
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onClick={() => setCategoryInfoModal(null)}
+        />
+        
+        {/* Modal Content */}
+        <div
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'white',
+            border: `3px solid ${CATEGORY_COLORS[categoryInfoModal] || '#667eea'}`,
+            borderRadius: '12px',
+            padding: '24px',
+            fontSize: '14px',
+            zIndex: 10001,
+            maxWidth: '500px',
+            width: '90%',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header with Close Button */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'flex-start',
+            marginBottom: '16px'
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              flex: 1
+            }}>
+              <span 
+                style={{ 
+                  width: '12px', 
+                  height: '12px', 
+                  borderRadius: '50%', 
+                  background: CATEGORY_COLORS[categoryInfoModal] || '#667eea'
+                }}
+              />
+              <h3 style={{ 
+                margin: 0, 
+                fontSize: '18px', 
+                fontWeight: '600',
+                color: CATEGORY_COLORS[categoryInfoModal] || '#667eea',
+                textTransform: 'capitalize'
+              }}>
+                {categoryInfoModal}
+              </h3>
+            </div>
+            <button
+              onClick={() => setCategoryInfoModal(null)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                fontSize: '28px',
+                cursor: 'pointer',
+                color: '#999',
+                padding: '0',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '4px',
+                transition: 'all 0.2s',
+                marginLeft: '12px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#f0f0f0'
+                e.currentTarget.style.color = '#333'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = '#999'
+              }}
+              title="Close"
+            >
+              ×
+            </button>
+          </div>
+          
+          {/* Description */}
+          <p style={{ 
+            margin: 0, 
+            lineHeight: '1.6', 
+            color: '#333',
+            fontSize: '14px'
+          }}>
+            {CATEGORY_DESCRIPTIONS[categoryInfoModal]}
+          </p>
+        </div>
+      </>
+    )}
+  </div>
+)
 }
+
 
 export default ComparisonDashboard

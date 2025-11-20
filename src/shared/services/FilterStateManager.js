@@ -371,8 +371,8 @@ export class FilterStateManager {
       // Region selection - empty means all regions
       regions: [],
       
-      // Year range - default to full available range (1980-2022)
-      yearRange: [1980, 2022],
+      // Year range - default to reliable data range (2005-2022) consistent across all modules
+      yearRange: [2005, 2022],
       
       // Value range in millions - default to full range
       valueRange: [0, 100000],

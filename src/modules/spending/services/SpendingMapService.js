@@ -264,10 +264,12 @@ export function initializeSpendingMap(svgRef, gRef, zoomRef, worldData, spending
         }
       } else {
         const spendingValue = getCountrySpendingForMap(spendingData, countryName, filters.yearRange)
-        if (spendingValue !== null) {
+        // Get the actual country data from spendingData to get the correct code
+        const actualCountryData = spendingData.countries[countryName]
+        if (spendingValue !== null && actualCountryData) {
           countryData = {
             name: countryName,
-            code: countryName.substring(0, 3).toUpperCase(),
+            code: actualCountryData.code || countryName.substring(0, 3).toUpperCase(),
             region: getCountryRegion(countryName),
             spending: { average: spendingValue, latest: spendingValue, dataPoints: 1 }
           }

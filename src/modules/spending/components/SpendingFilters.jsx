@@ -28,12 +28,12 @@ const SpendingFilters = ({
   // Calculate available year range based on selected country's data
   const availableYearRange = useMemo(() => {
     if (!selectedCountry || !spendingData.countries) {
-      return [1980, 2022] // Default full range
+      return [2005, 2022] // Default reliable data range (consistent with other modules)
     }
     
     const countryData = MapColorService.findCountryData(selectedCountry.name, spendingData)
     if (!countryData || !countryData.data) {
-      return [1980, 2022]
+      return [2005, 2022]
     }
     
     const years = Object.keys(countryData.data)
@@ -42,10 +42,11 @@ const SpendingFilters = ({
       .sort((a, b) => a - b)
     
     if (years.length === 0) {
-      return [1980, 2022]
+      return [2005, 2022]
     }
     
-    return [years[0], years[years.length - 1]]
+    // Allow country-specific range but ensure it doesn't go below 1970 for UI purposes
+    return [Math.max(years[0], 1970), years[years.length - 1]]
   }, [selectedCountry, spendingData])
 
   useEffect(() => {
