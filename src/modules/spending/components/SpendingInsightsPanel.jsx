@@ -103,13 +103,9 @@ function SpendingInsightsPanel({
     }
   }, [spendingData, filters?.regions, yearRange])
   
-  // Calculate top and bottom countries by category (filtered by region if selected)
+  // Calculate top and bottom countries by selected indicator (filtered by region if selected)
   const { topCountries, bottomCountries } = useMemo(() => {
-    if (!unifiedData) return { topCountries: [], bottomCountries: [] }
-    
-    const categoryIndicators = Object.entries(INDICATOR_METADATA)
-      .filter(([code, meta]) => meta.category === selectedCategory)
-      .map(([code]) => code)
+    if (!unifiedData || !selectedIndicator) return { topCountries: [], bottomCountries: [] }
     
     const countryTotals = {}
     
@@ -126,29 +122,28 @@ function SpendingInsightsPanel({
       let dataPoints = 0
       let usdDataPoints = 0
       
-      categoryIndicators.forEach(indicatorCode => {
-        const indicatorData = countryData.indicators[indicatorCode]
-        if (indicatorData) {
-          Object.entries(indicatorData).forEach(([year, valueObj]) => {
-            const yearNum = parseInt(year)
-            if (yearNum >= yearRange[0] && yearNum <= yearRange[1]) {
-              // Handle both old format (number) and new format (object with local/usd)
-              const localValue = typeof valueObj === 'object' ? valueObj.local : valueObj
-              const usdValue = typeof valueObj === 'object' ? valueObj.usd : null
-              
-              if (localValue > 0) {
-                totalLocal += localValue
-                dataPoints++
-              }
-              
-              if (usdValue && usdValue > 0) {
-                totalUSD += usdValue
-                usdDataPoints++
-              }
+      // Use only the selected indicator (not all indicators in category)
+      const indicatorData = countryData.indicators[selectedIndicator]
+      if (indicatorData) {
+        Object.entries(indicatorData).forEach(([year, valueObj]) => {
+          const yearNum = parseInt(year)
+          if (yearNum >= yearRange[0] && yearNum <= yearRange[1]) {
+            // Handle both old format (number) and new format (object with local/usd)
+            const localValue = typeof valueObj === 'object' ? valueObj.local : valueObj
+            const usdValue = typeof valueObj === 'object' ? valueObj.usd : null
+            
+            if (localValue > 0) {
+              totalLocal += localValue
+              dataPoints++
             }
-          })
-        }
-      })
+            
+            if (usdValue && usdValue > 0) {
+              totalUSD += usdValue
+              usdDataPoints++
+            }
+          }
+        })
+      }
       
       if (dataPoints > 0) {
         countryTotals[countryName] = {
@@ -175,7 +170,7 @@ function SpendingInsightsPanel({
       topCountries: sorted.slice(0, 10),
       bottomCountries: sorted.slice(-10).reverse()
     }
-  }, [unifiedData, selectedCategory, yearRange, filters?.regions])
+  }, [unifiedData, selectedIndicator, yearRange, filters?.regions])
   
   // Calculate detailed indicator breakdown for selected country (all 48 indicators)
   const selectedCountryIndicators = useMemo(() => {
