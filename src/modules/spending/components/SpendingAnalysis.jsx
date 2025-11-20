@@ -43,7 +43,7 @@ const SpendingAnalysis = ({ onLoadingChange }) => {
   
   // Filter state
   const [filters, setFilters] = useState({ 
-    yearRange: [1980, 2022], // Full data range: 1980-2022
+    yearRange: [2005, 2022], // Reliable data range: 2005-2022 (consistent with GDP and Comparison pages)
     categories: ['overview'],
     countries: [],
     sectors: [],
